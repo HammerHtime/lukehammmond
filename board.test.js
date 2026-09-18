@@ -227,6 +227,52 @@ check('low confidence where none were gathered', row('hamilton').confidence, 'Lo
 check('RIT is benchmarked against a champion', row('rit').comparisons[0].basis, 'champion');
 check('American is benchmarked against a roster swimmer', row('american').comparisons[0].basis, 'roster');
 
+// ---------- the tier says what year one looks like ----------
+// P1, P2 and P3 were a code you had to remember, and the card carried a second
+// scale underneath saying the same thing. The keys stay, because they sort and
+// because the importer uses them. They are never shown.
+check('P1 reads as racing', B.tierFor('P1', true).label, 'He\u2019d race');
+check('P2 reads as pushing', B.tierFor('P2', true).label, 'He\u2019d push');
+check('P3 reads as chasing', B.tierFor('P3', true).label, 'He\u2019d chase');
+check('and each carries a tone', [B.tierFor('P1', true).tone, B.tierFor('P2', true).tone,
+  B.tierFor('P3', true).tone], ['good', 'mid', 'warn']);
+check('an unrecorded school has no tier', B.tierFor('', true), null);
+
+// Nothing gathered means no reading. Printing "he'd chase" over an empty
+// record would be a verdict drawn from silence, which this board never does.
+check('no evidence outranks the recorded call', B.tierFor('P3', false).label, 'Not scored');
+check('even a P1 with nothing behind it', B.tierFor('P1', false).label, 'Not scored');
+check('and it is toned as nothing', B.tierFor('P1', false).tone, 'none');
+
+// The grouping the board actually shows, which is the recorded call except
+// where there is no evidence at all.
+function tierOf(id) {
+  const r = row(id);
+  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label;
+}
+check('the six he could race for', rows.filter(function (r) {
+  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'He\u2019d race'; }).length, 6);
+check('the six he would push into', rows.filter(function (r) {
+  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'He\u2019d push'; }).length, 6);
+check('the three he would chase', rows.filter(function (r) {
+  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'He\u2019d chase'; }).length, 3);
+check('and the two with nothing on them', rows.filter(function (r) {
+  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'Not scored'; }).length, 2);
+check('Loyola is one of them', tierOf('loyolamd'), 'Not scored');
+check('Canisius is not', tierOf('canisius'), 'He\u2019d race');
+
+// The disagreement is unchanged. The recorded call still stands and still
+// sorts the board, and the engine only ever says so on the side.
+check('Fairfield still reads higher than recorded', B.tierFor(row('fairfield').suggestedPriority, true).label,
+  'He\u2019d race');
+check('while the board still shows what was recorded', tierOf('fairfield'), 'He\u2019d chase');
+
+// No page shows the raw key any more.
+['admin.html', 'index.html'].forEach(function (f) {
+  const src = require('fs').readFileSync(require('path').join(__dirname, f), 'utf8');
+  ok(f + ' never prints a bare tier key', !/>\s*P[123]\s*</.test(src));
+});
+
 // ---------- where he would slot into the squad ----------
 // The bar was not understood, and that is a design failure rather than a
 // reading failure. "Fourth fastest of five" needs no explaining.

@@ -92,6 +92,10 @@
   .p.P2{background:var(--pool-wash);color:var(--pool)}
   .p.P3{background:var(--warn-wash);color:var(--warn)}
   .p.none{background:var(--line-soft);color:var(--ink-faint)}
+  .p.good{background:var(--good-wash);color:var(--good)}
+  .p.mid{background:var(--pool-wash);color:var(--pool)}
+  .p.warn{background:var(--warn-wash);color:var(--warn)}
+  .p.tier{font-size:12px;padding:3px 9px;white-space:nowrap}
   .differs{color:var(--warn);font-size:12px;font-weight:640}
   .conf{font-size:12.5px;color:var(--ink-faint)}
   .gapv{font-variant-numeric:tabular-nums;font-weight:640}
@@ -917,6 +921,12 @@
       'with Luke slotted into where his converted time would put him. The question it answers ' +
       'is not whether he is fast enough for them. It is what his year would look like if he ' +
       'went there, ie, would he be racing, chasing, or waiting.</p>' +
+      '<div class="legend-key" style="margin-bottom:10px">' +
+      '<span><span class="p tier good">He\u2019d race</span> his times already overlap them</span>' +
+      '<span><span class="p tier mid">He\u2019d push</span> realistic if he keeps progressing</span>' +
+      '<span><span class="p tier warn">He\u2019d chase</span> a reach, he needs a drop first</span>' +
+      '<span><span class="p tier none">Not scored</span> no times gathered, so no reading</span>' +
+      '</div>' +
       '<div class="legend-key">' +
       '<span><i class="legend-swatch" style="background:var(--good)"></i> in the front half, contributing</span>' +
       '<span><i class="legend-swatch" style="background:var(--warn)"></i> in the back half, developing</span>' +
@@ -925,9 +935,11 @@
       '</div></div>';
 
     var cards = rows.map(function (r) {
-      var p = r.recordedPriority || '';
-      var tone = r.bestFit === 'Current fit' ? 'fit-good'
-        : (r.computedFit === 'Not assessed' ? '' : (r.worstFit === 'Reach' ? 'fit-warn' : 'fit'));
+      // Nothing gathered means no reading, whatever was recorded. Saying "he'd
+      // chase" over an empty record would be a verdict drawn from silence.
+      var assessed = r.evidenceCount > 0;
+      var tier = B.tierFor(r.recordedPriority, assessed) || { label: 'Unset', tone: 'none' };
+      var suggested = assessed ? B.tierFor(r.suggestedPriority, true) : null;
 
       return '<div class="school">' +
         '<div class="school-head">' + badge(r.school) +
@@ -937,17 +949,18 @@
               (r.school.conference ? ' \u00b7 ' + esc(r.school.conference) : '') +
               (r.school.state ? ' \u00b7 ' + esc(r.school.state) : '') + '</div>' +
           '</div>' +
-          '<span class="p ' + (p || 'none') + '">' + esc(p || 'unset') + '</span>' +
+          '<span class="p tier ' + tier.tone + '">' + esc(tier.label) + '</span>' +
         '</div>' +
 
+        // The fit tag came off. It was a second scale saying what the tier now
+        // says in words, and two scales for one idea is what made the corner
+        // pill unreadable in the first place.
         '<div class="school-tags">' +
-          (r.computedFit !== 'Not assessed'
-            ? '<span class="tag ' + tone + '">' + esc(r.computedFit) + '</span>' : '') +
           '<span class="tag">' + esc(r.confidence) + ' confidence</span>' +
           '<span class="tag">' + esc(r.school.status || 'Not contacted') + '</span>' +
           (r.school.verified ? '<span class="tag fit-good">contact on file</span>' : '') +
-          (r.disagrees
-            ? '<span class="tag fit-warn">engine reads it ' + esc(r.suggestedPriority) + '</span>' : '') +
+          (r.disagrees && suggested
+            ? '<span class="tag fit-warn">engine reads it \u201c' + esc(suggested.label) + '\u201d</span>' : '') +
         '</div>' +
 
         (r.school.note ? '<p class="school-note">' + esc(r.school.note) + '</p>' : '') +
@@ -983,9 +996,11 @@
     var unassessed = rows.filter(function (r) { return r.evidenceCount === 0; }).length;
     var disagreeing = rows.filter(function (r) { return r.disagrees; }).length;
     el('boardNote').innerHTML =
-      'Priority is relevance, not quality. Confidence is about the evidence, not the odds. ' +
+      'The tier says what his first year there would look like, not how good the school is. ' +
+      'Confidence is about the evidence, not the odds. ' +
       (unassessed ? '<strong>' + unassessed + '</strong> have no swimmer times gathered. ' : '') +
-      (disagreeing ? '<strong>' + disagreeing + '</strong> read differently to the recorded priority.' : '');
+      (disagreeing ? '<strong>' + disagreeing + '</strong> read differently to your recorded call, ' +
+        'which still stands and still sorts the board.' : '');
   }
 
   // The draft, written for one school and shown on that school's own card.

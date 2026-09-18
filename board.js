@@ -32,12 +32,35 @@
 // loads these the way a browser does, which is the only way to see it.
 (function () {
 
+// P1, P2 and P3 are the keys, kept because they sort and because that is what
+// the pasted board and the importer use. They are never shown. Andrew asked for
+// something readable and he was right, ie, a code you have to remember is not a
+// label, and the board already carried a second scale saying the same thing.
+//
+// The wording says what his first year there would look like, which is the
+// question this board exists to answer. Nothing about scoring changed.
 const PRIORITIES = ['P1', 'P2', 'P3'];
 
+const TIERS = {
+  P1: { label: 'He\u2019d race', tone: 'good' },
+  P2: { label: 'He\u2019d push', tone: 'mid' },
+  P3: { label: 'He\u2019d chase', tone: 'warn' }
+};
+
+// No benchmarks means no reading. Printing "he'd chase" over an empty record
+// would be a verdict drawn from silence, which is the one thing this board
+// never does.
+const NOT_SCORED = { label: 'Not scored', tone: 'none' };
+
+function tierFor(priority, assessed) {
+  if (assessed === false) return NOT_SCORED;
+  return TIERS[priority] || null;
+}
+
 const PRIORITY_MEANING = {
-  P1: 'His times already overlap this programme. Firmly on the radar.',
-  P2: 'Realistic if he keeps progressing. This is where most of the campaign will sit.',
-  P3: 'A reach. Worth watching, but he needs a meaningful drop first.'
+  P1: 'His times already overlap this programme. He would be racing in year one.',
+  P2: 'Realistic if he keeps progressing. He would be pushing to get into the group.',
+  P3: 'A reach for now. He would be chasing it, and he needs a meaningful drop first.'
 };
 
 // What a benchmark was drawn from. This decides how to read the gap.
@@ -462,6 +485,9 @@ const api = {
   compareGroup: compareGroup,
   scalePositions: scalePositions,
   placeIn: placeIn,
+  TIERS: TIERS,
+  NOT_SCORED: NOT_SCORED,
+  tierFor: tierFor,
   CONFERENCES: CONFERENCES,
   conferenceContext: conferenceContext,
   ordinal: ordinal,
