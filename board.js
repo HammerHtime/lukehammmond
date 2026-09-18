@@ -42,9 +42,9 @@
 const PRIORITIES = ['P1', 'P2', 'P3'];
 
 const TIERS = {
-  P1: { label: 'He\u2019d race', tone: 'good' },
-  P2: { label: 'He\u2019d push', tone: 'mid' },
-  P3: { label: 'He\u2019d chase', tone: 'warn' }
+  P1: { label: 'You\u2019d race', tone: 'good' },
+  P2: { label: 'You\u2019d push', tone: 'mid' },
+  P3: { label: 'You\u2019d chase', tone: 'warn' }
 };
 
 // No benchmarks means no reading. Printing "he'd chase" over an empty record
@@ -58,9 +58,9 @@ function tierFor(priority, assessed) {
 }
 
 const PRIORITY_MEANING = {
-  P1: 'His times already overlap this programme. He would be racing in year one.',
-  P2: 'Realistic if he keeps progressing. He would be pushing to get into the group.',
-  P3: 'A reach for now. He would be chasing it, and he needs a meaningful drop first.'
+  P1: 'Your times already overlap this programme. You would be racing in year one.',
+  P2: 'Realistic if you keep progressing. You would be pushing to get into the group.',
+  P3: 'A reach for now. You would be chasing it, and you need a meaningful drop first.'
 };
 
 // What a benchmark was drawn from. This decides how to read the gap.
@@ -296,8 +296,8 @@ function conferenceContext(swim, school, comparison) {
     // stand on its own.
     sentence: 'It took ' + winner + ' to win this event at the ' + conf.meet.replace(/^2026 /, '') +
       ' in 2026. ' + (gap <= 0
-        ? 'He is already quicker than that.'
-        : 'He is ' + swim.formatGap(gap).replace('+', '') + ' off that.')
+        ? 'You are already quicker than that.'
+        : 'You are ' + swim.formatGap(gap).replace('+', '') + ' off that.')
   };
 }
 
@@ -319,10 +319,10 @@ function conferenceContext(swim, school, comparison) {
 function convertedNote(comparison) {
   if (!comparison || !comparison.mineEstimated) return '';
   const from = comparison.mineFrom;
-  if (!from || !from.event || !from.time) return 'Converted, not a time he has swum.';
+  if (!from || !from.event || !from.time) return 'Converted, not a time you have swum.';
   const parts = String(from.event).split('-');
   const said = parts[0] + ' ' + (parts[1] === 'im' ? 'IM' : parts[1]) + ' ' + parts[2];
-  return 'Converted from his ' + said + ', ' + from.time + '. Not a time he has swum.';
+  return 'Converted from your ' + said + ', ' + from.time + '. Not a time you have swum.';
 }
 
 function placeIn(swim, comparison) {
@@ -374,18 +374,18 @@ function placeIn(swim, comparison) {
 
 function meaningOf(position, of, aboveMedian) {
   if (position === 1) {
-    return 'He would lead their distance group from day one. Good for racing and for confidence, ' +
+    return 'You would lead their distance group from day one. Good for racing and for confidence, ' +
       'less good for having someone quicker to train behind.';
   }
   if (position === of) {
-    return 'He would be developing behind everyone there. That can be the right choice if the ' +
-      'coaching is what he wants, but it is a year or two before he races.';
+    return 'You would be developing behind everyone there. That can be the right choice if the ' +
+      'coaching is what you want, but it is a year or two before you race.';
   }
   if (aboveMedian) {
-    return 'He would be in the front half of their group, ie, contributing rather than making up ' +
-      'numbers, with people ahead of him to chase.';
+    return 'You would be in the front half of their group, ie, contributing rather than making up ' +
+      'numbers, with people ahead of you to chase.';
   }
-  return 'He would be in the back half of their group. Training with people quicker than him, ' +
+  return 'You would be in the back half of their group. Training with people quicker than you, ' +
     'which develops a swimmer, but not scoring straight away.';
 }
 

@@ -901,7 +901,7 @@
         '<span style="font-variant-numeric:tabular-nums;font-size:13.5px;' +
         (row.mine ? 'color:var(--' + tone + ')' : '') + '">' + esc(row.time) + '</span>' +
         (row.mine ? '<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;' +
-          'color:var(--' + tone + ')">Luke' + (c.mineEstimated ? ', converted' : '') +
+          'color:var(--' + tone + ')">You' + (c.mineEstimated ? ', converted' : '') +
           '</span>' : '') +
         '</div>';
     }).join('');
@@ -927,18 +927,19 @@
       '<p>Every event below shows that programme\u2019s swimmers in order, quickest first, ' +
       'with Luke slotted into where his converted time would put him. The question it answers ' +
       'is not whether he is fast enough for them. It is what his year would look like if he ' +
-      'went there, ie, would he be racing, chasing, or waiting.</p>' +
+      'went there, ie, would he be racing, chasing, or waiting. The board speaks to Luke, ' +
+      'because he is the one choosing.</p>' +
       '<div class="legend-key" style="margin-bottom:10px">' +
-      '<span><span class="p tier good">He\u2019d race</span> his times already overlap them</span>' +
-      '<span><span class="p tier mid">He\u2019d push</span> realistic if he keeps progressing</span>' +
-      '<span><span class="p tier warn">He\u2019d chase</span> a reach, he needs a drop first</span>' +
+      '<span><span class="p tier good">You\u2019d race</span> your times already overlap them</span>' +
+      '<span><span class="p tier mid">You\u2019d push</span> realistic if you keep progressing</span>' +
+      '<span><span class="p tier warn">You\u2019d chase</span> a reach, you need a drop first</span>' +
       '<span><span class="p tier none">Not scored</span> no times gathered, so no reading</span>' +
       '</div>' +
       '<div class="legend-key">' +
       '<span><i class="legend-swatch" style="background:var(--good)"></i> in the front half, contributing</span>' +
       '<span><i class="legend-swatch" style="background:var(--warn)"></i> in the back half, developing</span>' +
       '<span>Their middle swimmer is the line between the two</span>' +
-      '<span>His rung is a converted time, theirs are real yard swims</span>' +
+      '<span>Your rung is a converted time, theirs are real yard swims</span>' +
       '<span>Under each, what it took to win that event at the conference championship</span>' +
       '</div></div>';
 
@@ -1004,7 +1005,7 @@
     var unassessed = rows.filter(function (r) { return r.evidenceCount === 0; }).length;
     var disagreeing = rows.filter(function (r) { return r.disagrees; }).length;
     el('boardNote').innerHTML =
-      'The tier says what his first year there would look like, not how good the school is. ' +
+      'The tier says what your first year there would look like, not how good the school is. ' +
       'Confidence is about the evidence, not the odds. ' +
       (unassessed ? '<strong>' + unassessed + '</strong> have no swimmer times gathered. ' : '') +
       (disagreeing ? '<strong>' + disagreeing + '</strong> read differently to your recorded call, ' +

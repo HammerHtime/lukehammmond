@@ -231,9 +231,9 @@ check('American is benchmarked against a roster swimmer', row('american').compar
 // P1, P2 and P3 were a code you had to remember, and the card carried a second
 // scale underneath saying the same thing. The keys stay, because they sort and
 // because the importer uses them. They are never shown.
-check('P1 reads as racing', B.tierFor('P1', true).label, 'He\u2019d race');
-check('P2 reads as pushing', B.tierFor('P2', true).label, 'He\u2019d push');
-check('P3 reads as chasing', B.tierFor('P3', true).label, 'He\u2019d chase');
+check('P1 reads as racing', B.tierFor('P1', true).label, 'You\u2019d race');
+check('P2 reads as pushing', B.tierFor('P2', true).label, 'You\u2019d push');
+check('P3 reads as chasing', B.tierFor('P3', true).label, 'You\u2019d chase');
 check('and each carries a tone', [B.tierFor('P1', true).tone, B.tierFor('P2', true).tone,
   B.tierFor('P3', true).tone], ['good', 'mid', 'warn']);
 check('an unrecorded school has no tier', B.tierFor('', true), null);
@@ -251,21 +251,21 @@ function tierOf(id) {
   return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label;
 }
 check('the six he could race for', rows.filter(function (r) {
-  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'He\u2019d race'; }).length, 6);
+  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'You\u2019d race'; }).length, 6);
 check('the six he would push into', rows.filter(function (r) {
-  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'He\u2019d push'; }).length, 6);
+  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'You\u2019d push'; }).length, 6);
 check('the three he would chase', rows.filter(function (r) {
-  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'He\u2019d chase'; }).length, 3);
+  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'You\u2019d chase'; }).length, 3);
 check('and the two with nothing on them', rows.filter(function (r) {
   return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'Not scored'; }).length, 2);
 check('Loyola is one of them', tierOf('loyolamd'), 'Not scored');
-check('Canisius is not', tierOf('canisius'), 'He\u2019d race');
+check('Canisius is not', tierOf('canisius'), 'You\u2019d race');
 
 // The disagreement is unchanged. The recorded call still stands and still
 // sorts the board, and the engine only ever says so on the side.
 check('Fairfield still reads higher than recorded', B.tierFor(row('fairfield').suggestedPriority, true).label,
-  'He\u2019d race');
-check('while the board still shows what was recorded', tierOf('fairfield'), 'He\u2019d chase');
+  'You\u2019d race');
+check('while the board still shows what was recorded', tierOf('fairfield'), 'You\u2019d chase');
 
 // No page shows the raw key any more.
 ['admin.html', 'index.html'].forEach(function (f) {
@@ -295,11 +295,11 @@ ok('at St Bonaventure he does not', !bonniesPlace.aboveMedian);
 // This board exists to help Luke choose, so every rung says what the year
 // would look like, not whether he is good enough.
 ok('leading a group reads as leading it',
-  /lead their distance group/.test(B.placeIn(S, row('clarkson').comparisons[0]).meaning));
+  /You would lead their distance group/.test(B.placeIn(S, row('clarkson').comparisons[0]).meaning));
 ok('the back half reads as developing',
   /back half/.test(bonniesPlace.meaning));
 ok('and being last says how long before he races',
-  /before he races/.test(B.placeIn(S, row('saintpeters').comparisons[2]).meaning));
+  /before you race/.test(B.placeIn(S, row('saintpeters').comparisons[2]).meaning));
 
 // One benchmark cannot be ranked against, and inventing a squad from it would
 // be inventing evidence.
@@ -317,26 +317,26 @@ ok('his time is marked as an estimate', fairfield500.mineEstimated);
 check('and it carries the swim it came from', fairfield500.mineFrom.event, '400-free-LCM');
 check('with that swim\u2019s actual time', fairfield500.mineFrom.time, '4:10.86');
 check('said in a line a person can check', B.convertedNote(fairfield500),
-  'Converted from his 400 free LCM, 4:10.86. Not a time he has swum.');
+  'Converted from your 400 free LCM, 4:10.86. Not a time you have swum.');
 check('the mile comes from the 1500', B.convertedNote(row('fairfield').comparisons.filter(
   function (c) { return c.event === '1650-free-SCY'; })[0]),
-  'Converted from his 1500 free LCM, 16:59.80. Not a time he has swum.');
+  'Converted from your 1500 free LCM, 16:59.80. Not a time you have swum.');
 // The 400 IM is not the "400 im", here either.
 ok('an initialism survives the note', /400 IM LCM/.test(B.convertedNote(
   row('fairfield').comparisons.filter(function (c) { return c.event === '400-im-SCY'; })[0])));
 // A group comparison carries it too, not only a single benchmark.
 ok('a whole squad comparison says it as well',
-  /^Converted from his /.test(B.convertedNote(row('stbonaventure').comparisons[0])));
+  /^Converted from your /.test(B.convertedNote(row('stbonaventure').comparisons[0])));
 // Nothing to say about a time that was not converted.
 check('a real swim gets no note', B.convertedNote({ mineEstimated: false }), '');
 check('nor does nothing at all', B.convertedNote(null), '');
 // And it never guesses at a source it does not have.
 check('an estimate with no source still admits it is one',
-  B.convertedNote({ mineEstimated: true }), 'Converted, not a time he has swum.');
+  B.convertedNote({ mineEstimated: true }), 'Converted, not a time you have swum.');
 
 // The page has to actually print it, ie, on the rung and once under the event.
 const adminSrc = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
-ok('the rung says converted', /Luke\' \+ \(c\.mineEstimated \? \', converted\'/.test(adminSrc));
+ok('the rung says converted', /You\' \+ \(c\.mineEstimated \? \', converted\'/.test(adminSrc));
 ok('and the note is rendered', adminSrc.indexOf('B.convertedNote(c)') !== -1);
 
 // ---------- the conference beside the squad ----------
@@ -355,10 +355,10 @@ ok('he is behind that time', canisiusConf.gap > 0);
 // and what it has to do with Luke were all left to the reader. Andrew could not
 // read it, which is the only test that matters.
 check('the line stands on its own', canisiusConf.sentence,
-  'It took 15:39.33 to win this event at the MAAC Championships in 2026. He is 44.78 off that.');
+  'It took 15:39.33 to win this event at the MAAC Championships in 2026. You are 44.78 off that.');
 ok('it names what it took', canisiusConf.sentence.indexOf('It took 15:39.33 to win') === 0);
 ok('and where', /at the MAAC Championships in 2026/.test(canisiusConf.sentence));
-ok('and where he sits against it', /He is 44\.78 off that\./.test(canisiusConf.sentence));
+ok('and where you sit against it', /You are 44\.78 off that\./.test(canisiusConf.sentence));
 ok('the meet year is not said twice', !/2026 MAAC Championships in 2026/.test(canisiusConf.sentence));
 
 // Ithaca sits in a different conference, so the same event gives a different
