@@ -125,6 +125,7 @@ function compareOne(swim, mine, benchmark) {
     gap: gap,
     gapText: swim.formatGap(gap),
     ahead: gap <= 0,
+    theirTimes: [theirs],
     fit: bandFor(share)
   };
 }
@@ -158,7 +159,55 @@ function compareGroup(swim, mine, group) {
     gapText: swim.formatGap(mine.hundredths - slowest),
     ahead: mine.hundredths <= fastest,
     inside: inside,
+    theirTimes: times,
     fit: inside ? FIT.CURRENT : bandFor(share)
+  };
+}
+
+// Where every time sits on one shared scale, so a comparison can be drawn.
+//
+// This computes NO verdict. It decides nothing, it changes no band and it
+// feeds nothing back into scoring. It exists because reading "his 4:37.20
+// against 4:28.10 to 4:42.27, +9.10" makes you do the subtraction yourself,
+// and the only question that matters, ie, is he inside their range or off the
+// back of it, is a question about a picture.
+//
+// Fast is left, because that is how a results sheet reads.
+function scalePositions(comparison) {
+  if (!comparison || !comparison.theirTimes || !comparison.theirTimes.length) return null;
+
+  const theirs = comparison.theirTimes.slice().sort(function (a, b) { return a - b; });
+  const mine = comparison.mineHundredths;
+  const all = theirs.concat([mine]);
+  const low = Math.min.apply(null, all);
+  const high = Math.max.apply(null, all);
+
+  // A little air at each end so a mark never sits on the very edge, and a
+  // guard for the case where every time is identical.
+  const span = high - low;
+  const pad = span > 0 ? span * 0.08 : Math.max(50, high * 0.01);
+  const from = low - pad;
+  const to = high + pad;
+  const width = to - from || 1;
+
+  function at(value) {
+    return Math.max(0, Math.min(100, ((value - from) / width) * 100));
+  }
+
+  return {
+    mine: { hundredths: mine, pos: at(mine) },
+    theirs: theirs.map(function (t) { return { hundredths: t, pos: at(t) }; }),
+    // The band is their range. With a single benchmark there is no band, and
+    // drawing one would invent a spread that was never measured.
+    band: theirs.length > 1
+      ? { from: at(theirs[0]), to: at(theirs[theirs.length - 1]) }
+      : null,
+    fastest: theirs[0],
+    slowest: theirs[theirs.length - 1],
+    // Said in words, once, so the picture and the caption cannot disagree.
+    verdict: comparison.ahead
+      ? 'ahead of all ' + theirs.length
+      : (comparison.inside ? 'inside their range' : comparison.gapText + ' back')
   };
 }
 
@@ -274,6 +323,7 @@ const api = {
   worstFit: worstFit,
   compareOne: compareOne,
   compareGroup: compareGroup,
+  scalePositions: scalePositions,
   scoreSchool: scoreSchool,
   scoreBoard: scoreBoard,
   suggestPriority: suggestPriority,

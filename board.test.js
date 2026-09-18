@@ -159,6 +159,40 @@ check('low confidence where none were gathered', row('hamilton').confidence, 'Lo
 check('RIT is benchmarked against a champion', row('rit').comparisons[0].basis, 'champion');
 check('American is benchmarked against a roster swimmer', row('american').comparisons[0].basis, 'roster');
 
+// ---------- the comparison scale ----------
+// It draws, it does not decide. These checks exist to keep it that way.
+const bonnies = row('stbonaventure').comparisons[0];
+const scale = B.scalePositions(bonnies);
+ok('a group comparison has a scale', Boolean(scale));
+ok('every one of their swimmers is placed', scale.theirs.length === bonnies.theirTimes.length);
+ok('their range is drawn as a band', Boolean(scale.band));
+ok('fast is on the left', scale.theirs[0].pos < scale.theirs[scale.theirs.length - 1].pos);
+ok('every position is on the scale', scale.theirs.every(function (t) { return t.pos >= 0 && t.pos <= 100; }));
+ok('his mark is on the scale', scale.mine.pos >= 0 && scale.mine.pos <= 100);
+ok('he sits inside their band here', scale.mine.pos > scale.band.from && scale.mine.pos < scale.band.to);
+check('and the caption says so', scale.verdict, 'inside their range');
+
+// A single benchmark has no measured spread, so no band is invented for it.
+const niagara = B.scalePositions(row('niagara').comparisons[0]);
+check('one benchmark draws no band', niagara.band, null);
+check('and one mark', niagara.theirs.length, 1);
+
+// Ahead, and off the back, both read correctly.
+check('ahead of all of them', B.scalePositions(row('manhattan').comparisons[0]).verdict, 'ahead of all 2');
+ok('off the back names the gap', /back$/.test(B.scalePositions(row('marist').comparisons[1]).verdict));
+ok('and puts him to the right of their slowest',
+  B.scalePositions(row('marist').comparisons[1]).mine.pos >
+  B.scalePositions(row('marist').comparisons[1]).theirs[0].pos);
+
+check('no times means no scale', B.scalePositions({ theirTimes: [] }), null);
+check('nothing at all means no scale', B.scalePositions(null), null);
+
+// The scale must never feed back into a verdict. If this ever changes, the
+// drawing has started deciding things, which is not its job.
+check('drawing did not move Gannon', row('gannon').computedFit, 'Current fit');
+check('drawing did not move Marist', row('marist').computedFit, 'Target / reach');
+check('drawing did not move Bucknell', row('bucknell').suggestedPriority, 'P2');
+
 // ---------- what a time drop unlocks ----------
 const faster500 = B.whatIfFaster(S, yards, schools, '500-free-SCY', '4:32.00');
 check('a 4:32 500 moves two schools up', faster500.moved.length, 2);

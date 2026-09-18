@@ -74,11 +74,18 @@
   .msg.info{background:var(--pool-wash);color:var(--pool)}
 
   .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  table{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
   th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line-soft);white-space:nowrap;vertical-align:top}
   th{font-size:11.5px;text-transform:uppercase;letter-spacing:.055em;color:var(--ink-faint);font-weight:650}
   tbody tr:last-child td{border-bottom:0}
-  td.wrap-cell{white-space:normal;font-size:13px;color:var(--ink-soft);min-width:220px}
+  td.wrap-cell{white-space:normal;font-size:13px;color:var(--ink-soft)}
+  /* The summary row keeps its bottom border off, so a school and its strips
+     read as one block rather than two. */
+  tr.row-top td{border-bottom:0;padding-bottom:4px}
+  tr.row-detail td{padding:2px 12px 18px;white-space:normal}
+  .school-note{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;max-width:70ch;line-height:1.5}
+  .cmp-grid{display:grid;gap:18px 26px;grid-template-columns:1fr}
+  @media(min-width:760px){.cmp-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}}
 
   .p{display:inline-block;font-size:11.5px;font-weight:720;border-radius:6px;padding:2px 7px}
   .p.P1{background:var(--good-wash);color:var(--good)}
@@ -91,6 +98,30 @@
   .gapv.ahead{color:var(--good)}
   details summary{cursor:pointer;font-size:13px;color:var(--pool);font-weight:600}
   details[open] summary{margin-bottom:7px}
+
+  /* The comparison strip. Fast is on the left, the way a results sheet reads. */
+  .cmp{min-width:0}
+  .cmp-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;
+    font-size:12px;margin-bottom:5px;white-space:nowrap}
+  .cmp-ev{font-weight:660;color:var(--ink)}
+  .cmp-verdict{font-weight:640}
+  .cmp-verdict.good{color:var(--good)}
+  .cmp-verdict.warn{color:var(--warn)}
+  .cmp-track{position:relative;height:20px;margin-bottom:3px}
+  .cmp-rail{position:absolute;left:0;right:0;top:9px;height:2px;background:var(--line);border-radius:2px}
+  .cmp-band{position:absolute;top:6px;height:8px;background:var(--pool-wash);
+    border:1px solid var(--line);border-radius:3px}
+  .cmp-tick{position:absolute;top:5px;width:2px;height:10px;background:var(--ink-faint);
+    border-radius:1px;transform:translateX(-1px)}
+  .cmp-me{position:absolute;top:1px;width:3px;height:18px;border-radius:2px;transform:translateX(-1.5px)}
+  .cmp-me.good{background:var(--good)}
+  .cmp-me.warn{background:var(--warn)}
+  .cmp-scale{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;
+    color:var(--ink-faint);font-variant-numeric:tabular-nums}
+  .cmp-mine{font-weight:700;font-variant-numeric:tabular-nums}
+  .cmp-mine.good{color:var(--good)}
+  .cmp-mine.warn{color:var(--warn)}
+  .cmp-basis{font-size:11px;color:var(--ink-faint);white-space:normal;margin-top:4px;line-height:1.45}
   .ev-line{font-size:12.5px;color:var(--ink-soft);margin:3px 0;white-space:normal}
   .hint{font-size:12.5px;color:var(--ink-faint);margin:7px 0 0}
   .gate{max-width:380px;margin:12vh auto}
@@ -477,39 +508,77 @@
       'display:flex;align-items:center;justify-content:center&quot;>' + esc(initials) + '</span>\'">';
   }
 
+  // One comparison, drawn on a scale. Their swimmers are the grey ticks, the
+  // pale band is the range they cover, and the coloured bar is Luke. Reading
+  // it takes no arithmetic, which is the whole point.
+  function strip(c) {
+    var sc = B.scalePositions(c);
+    if (!sc) return '';
+    var good = c.ahead || c.inside;
+    var tone = good ? 'good' : 'warn';
+
+    var ticks = sc.theirs.map(function (t) {
+      return '<span class="cmp-tick" style="left:' + t.pos.toFixed(2) + '%"></span>';
+    }).join('');
+
+    var band = sc.band
+      ? '<span class="cmp-band" style="left:' + sc.band.from.toFixed(2) + '%;width:' +
+        Math.max(0.6, sc.band.to - sc.band.from).toFixed(2) + '%"></span>'
+      : '';
+
+    // The two ends are pinned left and right so they can never collide, and
+    // his own time sits up on the head line where it has room. A label
+    // positioned over the mark overlapped whenever two times were close.
+    var ends = sc.theirs.length > 1
+      ? '<span>' + esc(S.formatTime(sc.fastest)) + '</span><span>' + esc(S.formatTime(sc.slowest)) + '</span>'
+      : '<span>their ' + esc(S.formatTime(sc.fastest)) + '</span><span></span>';
+
+    return '<div class="cmp">' +
+      '<div class="cmp-head"><span class="cmp-ev">' +
+        esc(c.event.replace('-SCY', '').replace(/-/g, ' ')) + '</span>' +
+        '<span><span class="cmp-mine ' + tone + '">' + esc(c.mine) + '</span> ' +
+        '<span class="cmp-verdict ' + tone + '">' + esc(sc.verdict) + '</span></span></div>' +
+      '<div class="cmp-track"><span class="cmp-rail"></span>' + band + ticks +
+        '<span class="cmp-me ' + tone + '" style="left:' + sc.mine.pos.toFixed(2) + '%"></span></div>' +
+      '<div class="cmp-scale">' + ends + '</div>' +
+      '<div class="cmp-basis">' + esc(c.basisLabel) + (c.context ? ', ' + esc(c.context) : '') +
+        (c.sourceUrl ? ' <a href="' + esc(c.sourceUrl) + '" target="_blank" rel="noopener">source</a>' : '') +
+      '</div></div>';
+  }
+
   function renderBoard() {
     var rows = B.scoreBoard(S, C.yardBests(S, results), schools);
-    var head = '<thead><tr><th>School</th><th>Div</th><th>Priority</th><th>Fit</th>' +
-      '<th>Confidence</th><th>Evidence</th><th>Status</th></tr></thead>';
+    var head = '<thead><tr><th>School</th><th>Priority</th><th>Fit</th>' +
+      '<th>Confidence</th><th>Status</th></tr></thead>';
 
     var body = rows.map(function (r) {
       var p = r.recordedPriority || '';
-      var evidence = r.comparisons.length
-        ? '<details><summary>' + r.comparisons.length + ' compared</summary>' +
-          r.comparisons.map(function (c) {
-            return '<div class="ev-line"><strong>' + esc(c.event.replace('-SCY', '').replace(/-/g, ' ')) +
-              '</strong> his ' + esc(c.mine) + ' against ' + esc(c.theirs) +
-              ' <span class="gapv' + (c.ahead ? ' ahead' : '') + '">' +
-              (c.ahead ? 'ahead' : esc(c.gapText)) + '</span><br>' +
-              '<span style="opacity:.75">' + esc(c.basisLabel) +
-              (c.context ? ', ' + esc(c.context) : '') + '</span></div>';
-          }).join('') + '</details>'
-        : '<span class="conf">none gathered</span>';
-
-      return '<tr>' +
+      // Two rows per school. The summary across the top, then the comparison
+      // strips on their own full width row underneath. Seven columns and a
+      // picture will not share one line, and squeezing them clips the picture.
+      var summary = '<tr class="row-top">' +
         '<td><div style="display:flex;gap:9px;align-items:flex-start">' + badge(r.school) +
           '<div><strong>' + esc(r.school.name) + '</strong>' +
-          (r.school.note ? '<div class="ev-line" style="max-width:260px">' + esc(r.school.note) + '</div>' : '') +
+          '<div class="conf">' + esc(r.school.division) +
+            (r.school.conference ? ', ' + esc(r.school.conference) : '') + '</div>' +
           '</div></div></td>' +
-        '<td>' + esc(r.school.division) + '</td>' +
         '<td><span class="p ' + (p || 'none') + '">' + esc(p || 'unset') + '</span>' +
           (r.disagrees ? '<div class="differs">engine says ' + esc(r.suggestedPriority) + '</div>' : '') + '</td>' +
         '<td>' + esc(r.computedFit) + '</td>' +
         '<td class="conf">' + esc(r.confidence) + '</td>' +
-        '<td class="wrap-cell">' + evidence + '</td>' +
         '<td>' + esc(r.school.status || 'Not contacted') +
           (r.school.lastContact ? '<div class="conf">' + esc(r.school.lastContact) + '</div>' : '') + '</td>' +
         '</tr>';
+
+      var detail = '<tr class="row-detail"><td colspan="5">' +
+        (r.school.note ? '<p class="school-note">' + esc(r.school.note) + '</p>' : '') +
+        (r.comparisons.length
+          ? '<div class="cmp-grid">' + r.comparisons.map(strip).join('') + '</div>'
+          : '<p class="conf" style="margin:0">No swimmer times gathered for this programme yet, ' +
+            'so it is not scored. That is silence, not a verdict.</p>') +
+        '</td></tr>';
+
+      return summary + detail;
     }).join('');
 
     el('boardTable').innerHTML = head + '<tbody>' + body + '</tbody>';
