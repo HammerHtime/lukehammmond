@@ -727,6 +727,57 @@ ok('and does not put it in the wrong town',
 ok('while still saying where he lives', clubDraft.body.indexOf('from Etobicoke, Ontario') !== -1);
 ok('and names the new coach', clubDraft.body.indexOf('Aris Bousoulegkas') !== -1);
 
+// ---------- which schools would he actually swim at ----------
+// Andrew's question, and the reason for it: hiding a school takes it off the
+// board AND out of the scoring, so a good fit hidden by mistake disappears.
+// This searches everything researched, not just what is on the board.
+const fitRow = rows.filter(function (r) { return r.school.id === 'clarkson'; })[0];
+const fit = B.fitScore(S, fitRow);
+ok('a school with ladders gets a score', fit !== null);
+ok('the share is between nought and one', fit.share >= 0 && fit.share <= 1);
+check('all three of his events counted', fit.events, 3);
+check('and all three rest on a real squad', fit.ranked, 3);
+check('a school with nothing gathered gets nothing', B.fitScore(S, row('hamilton')), null);
+
+// The bands say what the year looks like rather than scoring the school.
+check('the three bands are named', Object.keys(B.FIT_BANDS), ['race', 'compete', 'develop']);
+ok('and each says why', Object.keys(B.FIT_BANDS).every(function (k) {
+  return B.FIT_BANDS[k].label && B.FIT_BANDS[k].why; }));
+
+// A lone benchmark is NOT a squad and the sentence must not call it one.
+const lone = B.fitScore(S, row('canisius'));
+check('Canisius rests on one time', lone.ranked, 0);
+ok('so it says there is no squad to rank against',
+  /no squad to rank against yet/.test(lone.sentence));
+ok('rather than claiming he leads one', lone.sentence.indexOf('Fastest on their squad') === -1);
+
+// The search itself, with half the board hidden.
+const kept = schools.filter(function (s, i) { return i % 2 === 0; });
+const found = B.bestFits(S, yards, kept, schools, 10);
+check('the shortlist is capped', found.shortlist.length, 10);
+ok('it ranks more than the board holds', found.all.length > kept.length / 2);
+ok('and finds schools that were hidden', found.missing > 0);
+ok('every hidden one is marked as off the board',
+  found.all.filter(function (x) { return !x.onBoard; })
+    .every(function (x) { return !kept.some(function (k) { return k.id === x.school.id; }); }));
+// Best first, by where he would sit on the squad.
+ok('the shortlist is in order', found.shortlist.every(function (x, i, a) {
+  return i === 0 || a[i - 1].fit.share <= x.fit.share; }));
+// A real squad outranks a single recorded time at the same position, because
+// being quicker than one time is not the same as leading a group of six.
+const tied = found.all.filter(function (x) { return x.fit.share === 0; });
+ok('a real ladder outranks a lone time', tied.every(function (x, i, a) {
+  return i === 0 || a[i - 1].fit.ranked >= x.fit.ranked; }));
+// Searching only the board still works, ie, nothing is required to be missing.
+check('nothing hidden means nothing to find back',
+  B.bestFits(S, yards, schools, schools, 5).missing, 0);
+
+const fitSrc = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
+ok('the button sits at the top of the schools list', fitSrc.indexOf('id="findFits"') !== -1);
+ok('it searches the researched list, not just the board',
+  /bestFits\(S, C\.boardBests\(S, results\), schools, seedList/.test(fitSrc));
+ok('and anything off the board can be put back', /data-restore="/.test(fitSrc));
+
 // ---------- a school with no men's swimming is not a school ----------
 // Andrew's rule: if a university does not offer swimming, take it off the list
 // entirely. The NCAA directory's sport code covers swimming AND diving

@@ -493,6 +493,111 @@ function suggestPriority(best, worst, count) {
   return 'P3';
 }
 
+// ---------------------------------------------------------------------------
+// Where would he actually swim
+// ---------------------------------------------------------------------------
+// Andrew's question, and it is the right one: after hiding a pile of schools,
+// which are the ones where he would genuinely race?
+//
+// This does NOT invent a new verdict. It reads the ladders that are already
+// there and ranks by where he would sit on each squad, because that is the
+// question, ie, not "is this a good school" but "would he be in the water".
+//
+// One number per school: his average position on their ladder, as a share of
+// the squad. 0 means fastest on every squad, 1 means last on every squad.
+// Averaging the share rather than the raw position stops a deep programme
+// being punished for having more swimmers in the event.
+function fitScore(swim, row) {
+  if (!row || !row.comparisons || !row.comparisons.length) return null;
+
+  const placed = [];
+  row.comparisons.forEach(function (c) {
+    const place = placeIn(swim, c);
+    if (place) {
+      placed.push({ event: c.event, position: place.position, of: place.of,
+        share: (place.position - 1) / (place.of - 1), aboveMedian: place.aboveMedian });
+      return;
+    }
+    // A single benchmark cannot be ranked against, but it still says whether he
+    // is ahead of it, which is the only honest reading available.
+    placed.push({ event: c.event, position: c.ahead ? 1 : 2, of: 2,
+      share: c.ahead ? 0 : 1, aboveMedian: Boolean(c.ahead), lone: true });
+  });
+  if (!placed.length) return null;
+
+  const share = placed.reduce(function (n, p) { return n + p.share; }, 0) / placed.length;
+  const scoring = placed.filter(function (p) { return p.aboveMedian; }).length;
+  const leads = placed.filter(function (p) { return p.position === 1; }).length;
+
+  // How much of this rests on a real squad rather than a single time. A lone
+  // benchmark is not a ladder, so the sentence must not call it one.
+  const ranked = placed.filter(function (p) { return !p.lone; });
+  const lone = placed.length - ranked.length;
+
+  let sentence;
+  if (!ranked.length) {
+    sentence = 'Quicker than the ' + (lone === 1 ? 'one time' : lone + ' times') +
+      ' on file, but no squad to rank against yet';
+  } else if (leads === placed.length) {
+    sentence = 'Fastest on their squad in ' + (ranked.length === 1 ? 'that event' : 'all ' + ranked.length);
+  } else if (scoring) {
+    sentence = 'Front half in ' + scoring + ' of ' + placed.length;
+  } else {
+    sentence = 'Back half in all ' + placed.length;
+  }
+
+  return {
+    share: share, events: placed.length, scoring: scoring, leads: leads, placed: placed,
+    ranked: ranked.length, lone: lone,
+    band: share <= 0.34 ? 'race' : (share <= 0.67 ? 'compete' : 'develop'),
+    sentence: sentence
+  };
+}
+
+const FIT_BANDS = {
+  race: { label: 'He would race', why: 'Front third of their squad, ie, scoring from day one.' },
+  compete: { label: 'He would compete for a spot', why: 'Inside the squad and in the fight, ie, training with people to chase.' },
+  develop: { label: 'He would develop behind them', why: 'Back third, ie, a year or two before he races.' }
+};
+
+// The shortlist. Ranked across EVERYTHING researched, not just what is on the
+// board right now, because hiding a school removes it from the scoring too and
+// the whole point of asking is to not lose a good one that way.
+function bestFits(swim, bests, onBoard, researched, limit) {
+  const here = {};
+  (onBoard || []).forEach(function (s) { here[s.id] = true; });
+
+  // Anything researched that is not on the board is scored anyway and marked,
+  // so a good fit that was hidden comes back into view rather than vanishing.
+  const all = (onBoard || []).slice();
+  (researched || []).forEach(function (s) { if (!here[s.id]) all.push(s); });
+
+  const rows = scoreBoard(swim, bests, all);
+  const out = [];
+  rows.forEach(function (row) {
+    const fit = fitScore(swim, row);
+    if (!fit) return;
+    out.push({ school: row.school, fit: fit, row: row, onBoard: Boolean(here[row.school.id]) });
+  });
+
+  out.sort(function (a, b) {
+    if (a.fit.share !== b.fit.share) return a.fit.share - b.fit.share;
+    // A tie on position goes to the school with a real squad behind it. Being
+    // quicker than one recorded time is not the same as leading a group of six,
+    // and sorting on position alone put the weaker evidence first.
+    if (a.fit.ranked !== b.fit.ranked) return b.fit.ranked - a.fit.ranked;
+    return b.fit.events - a.fit.events;
+  });
+
+  return {
+    all: out,
+    shortlist: out.slice(0, limit || 12),
+    race: out.filter(function (x) { return x.fit.band === 'race'; }).length,
+    compete: out.filter(function (x) { return x.fit.band === 'compete'; }).length,
+    missing: out.filter(function (x) { return !x.onBoard; }).length
+  };
+}
+
 // The whole board, scored and sorted the way it should be read.
 function scoreBoard(swim, yardBests, schools) {
   const rows = (schools || []).map(function (s) { return scoreSchool(swim, yardBests, s); });
@@ -551,6 +656,9 @@ const api = {
   compareGroup: compareGroup,
   scalePositions: scalePositions,
   placeIn: placeIn,
+  fitScore: fitScore,
+  FIT_BANDS: FIT_BANDS,
+  bestFits: bestFits,
   convertedNote: convertedNote,
   TIERS: TIERS,
   NOT_SCORED: NOT_SCORED,

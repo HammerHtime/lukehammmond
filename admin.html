@@ -310,6 +310,14 @@
     <button class="go" id="topUp">Bring them onto the board</button>
     <div class="msg" id="topUpMsg"></div>
   </div></div>
+  <div class="card" style="margin-top:12px"><div class="pad">
+    <button class="go" id="findFits">Find the schools where he would actually swim</button>
+    <p class="hint" style="margin:8px 0 0">Ranks every school researched, including any you have
+      hidden, by where he would sit on their squad. Hiding one takes it off the board but not out
+      of this search, so a good fit cannot be lost.</p>
+    <div id="fitOut" style="margin-top:12px"></div>
+  </div></div>
+
   <div class="card" style="margin-top:12px"><div class="pad" style="padding-bottom:10px">
     <label for="schoolQ">Narrow the list</label>
     <p class="hint" id="schoolCount" style="margin:0 0 8px"></p>
@@ -1263,6 +1271,60 @@
           ' already here and left alone. ' + merged.schools.length + ' on the board now.');
       })
       .catch(function (err) { say('topUpMsg', 'bad', esc(err.message)); });
+  });
+
+  // Andrew's question: after hiding a pile of schools, which are the ones where
+  // he would genuinely race? It reads the ladders that already exist rather than
+  // inventing a verdict, and it searches EVERYTHING researched, because hiding a
+  // school takes it out of the scoring too and losing a good fit that way is the
+  // exact thing being asked about.
+  el('findFits').addEventListener('click', function () {
+    var out = B.bestFits(S, C.boardBests(S, results), schools, seedList.length ? seedList : schools, 15);
+    if (!out.shortlist.length) {
+      el('fitOut').innerHTML = '<p class="hint">Nothing to rank yet, ie, no school on the ' +
+        'board has swimmer times gathered.</p>';
+      return;
+    }
+
+    var head = '<p class="hint" style="margin:0 0 10px"><strong>' + out.race + '</strong> where he ' +
+      'would race, <strong>' + out.compete + '</strong> where he would compete for a spot' +
+      (out.missing ? ', and <strong>' + out.missing + '</strong> of these are not on your board' : '') +
+      '.</p>';
+
+    var rows = out.shortlist.map(function (x) {
+      var band = B.FIT_BANDS[x.fit.band];
+      var tone = x.fit.band === 'race' ? 'good' : (x.fit.band === 'compete' ? 'mid' : 'warn');
+      return '<div style="display:flex;gap:10px;align-items:baseline;padding:9px 0;' +
+        'border-bottom:1px solid var(--line-soft)">' +
+        '<span class="p tier ' + tone + '" style="flex:none">' + esc(band.label) + '</span>' +
+        '<div style="min-width:0;flex:1">' +
+          '<strong>' + esc(x.school.name) + '</strong> ' +
+          '<span class="conf">' + esc(x.school.division) +
+            (x.school.conference ? ', ' + esc(x.school.conference) : '') + '</span>' +
+          '<div class="conf">' + esc(x.fit.sentence) + '</div>' +
+        '</div>' +
+        (x.onBoard ? '' : '<button class="minor" style="flex:none" data-restore="' +
+          esc(x.school.id) + '">add back</button>') +
+        '</div>';
+    }).join('');
+
+    el('fitOut').innerHTML = head + rows;
+
+    // Anything ranked that is not on the board can be put back from here, which
+    // is the whole point of searching past the board.
+    Array.prototype.forEach.call(el('fitOut').querySelectorAll('[data-restore]'), function (b) {
+      b.addEventListener('click', function () {
+        var school = seedList.filter(function (s) { return s.id === b.dataset.restore; })[0];
+        if (!school) return;
+        var merged = window.Schools.mergeSchools(schools, [school]);
+        api('/api/schools', { method: 'PUT', body: JSON.stringify({ schools: merged.schools }) })
+          .then(function () {
+            schools = merged.schools;
+            renderAll();
+            b.outerHTML = '<span class="conf" style="flex:none">back on the board</span>';
+          });
+      });
+    });
   });
 
   el('schoolQ').addEventListener('input', function () {
