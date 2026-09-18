@@ -211,6 +211,21 @@
     <div class="msg info" id="wiMsg"></div>
   </div></div>
 
+  <h2>Club coach</h2>
+  <div class="card"><div class="pad">
+    <p class="hint" style="margin:0 0 12px">The one thing college coaches said they actually do is
+      telephone the club coach. Leave it blank and the row disappears from the public page and the
+      line disappears from the email, ie, better nothing than a name that has moved on.</p>
+    <div class="grid two">
+      <div class="field"><label for="coachName">Name</label>
+        <input id="coachName" placeholder="Not set" autocomplete="off"></div>
+      <div class="field"><label for="coachEmail">Email</label>
+        <input id="coachEmail" placeholder="Optional" autocomplete="off"></div>
+    </div>
+    <button class="go" id="coachSave">Save the coach</button>
+    <div class="msg" id="coachMsg"></div>
+  </div></div>
+
   <h2>National rankings</h2>
   <div class="card"><div class="pad">
     <p class="hint" style="margin:0 0 12px">These sit beside the time on the public page.
@@ -334,7 +349,10 @@
       var raw = both[0] && Array.isArray(both[0].results) && both[0].results.length ? both[0].results : SEED;
       results = clean(raw);
       schools = both[1].schools || [];
-      if (both[2] && both[2].profile) rankings = window.SwimmerData.rankingsFrom(both[2].profile);
+      if (both[2] && both[2].profile) {
+        rankings = window.SwimmerData.rankingsFrom(both[2].profile);
+        coach = both[2].profile.coach || {};
+      }
       photos = (both[3] && both[3].photos) || [];
       buildPickers();
       renderAll();
@@ -348,6 +366,7 @@
   }
 
   function renderAll() {
+    renderCoach();
     renderEligibility();
     renderRosterCount();
     renderPhotos();
@@ -667,6 +686,42 @@
     });
   });
 
+  // ---------- club coach ----------
+  var coach = {};
+
+  function renderCoach() {
+    el('coachName').value = coach.name || '';
+    el('coachEmail').value = coach.email || '';
+  }
+
+  el('coachSave').addEventListener('click', function () {
+    var next = {
+      name: el('coachName').value.trim(),
+      email: el('coachEmail').value.trim()
+    };
+    el('coachSave').disabled = true;
+    api('/api/profile', { method: 'PUT', body: JSON.stringify({
+      profile: { rankings: rankingsPayload(), coach: next }
+    }) })
+      .then(function () {
+        coach = next;
+        say('coachMsg', 'ok', next.name
+          ? 'Saved. The public page and the interest email both name ' + esc(next.name) + ' now.'
+          : 'Cleared. No coach is named on the public page or in the email.');
+      })
+      .catch(function (err) { say('coachMsg', 'bad', esc(err.message)); })
+      .then(function () { el('coachSave').disabled = false; });
+  });
+
+  // Saving one part of the profile must not wipe another.
+  function rankingsPayload() {
+    var out = {};
+    Object.keys(rankings).forEach(function (id) {
+      out[id] = { rank: rankings[id].rank, basis: rankings[id].basis };
+    });
+    return out;
+  }
+
   // ---------- rankings ----------
   // Editable because they change every time the national lists are
   // republished, and a stale #4 on a public page is worse than no number.
@@ -717,7 +772,9 @@
       next[input.dataset.rank] = { rank: Number(value), basis: 'Canada, for age' };
     });
     el('saveRanks').disabled = true;
-    api('/api/profile', { method: 'PUT', body: JSON.stringify({ profile: { rankings: next } }) })
+    api('/api/profile', { method: 'PUT', body: JSON.stringify({
+      profile: { rankings: next, coach: coach }
+    }) })
       .then(function () {
         rankings = window.SwimmerData.rankingsFrom({ rankings: next });
         renderRankings();

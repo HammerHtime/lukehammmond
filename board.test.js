@@ -254,6 +254,33 @@ ok('so is one marked by country', Sc.isCanadian({ division: 'D1', country: 'Cana
 ok('a US school is not', !Sc.isCanadian({ division: 'D1', country: 'USA' }));
 check('a nonsense division is still refused', Sc.normaliseSchool({ name: 'X', division: 'D9' }).ok, false);
 
+// ---------- the club coach ----------
+// Coaches said the thing they actually do is telephone the club coach. So a
+// stale name is not a cosmetic problem, it sends a US programme to someone who
+// no longer coaches him. Better nothing than wrong.
+check('no coach name is hardcoded any more', SWIMMER.coach, '');
+const noCoach = R.draftEmail({
+  swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
+  profileUrl: 'https://example.org',
+  school: { id: 'x', name: 'X', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
+});
+ok('the email names no coach when none is set', noCoach.body.indexOf('club coach') === -1);
+ok('and never leaves a dangling sentence', noCoach.body.indexOf('coach is  ') === -1);
+
+const withCoach = R.draftEmail({
+  swim: S, standards: St, swimmer: Object.assign({}, SWIMMER, { coach: 'A New Coach' }),
+  results: results, today: '2026-09-18', profileUrl: 'https://example.org',
+  school: { id: 'x', name: 'X', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
+});
+ok('and names them once one is set', withCoach.body.indexOf('My club coach is A New Coach') !== -1);
+
+// The old name must not survive anywhere, including the hand-written markup,
+// which is where two of the four copies were.
+['swimmer.js', 'index.html', 'live-profile.js', 'recruiting.js'].forEach(function (f) {
+  const src = require('fs').readFileSync(require('path').join(__dirname, f), 'utf8');
+  ok(f + ' carries no former coach name', src.indexOf('Vowles') === -1);
+});
+
 // ---------- the email ----------
 const draft = R.draftEmail({
   swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',

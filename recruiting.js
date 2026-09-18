@@ -229,8 +229,14 @@ function draftEmail(input) {
   lines.push('My full profile, with every time and the meet it was swum at, is here:');
   lines.push(link);
   lines.push('');
-  lines.push('It updates as I race, so it is always current. My club coach is ' + swimmer.coach +
-    ' and he is happy to speak with you.');
+  // The club coach line only appears when there is a coach to name. A sentence
+  // reading "my club coach is  and he is happy to speak with you" is worse
+  // than no sentence, and a WRONG name is worse than both, because the one
+  // thing coaches said they actually do is telephone the club coach.
+  lines.push('It updates as I race, so it is always current.');
+  if (swimmer.coach) {
+    lines.push('My club coach is ' + swimmer.coach + ' and is happy to speak with you.');
+  }
   lines.push('');
   if (window && !window.open) {
     lines.push('I understand you may not be able to reply until ' + friendlyDate(window.replyDate) +

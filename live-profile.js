@@ -19,6 +19,7 @@
   var SEED = window.SwimmerData.SEED_RESULTS;
   var rankings = window.SwimmerData.seedRankings();
   var photos = [];
+  var coach = {};
   if (!S || !SWIMMER) return;
 
   var today = new Date().toISOString().slice(0, 10);
@@ -40,6 +41,7 @@
     timeCards(results, bests);
     rankingLines(bests);
     compTable(results, bests);
+    clubCoach();
     coachPanel(yards);
     gallery();
   }
@@ -249,6 +251,26 @@
       'until ' + esc(R.friendlyDate(w.replyDate)) + '. He would rather you had his times before then.</p>';
   }
 
+  // The club coach. Coaches told researchers repeatedly that the thing they
+  // actually do is telephone the club coach, so this is one of the highest
+  // value lines on the page. It is also the one most likely to go stale, and a
+  // stale name sends a programme to someone who no longer coaches him. So:
+  // no name means no row, rather than a wrong name or an empty label.
+  function clubCoach() {
+    var name = String(coach.name || SWIMMER.coach || '').trim();
+    var box = el('contact-coach');
+    var label = el('contact-coach-label');
+    if (box) {
+      box.innerHTML = name
+        ? esc(name) + (coach.email
+            ? ' <a href="mailto:' + esc(coach.email) + '" style="color:var(--aqua);text-decoration:none">' +
+              esc(coach.email) + '</a>' : '')
+        : '';
+      box.style.display = name ? '' : 'none';
+    }
+    if (label) label.style.display = name ? '' : 'none';
+  }
+
   // The gallery, and the picture at the top of the page.
   //
   // The page shipped with six fixed slots, two of which pointed at files that
@@ -326,7 +348,10 @@
     ]).then(function (all) {
       var stored = all[0];
       var profile = all[1];
-      if (profile && profile.profile) rankings = window.SwimmerData.rankingsFrom(profile.profile);
+      if (profile && profile.profile) {
+        rankings = window.SwimmerData.rankingsFrom(profile.profile);
+        coach = profile.profile.coach || {};
+      }
       photos = (all[2] && all[2].photos) || [];
       var list = stored && Array.isArray(stored.results) && stored.results.length ? stored.results : SEED;
       render(clean(list));

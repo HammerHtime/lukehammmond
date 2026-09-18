@@ -22,7 +22,14 @@ const SWIMMER = {
   classOf: 2029,
   club: 'Lakeshore Swim Club',
   clubShort: 'LSC',
-  coach: 'Tristan Vowles',
+  // Cleared 18 September 2026. The club head coach changed and the new name is
+  // not known yet. It is set from the back end now rather than living in code,
+  // because a club coach changing is normal and should never need a developer.
+  //
+  // Publishing the WRONG name is worse than publishing none. Coaches phone the
+  // club coach, that is the thing they said they actually do, so a stale name
+  // sends a US programme to someone who no longer coaches him.
+  coach: '',
   coachTitle: 'Head Coach, Lakeshore Swim Club',
   city: 'Etobicoke',
   province: 'Ontario',
@@ -41,8 +48,7 @@ const SWIMMER = {
 
   // Anything a coach could not work out from a times sheet.
   about: [
-    'Distance freestyler out of Lakeshore Swim Club in Etobicoke, Ontario. Trains ' +
-    'under head coach Tristan Vowles.',
+    'Distance freestyler out of Lakeshore Swim Club in Etobicoke, Ontario.',
     'Selected to the Swim Canada National ID Development Program and the Swim ' +
     'Ontario Aerobic Development Program.',
     'Ranked inside the top five in Canada for age across four distance freestyle events.'
