@@ -23,8 +23,25 @@
 const AID = {
   D1: 'Possible. Athletic aid is permitted, which is not the same as being offered any.',
   D2: 'Partial. Division II runs a partial scholarship model.',
-  D3: 'None. No athletic scholarships, but merit and need-based aid can still make it affordable.'
+  D3: 'None. No athletic scholarships, but merit and need-based aid can still make it affordable.',
+  NAIA: 'Possible. NAIA programmes may offer athletic aid.',
+  USPORTS: 'Athletic Financial Awards, capped and with academic conditions attached. ' +
+    'Read alongside Canadian domestic tuition, which is a fraction of US sticker price, ' +
+    'ie, a smaller award can leave a far smaller bill.',
+  CCAA: 'Varies by province and institution.'
 };
+
+// A programme is either NCAA, NAIA, or Canadian. The distinction is not
+// cosmetic: the NCAA contact calendar does not apply to a U SPORTS coach at
+// all, so a Canadian programme can be in conversation with Luke today while
+// an American one cannot reply until June 2027.
+const LEVELS = ['D1', 'D2', 'D3', 'NAIA', 'USPORTS', 'CCAA'];
+
+function isCanadian(school) {
+  const division = String((school && school.division) || '').toUpperCase();
+  return division === 'USPORTS' || division === 'CCAA' ||
+    String((school && school.country) || '').toUpperCase() === 'CANADA';
+}
 
 // Distances are from Toronto, because a programme Luke can drive to for a
 // visit is worth more than an identical one he cannot.
@@ -89,8 +106,8 @@ function normaliseSchool(raw) {
   const errors = [];
 
   if (!name) errors.push('School name is missing.');
-  if (division !== 'D1' && division !== 'D2' && division !== 'D3' && division !== 'NAIA') {
-    errors.push('Division must be D1, D2, D3 or NAIA.');
+  if (LEVELS.indexOf(division) === -1) {
+    errors.push('Division must be one of ' + LEVELS.join(', ') + '.');
   }
   const email = String(input.email || '').trim();
   if (email && !isEmail(email)) errors.push('That is not a readable email address: ' + email);
@@ -107,7 +124,9 @@ function normaliseSchool(raw) {
       division: division,
       conference: String(input.conference || '').trim(),
       state: String(input.state || '').trim(),
-      country: String(input.country || 'USA').trim(),
+      country: String(input.country || (division === 'USPORTS' || division === 'CCAA' ? 'Canada' : 'USA')).trim(),
+      // A U SPORTS record carries its conference as OUA, RSEQ, Canada West or
+      // AUS, which is the same shape as a US conference and sorts the same way.
       coach: String(input.coach || '').trim(),
       coachTitle: String(input.coachTitle || '').trim(),
       email: email,
@@ -254,6 +273,8 @@ function mergeSchools(existing, incoming) {
 
 const api = {
   AID: AID,
+  LEVELS: LEVELS,
+  isCanadian: isCanadian,
   CONTACT_FIELDS: CONTACT_FIELDS,
   aidFor: aidFor,
   logoFor: logoFor,

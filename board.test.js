@@ -218,6 +218,42 @@ check('and open after', R.contactWindow('D1', 2029, '2027-08-01').open, true);
 ok('the D2 rule is marked unconfirmed', R.CONTACT_RULES.D2.confirmed === false);
 ok('the shut message names the date', R.contactWindow('D1', 2029, '2026-09-18').message.indexOf('15 June 2027') !== -1);
 
+// ---------- Canadian programmes ----------
+// U SPORTS is not an NCAA member, so the NCAA calendar does not bind it. That
+// is the difference between writing this week and waiting nine months, so the
+// app must not tell a Canadian coach he cannot reply.
+const canada = R.contactWindow('USPORTS', 2029, '2026-09-18');
+check('a U SPORTS coach can reply now', canada.open, true);
+check('and there is no date to wait for', canada.replyDate, null);
+ok('the message says the NCAA calendar does not apply', canada.message.indexOf('not bound by the NCAA calendar') !== -1);
+ok('but it does not claim to be confirmed', canada.confirmed === false);
+check('the CCAA reads the same way', R.contactWindow('CCAA', 2029, '2026-09-18').open, true);
+check('Division III still uses the safe date', R.contactWindow('D3', 2029, '2026-09-18').open, false);
+ok('and is marked unconfirmed', R.CONTACT_RULES.D3.confirmed === false);
+
+// The email used to read every school as Division I, which told a Canadian
+// coach he could not reply until June 2027. He can.
+const canDraft = R.draftEmail({
+  swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
+  profileUrl: 'https://example.org',
+  school: { id: 'utoronto', name: 'University of Toronto', coach: 'A Coach', email: 'c@utoronto.ca', division: 'USPORTS' }
+});
+ok('a Canadian coach is not told to wait', canDraft.body.indexOf('15 June 2027') === -1);
+ok('an American one still is', R.draftEmail({
+  swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
+  profileUrl: 'https://example.org',
+  school: { id: 'x', name: 'X', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
+}).body.indexOf('15 June 2027') !== -1);
+
+// The school record has to accept a Canadian programme at all.
+check('a U SPORTS school is valid', Sc.normaliseSchool({ name: 'University of Toronto', division: 'USPORTS', conference: 'OUA' }).ok, true);
+check('and defaults to Canada', Sc.normaliseSchool({ name: 'University of Toronto', division: 'USPORTS' }).school.country, 'Canada');
+check('a US school still defaults to the USA', Sc.normaliseSchool({ name: 'X', division: 'D1' }).school.country, 'USA');
+ok('a Canadian school is recognised as Canadian', Sc.isCanadian({ division: 'USPORTS' }));
+ok('so is one marked by country', Sc.isCanadian({ division: 'D1', country: 'Canada' }));
+ok('a US school is not', !Sc.isCanadian({ division: 'D1', country: 'USA' }));
+check('a nonsense division is still refused', Sc.normaliseSchool({ name: 'X', division: 'D9' }).ok, false);
+
 // ---------- the email ----------
 const draft = R.draftEmail({
   swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',

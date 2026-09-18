@@ -44,13 +44,57 @@ const CONTACT_RULES = {
     confirmed: false,
     source: 'Published guidance disagrees. Using the later date until the NCAA Division II recruiting guide is read directly.',
     recorded: '2026-09-18'
+  },
+  D3: {
+    division: 'NCAA Division III',
+    rule: 'A coach may not reply until 15 June after sophomore year.',
+    monthDay: '06-15',
+    yearsBeforeGraduation: 2,
+    confirmed: false,
+    source: 'Division III rules are widely described as far looser than Division I, with little or no restriction on when a coach may make contact. Not yet read from the NCAA Division III manual, so the app uses the later, safer date and promises nothing it has not confirmed.',
+    recorded: '2026-09-18'
+  },
+  NAIA: {
+    division: 'NAIA',
+    rule: 'A coach may not reply until 15 June after sophomore year.',
+    monthDay: '06-15',
+    yearsBeforeGraduation: 2,
+    confirmed: false,
+    source: 'The NAIA is a separate body with its own rules and is generally described as having far fewer restrictions. Not yet confirmed from NAIA material, so the safer date stands.',
+    recorded: '2026-09-18'
+  },
+  // Canadian programmes are not governed by the NCAA at all, so its calendar
+  // simply does not apply. That is a structural fact rather than a rule to be
+  // looked up. What has NOT been confirmed is whether U SPORTS imposes any
+  // contact rule of its own, so the wording promises nothing beyond what is
+  // actually known.
+  USPORTS: {
+    division: 'U SPORTS',
+    rule: 'The NCAA contact calendar does not apply to a Canadian programme.',
+    monthDay: null,
+    yearsBeforeGraduation: null,
+    open: true,
+    confirmed: false,
+    source: 'U SPORTS is not an NCAA member, so the NCAA calendar does not bind it. Whether U SPORTS sets a contact rule of its own has not yet been confirmed from its own material.',
+    recorded: '2026-09-18'
+  },
+  CCAA: {
+    division: 'CCAA',
+    rule: 'The NCAA contact calendar does not apply to a Canadian programme.',
+    monthDay: null,
+    yearsBeforeGraduation: null,
+    open: true,
+    confirmed: false,
+    source: 'The CCAA is not an NCAA member. Its own rules have not been confirmed.',
+    recorded: '2026-09-18'
   }
 };
 
 // The date a coach in this division may first write back.
 function replyDateFor(division, classOf) {
   const rule = CONTACT_RULES[division];
-  if (!rule || !Number.isFinite(Number(classOf))) return null;
+  if (!rule || rule.open) return null;
+  if (!Number.isFinite(Number(classOf))) return null;
   return (Number(classOf) - rule.yearsBeforeGraduation) + '-' + rule.monthDay;
 }
 
@@ -59,8 +103,25 @@ function replyDateFor(division, classOf) {
 // so a page rendered at a coach's desk agrees with a page rendered here.
 function contactWindow(division, classOf, today) {
   const rule = CONTACT_RULES[division];
+  if (!rule) return null;
+
+  // A programme with no calendar over it is open now. Saying so matters: it is
+  // the difference between waiting nine months and writing this week.
+  if (rule.open) {
+    return {
+      division: rule.division,
+      replyDate: null,
+      open: true,
+      daysAway: 0,
+      confirmed: rule.confirmed,
+      rule: rule.rule,
+      source: rule.source,
+      message: 'A ' + rule.division + ' coach is not bound by the NCAA calendar and can reply now.'
+    };
+  }
+
   const date = replyDateFor(division, classOf);
-  if (!rule || !date) return null;
+  if (!date) return null;
 
   const open = String(today) >= date;
   const daysAway = open ? 0 : Math.round(
@@ -129,7 +190,11 @@ function draftEmail(input) {
     return { line: timeLine(swim, best, gap), rank: p.rank, rankBasis: p.rankBasis, name: best.name };
   }).filter(Boolean);
 
-  const window = contactWindow(school && school.division === 'D2' ? 'D2' : 'D1', swimmer.classOf, today);
+  // Use the school's own division. Reading every programme as Division I told
+  // a Canadian coach he could not reply for another nine months, which is not
+  // true of him and is the opposite of useful.
+  const division = String((school && school.division) || 'D1').toUpperCase();
+  const window = contactWindow(CONTACT_RULES[division] ? division : 'D1', swimmer.classOf, today);
 
   const link = profileUrl + (school && school.id
     ? (profileUrl.indexOf('?') === -1 ? '?' : '&') + 'c=' + encodeURIComponent(school.id)
