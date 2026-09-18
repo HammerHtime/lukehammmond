@@ -25,9 +25,12 @@ const AID = {
   D2: 'Partial. Division II runs a partial scholarship model.',
   D3: 'None. No athletic scholarships, but merit and need-based aid can still make it affordable.',
   NAIA: 'Possible. NAIA programmes may offer athletic aid.',
-  USPORTS: 'Athletic Financial Awards, capped and with academic conditions attached. ' +
-    'Read alongside Canadian domestic tuition, which is a fraction of US sticker price, ' +
-    'ie, a smaller award can leave a far smaller bill.',
+  USPORTS: 'Athletic Financial Award. The OUA caps it at $5,000 a year, which is HARDER ' +
+    'than the national ceiling of tuition and compulsory fees, so a Canada West or AUS ' +
+    'programme can in principle offer more than an Ontario one. Read it against Canadian ' +
+    'domestic tuition of roughly $6,000 to $9,000, ie, $5,000 covers most of an Ontario ' +
+    'tuition bill but touches nothing of residence or food. Living at home changes that sum ' +
+    'more than the award does.',
   CCAA: 'Varies by province and institution.'
 };
 

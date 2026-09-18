@@ -74,8 +74,8 @@ const CONTACT_RULES = {
     monthDay: null,
     yearsBeforeGraduation: null,
     open: true,
-    confirmed: false,
-    source: 'U SPORTS is not an NCAA member, so the NCAA calendar does not bind it. Whether U SPORTS sets a contact rule of its own has not yet been confirmed from its own material.',
+    confirmed: true,
+    source: 'U SPORTS Policy 40.10.7 Recruiting Regulations 2026-2027, section 40.10.7.4.2: representatives and prospective student-athletes "may contact each other at any time" until the prospect becomes a confirmed recruit elsewhere. No age gate, no grade gate, no calendar date.',
     recorded: '2026-09-18'
   },
   CCAA: {
@@ -116,7 +116,8 @@ function contactWindow(division, classOf, today) {
       confirmed: rule.confirmed,
       rule: rule.rule,
       source: rule.source,
-      message: 'A ' + rule.division + ' coach is not bound by the NCAA calendar and can reply now.'
+      message: 'A ' + rule.division + ' coach is not bound by the NCAA calendar and can reply now.' +
+        (rule.confirmed ? '' : ' Not yet confirmed from that body\u2019s own rules.')
     };
   }
 

@@ -96,7 +96,7 @@ if (adminScope) {
   ok('the board engine works in the browser', typeof adminScope.Board.scoreBoard === 'function');
   ok('the roster is published', Boolean(adminScope.Roster));
   ok('the eligibility rules are published', Boolean(adminScope.Eligibility));
-  check('and carries every programme', adminScope.Roster.counts().total, 458);
+  check('and carries every programme', adminScope.Roster.counts().total, 484);
 }
 
 // ---------- every front end file keeps its own scope ----------

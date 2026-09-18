@@ -34,7 +34,36 @@ const STANDARDS = [
       '1500-free-LCM': '16:31.79'
     }
   }
+  ,
+  {
+    id: 'usports-2026',
+    name: 'U SPORTS Championship qualifying',
+    short: 'U SPORTS',
+    course: 'SCM',
+    // Read off the official Splash results header for each event at the 2026
+    // U SPORTS Championships, Markham, 12-14 March 2026, and cross-checked
+    // against the scoring cut-off in the results themselves, ie, in the men's
+    // 400 free a 3:55.39 scored and a 3:55.47 did not.
+    source: '2026 U SPORTS Championships official results, results.swimming.ca/2026_USPORTS',
+    recorded: '2026-09-18',
+    confirmed: true,
+    cuts: {
+      '200-free-SCM': '1:49.74',
+      '400-free-SCM': '3:55.45',
+      '1500-free-SCM': '15:58.09',
+      '400-im-SCM': '4:25.59'
+    }
+  }
 ];
+
+// There is NO men's 800 freestyle at U SPORTS. It is a women's championship
+// event; the only men's 800 at the 2026 nationals was a time trial. So of
+// Luke's distance events, the 400 and the 1500 are the ones that score in
+// Canada, and the 800 does not exist to a U SPORTS coach.
+//
+// This matters more than it looks. The 800 is one of his four ranked events
+// and it is the one that travels worst, ie, the NCAA races a 1000 yard free
+// and Canada races no men's 800 at all.
 
 // NCAA Division I and Division II qualifying standards are published in short
 // course yards and change every season. None are recorded here yet, because

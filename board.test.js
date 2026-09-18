@@ -226,7 +226,9 @@ const canada = R.contactWindow('USPORTS', 2029, '2026-09-18');
 check('a U SPORTS coach can reply now', canada.open, true);
 check('and there is no date to wait for', canada.replyDate, null);
 ok('the message says the NCAA calendar does not apply', canada.message.indexOf('not bound by the NCAA calendar') !== -1);
-ok('but it does not claim to be confirmed', canada.confirmed === false);
+ok('and now it is confirmed, from U SPORTS own policy', canada.confirmed === true);
+ok('while the CCAA, unresearched, still does not claim to be',
+  R.CONTACT_RULES.CCAA.confirmed === false);
 check('the CCAA reads the same way', R.contactWindow('CCAA', 2029, '2026-09-18').open, true);
 check('Division III still uses the safe date', R.contactWindow('D3', 2029, '2026-09-18').open, false);
 ok('and is marked unconfirmed', R.CONTACT_RULES.D3.confirmed === false);
@@ -423,7 +425,7 @@ ok('the carding myth is recorded and corrected',
 // hand or copied from a recruiting site. That matters: the popular published
 // lists carry programmes cut years ago and miss ones recently added.
 const Ro = require('./roster.js');
-check('every programme is present', Ro.counts().total, 458);
+check('every programme is present', Ro.counts().total, 484);
 check('NAIA, from a different source entirely', Ro.counts().NAIA, 16);
 ok('and every NAIA entry says so', Ro.ROSTER.filter(function (s) { return s.division === 'NAIA'; })
   .every(function (s) { return s.src === 'cscaa'; }));
@@ -467,6 +469,45 @@ schools.forEach(function (s) {
 });
 check('every board school sponsors mens swimming', missing, []);
 check('and is in the division the board says', wrongDivision, []);
+
+// ---------- U SPORTS ----------
+// 26 men's programmes, from the 2026 U SPORTS Championship entry statistics
+// cross-checked against each conference's own championship standings.
+check('twenty six Canadian programmes', Ro.counts().USPORTS, 26);
+check('OUA', Ro.ROSTER.filter(function (s) { return s.conference === 'OUA'; }).length, 10);
+check('RSEQ', Ro.ROSTER.filter(function (s) { return s.conference === 'RSEQ'; }).length, 6);
+check('Canada West', Ro.ROSTER.filter(function (s) { return s.conference === 'Canada West'; }).length, 6);
+check('AUS', Ro.ROSTER.filter(function (s) { return s.conference === 'AUS'; }).length, 4);
+ok('every Canadian entry names its source',
+  Ro.ROSTER.filter(function (s) { return s.division === 'USPORTS'; })
+    .every(function (s) { return s.src === 'usports'; }));
+
+// The contact rule is no longer a guess. U SPORTS Policy 40.10.7.4.2 says
+// coaches and prospects "may contact each other at any time".
+check('and it is confirmed now', R.CONTACT_RULES.USPORTS.confirmed, true);
+ok('against the policy that says so', /40\.10\.7\.4\.2/.test(R.CONTACT_RULES.USPORTS.source));
+ok('so the message claims no hedge', R.contactWindow('USPORTS', 2029, '2026-09-18').message.indexOf('Not yet confirmed') === -1);
+// The CCAA is still unconfirmed and must still say so.
+ok('the CCAA still hedges', R.contactWindow('CCAA', 2029, '2026-09-18').message.indexOf('Not yet confirmed') !== -1);
+
+// ---------- the U SPORTS standard, in his own course ----------
+// The first standard we can measure him against with NO conversion at all.
+// U SPORTS races short course metres and so does he.
+const usports = St.STANDARDS.filter(function (s) { return s.id === 'usports-2026'; })[0];
+check('the U SPORTS standard is short course metres', usports.course, 'SCM');
+ok('and it is confirmed, unlike the Junior Trials cuts', usports.confirmed === true);
+const usProgress = St.progressAgainst(S, results, 'usports-2026');
+check('four events are tracked', usProgress.length, 4);
+ok('every one has a real swim behind it', usProgress.every(function (p) { return p.best && p.gap; }));
+check('the 400 free gap', S.formatGap(usProgress.filter(function (p) { return p.eventId === '400-free-SCM'; })[0].gap.behindBy), '+14.32');
+ok('none is made yet', usProgress.every(function (p) { return p.gap.made === false; }));
+
+// There is no men's 800 free at U SPORTS. It is a women's event. So one of his
+// four ranked events does not exist to a Canadian coach, and the file has to
+// say so rather than quietly omitting it.
+check('no men\u2019s 800 is claimed', usports.cuts['800-free-SCM'], undefined);
+const stdSource = require('fs').readFileSync(require('path').join(__dirname, 'standards.js'), 'utf8');
+ok('and the reason is written down', /NO men\u2019s 800|NO men's 800/.test(stdSource));
 
 // ---------- the photo library ----------
 const Ph = require('./photos.js');
@@ -541,7 +582,8 @@ check('a missing event has no ranking', SD.rankFor(SD.seedRankings(), '100-fly-L
 // the first deploy. A grep is a blunt instrument and that is the point.
 const utilsSource = require('fs').readFileSync(require('path').join(__dirname, 'school-utils.js'), 'utf8');
 ok('the public file carries no email address', !/@[a-z0-9.-]+\.(edu|com|org)/i.test(utilsSource));
-ok('the public file names no school', !/Gannon|Canisius|Bonaventure|Bucknell|Fairfield|Niagara|Marist|Ithaca|Clarkson|Hamilton|Iona|Loyola|Manhattan/i.test(utilsSource));
+ok('the public file names no school',
+  !/\b(Gannon|Canisius|Bonaventure|Bucknell|Fairfield|Niagara|Marist|Ithaca|Clarkson|Hamilton|Iona|Loyola|Manhattan)\b/i.test(utilsSource));
 ok('the public file carries no benchmark time', !/\d:\d\d\.\d\d/.test(utilsSource));
 ok('the public file carries no priority', !/'P[123]'/.test(utilsSource));
 ok('but it still exports the importer', typeof require('./school-utils.js').parsePaste === 'function');

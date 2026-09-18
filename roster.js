@@ -29,6 +29,16 @@
 // gives almost nothing to an international student. For a Canadian, that
 // asymmetry can outweigh the swimming.
 //
+// U SPORTS is a third source again, tagged src: 'usports'. Built from the 2026
+// U SPORTS Championship entry statistics and each conference's own 2025-26
+// championship standings, which agree. 26 men's programmes: OUA 10, RSEQ 6,
+// Canada West 6, AUS 4.
+//
+// A Canadian programme is not a lesser version of an American one, it is a
+// different shape. Its coaches may contact a Grade 10 today, its money is
+// smaller but so is the bill it has to cover, and seven of the ten OUA
+// programmes are inside about seventy minutes of Etobicoke.
+//
 // Counts at the date recorded: 137 Division I, 77 Division II, 228 Division III,
 // 16 NAIA. 458 programmes in total. Re-run the query to refresh, do not edit
 // by hand.
@@ -496,7 +506,33 @@ const ROSTER = [
   { id: "scad-savannah", name: "SCAD Savannah", division: 'NAIA', conference: "Sun Conference", state: 'GA', site: "", src: "cscaa" },
   { id: "st-ambrose-university", name: "St. Ambrose University", division: 'NAIA', conference: "Chicagoland", state: 'IA', site: "", src: "cscaa" },
   { id: "st-thomas-university-florida", name: "St. Thomas University (Florida)", division: 'NAIA', conference: "Sun Conference", state: 'FL', site: "", src: "cscaa" },
-  { id: "university-of-the-cumberlands", name: "University of the Cumberlands", division: 'NAIA', conference: "Mid-South", state: 'KY', site: "", src: "cscaa" }
+  { id: "university-of-the-cumberlands", name: "University of the Cumberlands", division: 'NAIA', conference: "Mid-South", state: 'KY', site: "", src: "cscaa" },
+  { id: "university-of-toronto", name: "University of Toronto", division: 'USPORTS', conference: "OUA", state: 'ON', site: "varsityblues.ca", src: "usports", note: "About 30 minutes from Etobicoke." },
+  { id: "york-university", name: "York University", division: 'USPORTS', conference: "OUA", state: 'ON', site: "yorkulions.ca", src: "usports", note: "About 30 minutes. Runs as a club programme, still competes in OUA and U SPORTS. Its head coach swam and later coached at Etobicoke Swim Club." },
+  { id: "mcmaster-university", name: "McMaster University", division: 'USPORTS', conference: "OUA", state: 'ON', site: "marauders.ca", src: "usports", note: "About an hour." },
+  { id: "university-of-guelph", name: "University of Guelph", division: 'USPORTS', conference: "OUA", state: 'ON', site: "gryphons.ca", src: "usports", note: "About an hour." },
+  { id: "university-of-waterloo", name: "University of Waterloo", division: 'USPORTS', conference: "OUA", state: 'ON', site: "athletics.uwaterloo.ca", src: "usports", note: "About seventy minutes." },
+  { id: "wilfrid-laurier-university", name: "Wilfrid Laurier University", division: 'USPORTS', conference: "OUA", state: 'ON', site: "laurierathletics.com", src: "usports", note: "About seventy minutes." },
+  { id: "brock-university", name: "Brock University", division: 'USPORTS', conference: "OUA", state: 'ON', site: "gobadgers.ca", src: "usports", note: "About seventy to eighty five minutes." },
+  { id: "western-university", name: "Western University", division: 'USPORTS', conference: "OUA", state: 'ON', site: "westernmustangs.ca", src: "usports", note: "About two hours. Its distance freestyler was 2026 OUA Rookie of the Year, ie, they develop this profile." },
+  { id: "queen-s-university", name: "Queen's University", division: 'USPORTS', conference: "OUA", state: 'ON', site: "gogaelsgo.com", src: "usports", note: "About three hours." },
+  { id: "carleton-university", name: "Carleton University", division: 'USPORTS', conference: "OUA", state: 'ON', site: "goravens.ca", src: "usports", note: "About four and a quarter hours. Runs as a club programme." },
+  { id: "mcgill-university", name: "McGill University", division: 'USPORTS', conference: "RSEQ", state: 'QC', site: "mcgillathletics.ca", src: "usports" },
+  { id: "universit-de-montr-al", name: "Universit\u00e9 de Montr\u00e9al", division: 'USPORTS', conference: "RSEQ", state: 'QC', site: "carabins.umontreal.ca", src: "usports" },
+  { id: "universit-laval", name: "Universit\u00e9 Laval", division: 'USPORTS', conference: "RSEQ", state: 'QC', site: "rougeetor.ulaval.ca", src: "usports" },
+  { id: "universit-de-sherbrooke", name: "Universit\u00e9 de Sherbrooke", division: 'USPORTS', conference: "RSEQ", state: 'QC', site: "usherbrooke.ca/vertetor", src: "usports" },
+  { id: "universit-du-qu-bec-trois-rivi-res", name: "Universit\u00e9 du Qu\u00e9bec \u00e0 Trois-Rivi\u00e8res", division: 'USPORTS', conference: "RSEQ", state: 'QC', site: "uqtr.ca", src: "usports" },
+  { id: "university-of-ottawa", name: "University of Ottawa", division: 'USPORTS', conference: "RSEQ", state: 'ON', site: "geegees.ca", src: "usports", note: "An Ontario university whose swim team competes in RSEQ, not OUA." },
+  { id: "university-of-british-columbia", name: "University of British Columbia", division: 'USPORTS', conference: "Canada West", state: 'BC', site: "gothunderbirds.ca", src: "usports", note: "Won the 2026 U SPORTS men\u2019s title by a wide margin." },
+  { id: "university-of-calgary", name: "University of Calgary", division: 'USPORTS', conference: "Canada West", state: 'AB', site: "godinos.com", src: "usports" },
+  { id: "university-of-victoria", name: "University of Victoria", division: 'USPORTS', conference: "Canada West", state: 'BC', site: "govikesgo.com", src: "usports" },
+  { id: "university-of-lethbridge", name: "University of Lethbridge", division: 'USPORTS', conference: "Canada West", state: 'AB', site: "gohorns.ca", src: "usports" },
+  { id: "university-of-manitoba", name: "University of Manitoba", division: 'USPORTS', conference: "Canada West", state: 'MB', site: "gobisons.ca", src: "usports" },
+  { id: "university-of-regina", name: "University of Regina", division: 'USPORTS', conference: "Canada West", state: 'SK', site: "cougarsandrams.com", src: "usports" },
+  { id: "dalhousie-university", name: "Dalhousie University", division: 'USPORTS', conference: "AUS", state: 'NS', site: "daltigers.ca", src: "usports" },
+  { id: "university-of-new-brunswick", name: "University of New Brunswick", division: 'USPORTS', conference: "AUS", state: 'NB', site: "goredsgo.ca", src: "usports" },
+  { id: "mount-allison-university", name: "Mount Allison University", division: 'USPORTS', conference: "AUS", state: 'NB', site: "mountiepride.ca", src: "usports" },
+  { id: "memorial-university-of-newfoundland", name: "Memorial University of Newfoundland", division: 'USPORTS', conference: "AUS", state: 'NL', site: "goseahawks.ca", src: "usports" }
 ];
 
 function byDivision(division) {
