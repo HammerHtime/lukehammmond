@@ -53,6 +53,22 @@ const NOT_APPROVED = {
 // The one Open-level course the NCAA does count, and it is worth half a credit.
 const HALF_CREDIT = { CHV2O: 'Civics' };
 
+// Ontario de-streamed Grade 9 in 2021, and the new courses end in W, which is
+// not in the NCAA's fifth-character table at all. The table was written before
+// they existed. What the sheet does instead is name them one by one on the
+// approved TITLE list, so these five count and any other W code does not, until
+// the Eligibility Center names it.
+//
+// This is not academic. Luke sat Grade 9 in 2025-26, which is fully de-streamed,
+// so MTH1W and SNC1W are the actual codes on his transcript. Before this the
+// checker rejected them outright as an unrecognised level.
+// Source: NCAA Eligibility Center, Ontario (Canada) country sheet, approved
+// course title list, read 18 September 2026.
+const DESTREAMED = {
+  MTH1W: 'Grade 9 Mathematics', ENL1W: 'English 9', SNC1W: 'Science 9',
+  FRL1W: 'French First Language 9', CGC1W: 'Exploring Canadian Geography'
+};
+
 function checkCourse(code) {
   const c = String(code || '').trim().toUpperCase();
   if (!/^[A-Z]{3}[1-4][A-Z]$/.test(c)) {
@@ -62,6 +78,19 @@ function checkCourse(code) {
   const grade = Number(c[3]);
   const level = LEVELS[c[4]] || null;
 
+  if (DESTREAMED[c]) {
+    return { ok: true, approved: true, credit: 1, grade: grade,
+      level: 'De-streamed Grade 9', name: DESTREAMED[c],
+      note: 'A de-streamed Grade 9 course. The NCAA level table predates these, so it ' +
+        'counts because the Eligibility Center names it, not because of its level letter.' };
+  }
+  if (c[4] === 'W') {
+    return { ok: true, approved: null, credit: 0, grade: grade,
+      level: 'De-streamed', name: '',
+      note: 'A de-streamed course the NCAA Ontario sheet does not name. Only five are ' +
+        'listed, ie, MTH1W, ENL1W, SNC1W, FRL1W and CGC1W. Ask the guidance office to ' +
+        'have this one checked rather than assuming either way.' };
+  }
   if (HALF_CREDIT[c]) {
     return { ok: true, approved: true, credit: 0.5, grade: grade,
       level: level ? level.name : '', name: HALF_CREDIT[c],
@@ -243,6 +272,7 @@ const api = {
   LEVELS: LEVELS,
   NOT_APPROVED: NOT_APPROVED,
   HALF_CREDIT: HALF_CREDIT,
+  DESTREAMED: DESTREAMED,
   BANDS: BANDS,
   MILESTONES: MILESTONES,
   milestones: milestones,

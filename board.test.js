@@ -992,6 +992,32 @@ check('removing everything empties cleanly',
 check('a url is built from the id', Ph.urlFor({ id: 'abc123' }), '/api/photo/abc123');
 check('no photo means no url', Ph.urlFor(null), '');
 
+// ---------- de-streamed Grade 9, ie, the codes on his actual transcript ----------
+// Ontario de-streamed Grade 9 in 2021 and the new codes end in W, which is not
+// in the NCAA fifth-character table because the table predates them. The
+// checker used to reject them as an unrecognised level, and Luke sat Grade 9 in
+// 2025-26, so these are the codes really on his transcript.
+// Source: NCAA Eligibility Center Ontario country sheet, approved title list.
+['MTH1W', 'ENL1W', 'SNC1W', 'FRL1W', 'CGC1W'].forEach(function (code) {
+  const r = El.checkCourse(code);
+  ok(code + ' is read, not rejected', r.ok);
+  check(code + ' counts', r.approved, true);
+  check(code + ' is a full credit', r.credit, 1);
+  ok(code + ' says why it counts', /Eligibility Center names it/.test(r.note));
+});
+// Only those five are named. Anything else ending in W is a question for the
+// guidance office, not a yes and not a no.
+const otherW = El.checkCourse('TEJ1W');
+check('an unnamed de-streamed course is neither', otherW.approved, null);
+check('and earns nothing until it is checked', otherW.credit, 0);
+ok('with the five that are named spelled out', /MTH1W, ENL1W, SNC1W, FRL1W and CGC1W/.test(otherW.note));
+// The old codes still work, because both exist on transcripts right now.
+check('the academic Grade 9 codes still count', El.checkCourse('ENG1D').approved, true);
+check('and Civics is still the half credit exception', El.checkCourse('CHV2O').credit, 0.5);
+// The two courses a swimmer gravitates to still earn nothing.
+check('kinesiology still counts for nothing', El.checkCourse('PSK4U').approved, false);
+check('and so does exercise science', El.checkCourse('PSE4U').approved, false);
+
 // ---------- rankings, editable and clearable ----------
 const SD = require('./swimmer.js');
 check('the seed carries four rankings', Object.keys(SD.seedRankings()).length, 4);
