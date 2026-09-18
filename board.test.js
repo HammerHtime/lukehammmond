@@ -1119,6 +1119,70 @@ check('95 wastes fifteen marks', El.convertMark(95).wasted, 15);
 check('a mark at the top has nowhere to go', El.convertMark(100).marksToNextPoint, 0);
 check('a nonsense mark returns nothing', El.convertMark(120), null);
 
+// The core GPA, ie, where the halves come from. convertMark only ever returns a
+// whole number because the NCAA Ontario table only has whole numbers on it. A
+// 3.5 is the AVERAGE of those whole numbers across the core courses.
+check('an A and a B average to 3.5', El.coreGpa(
+  [{ code: 'ENG4U', mark: 84 }, { code: 'MHF4U', mark: 78 }]).gpa, 3.5);
+check('and it prints to three decimals like the NCAA does', El.coreGpa(
+  [{ code: 'ENG4U', mark: 84 }, { code: 'MHF4U', mark: 78 }]).shown, '3.500');
+check('a B and a C average to 2.5', El.coreGpa(
+  [{ code: 'ENG4U', mark: 74 }, { code: 'MHF4U', mark: 64 }]).gpa, 2.5);
+check('three A and one C is 3.5 too', El.coreGpa(
+  [{ code: 'ENG4U', mark: 84 }, { code: 'MHF4U', mark: 88 },
+    { code: 'SPH4U', mark: 91 }, { code: 'SBI4U', mark: 62 }]).gpa, 3.5);
+
+// Civics is half a credit, so it pulls half as hard. An A in Civics beside a C
+// in a full credit is not a 3.0, it is a 2.667.
+const civics = El.coreGpa([{ code: 'CHV2O', mark: 95 }, { code: 'ENG4U', mark: 65 }]);
+check('a half credit is weighted at a half', civics.shown, '2.667');
+check('and the credit count says 1.5', civics.credits, 1.5);
+
+// An empty mark box is not a zero. Number('') is 0, which would book an F.
+const blank = El.coreGpa([{ code: 'ENG4U', mark: 84 }, { code: 'MHF4U', mark: '' }]);
+check('an unmarked course is left out, not failed', blank.gpa, 4);
+check('and it is named as waiting for a mark', blank.skipped[0].code, 'MHF4U');
+
+// Courses that earn no core credit never reach the average at all, whatever
+// the mark on them is. A 95 in Kinesiology changes nothing.
+const kin = El.coreGpa([{ code: 'ENG4U', mark: 84 }, { code: 'PSK4U', mark: 95 }]);
+check('a 95 in a non-core course does not lift the GPA', kin.gpa, 4);
+check('it is reported as skipped', kin.skipped[0].code, 'PSK4U');
+
+// The best 16 core credits, not the first 16 and not all of them. A bad extra
+// course that was never needed does not drag the number down.
+const sixteen = ['ENG4U', 'ENG3U', 'ENG2D', 'ENG1D', 'MHF4U', 'MCR3U', 'MPM2D',
+  'SPH4U', 'SBI4U', 'SNC2D', 'CHC2D', 'CGC1W', 'FSF2D', 'FSF3U', 'SCH4U', 'MDM4U']
+  .map(function (c) { return { code: c, mark: 85 }; });
+const best = El.coreGpa(sixteen.concat([{ code: 'CHW3M', mark: 55 }]));
+check('sixteen credits is the cap', best.credits, 16);
+check('so a seventeenth weak course cannot drag it down', best.gpa, 4);
+check('and it is held as spare, not thrown away', best.spare[0].code, 'CHW3M');
+
+// The bars, and what is still needed to clear them.
+check('Division I asks 2.300', El.coreGpa(sixteen).bar, 2.3);
+check('Division II asks 2.200', El.coreGpa(sixteen, 'D2').bar, 2.2);
+check('sixteen A credits clears it', El.coreGpa(sixteen).clears, true);
+const weak = El.coreGpa([{ code: 'ENG4U', mark: 55 }, { code: 'MHF4U', mark: 55 }]);
+check('two D credits is a 1.000 so far', weak.shown, '1.000');
+check('and the other fourteen must average 2.486', weak.needed, 2.486);
+ok('the sentence says so plainly', weak.sentence.indexOf('average 2.49') !== -1);
+// Fourteen F credits with two D credits already banked cannot be rescued.
+const sunk = El.coreGpa(['ENG4U', 'ENG3U', 'ENG2D', 'ENG1D', 'MHF4U', 'MCR3U',
+  'MPM2D', 'SPH4U', 'SBI4U', 'SNC2D', 'CHC2D', 'CGC1W']
+  .map(function (c) { return { code: c, mark: 30 }; }));
+ok('a sunk GPA is said to be sunk', sunk.impossible);
+
+// Division III sets no NCAA academic requirement, so there is no bar to print.
+check('Division III has no core GPA to meet', El.coreGpa(sixteen, 'D3').applies, false);
+
+// People type the list every way there is.
+const typed = El.parseCourseLines('ENG4U 84\nMHF4U, 78\n\nsph4u: 71\nSBI4U - 66%');
+check('four lines read back', typed.length, 4);
+check('a lower case code is lifted', typed[2].code, 'SPH4U');
+check('a percent sign is dropped', typed[3].mark, '66');
+check('and the blank line is ignored', typed[1].code, 'MHF4U');
+
 // Dates derive from the graduation year. Written-out years were right for 2029
 // and would have quietly stayed at 2029 if the class ever changed.
 check('the hard deadline moves with the class',

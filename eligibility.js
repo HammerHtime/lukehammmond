@@ -352,6 +352,140 @@ function convertMark(percent) {
 }
 
 // ---------------------------------------------------------------------------
+// The core GPA
+// ---------------------------------------------------------------------------
+// convertMark above answers "what is one mark worth", and the answer is always
+// a whole number, because the NCAA Ontario sheet only has whole quality points
+// in it. There is no 3.5 on that table and there never was.
+//
+// A 3.5 comes from here instead. The core GPA is the average of those whole
+// points across the core courses, weighted by credit, so a 4 and a 3 average to
+// 3.5 and the halves appear. This is the number the Eligibility Center actually
+// publishes, and the number the D1 2.300 and D2 2.200 bars are set against.
+//
+// Two rules that change the answer and are easy to miss:
+//   - It is the BEST 16 core credits, not the first 16 and not all of them. A
+//     bad core course you did not need does not drag the number down.
+//   - Civics is half a credit, so it pulls half as hard as everything else.
+// Source: NCAA Eligibility Center, Ontario (Canada) country sheet, and the
+// 2026-27 Guide for the College-Bound Student-Athlete. Read 18 September 2026.
+
+// One course per line, the code then the mark, ie, "ENG4U 84". Commas, tabs,
+// colons and dashes all work as the separator because people type all of them.
+function parseCourseLines(text) {
+  return String(text || '').split('\n').map(function (line) {
+    const bits = line.trim().split(/[\s,:\-–]+/).filter(Boolean);
+    if (!bits.length) return null;
+    const mark = bits.length > 1 ? bits[bits.length - 1].replace('%', '') : '';
+    return { code: bits[0].toUpperCase(), mark: mark };
+  }).filter(Boolean);
+}
+
+function coreGpa(entries, division) {
+  const spec = CORE[String(division || 'D1').toUpperCase()];
+  if (!spec) return null;
+  if (!spec.total) {
+    return { division: spec.division, applies: false, note: spec.note,
+      used: [], skipped: [], credits: 0, gpa: null };
+  }
+
+  const scored = [];
+  const skipped = [];
+  (entries || []).forEach(function (e) {
+    const code = String((e && e.code) || '').toUpperCase();
+    if (!code) return;
+    const checked = checkCourse(code);
+    if (!checked.ok) { skipped.push({ code: code, why: checked.reason }); return; }
+    if (checked.approved !== true) {
+      skipped.push({ code: code, why: checked.note });
+      return;
+    }
+    const area = areaOf(code);
+    if (!area) {
+      skipped.push({ code: code, why: 'Approved level, but not in an NCAA core subject area.' });
+      return;
+    }
+    // An empty box is not a zero. Number('') is 0, which would quietly book an
+    // F against a course that simply has not been marked yet.
+    const raw = e && e.mark;
+    const blank = raw === null || raw === undefined || String(raw).trim() === '';
+    const mark = blank ? null : convertMark(raw);
+    if (!mark) {
+      skipped.push({ code: code, name: checked.name, why: 'No mark entered yet, so it cannot be averaged.' });
+      return;
+    }
+    scored.push({
+      code: code, name: checked.name || '', area: area, credit: checked.credit,
+      percent: mark.percent, letter: mark.letter, points: mark.points,
+      quality: mark.points * checked.credit,
+      marksToNextPoint: mark.marksToNextPoint
+    });
+  });
+
+  // Best first. Ties broken by the higher percentage, so the course closer to
+  // the next band wins the slot, then by code so the answer never wobbles.
+  scored.sort(function (a, b) {
+    return b.points - a.points || b.percent - a.percent || (a.code < b.code ? -1 : 1);
+  });
+
+  // Fill 16 credits. A course that would overflow the 16 is passed over rather
+  // than sliced, and the next one that fits is taken, which is how a half
+  // credit ends up finishing the count.
+  const used = [];
+  const spare = [];
+  let credits = 0;
+  scored.forEach(function (c) {
+    if (credits + c.credit <= spec.total + 1e-9) { used.push(c); credits += c.credit; }
+    else spare.push(c);
+  });
+
+  const quality = used.reduce(function (sum, c) { return sum + c.quality; }, 0);
+  const gpa = credits > 0 ? quality / credits : null;
+  const remaining = Math.max(0, spec.total - credits);
+
+  // What the courses still to come have to average for the bar to be cleared.
+  // Negative means it is already clear whatever happens next.
+  let needed = null;
+  if (remaining > 0) needed = (spec.gpa * spec.total - quality) / remaining;
+
+  return {
+    division: spec.division, applies: true, bar: spec.gpa, total: spec.total,
+    used: used, spare: spare, skipped: skipped,
+    credits: credits, remaining: remaining,
+    quality: Math.round(quality * 1000) / 1000,
+    gpa: gpa === null ? null : Math.round(gpa * 1000) / 1000,
+    // The NCAA prints three decimals. Matching it stops a 2.3 being read as
+    // clearing a 2.300 bar when it is really a 2.296.
+    shown: gpa === null ? null : gpa.toFixed(3),
+    clears: gpa === null ? null : gpa >= spec.gpa,
+    needed: needed === null ? null : Math.round(needed * 1000) / 1000,
+    impossible: needed !== null && needed > 4,
+    sentence: gpaSentence(gpa, credits, remaining, needed, spec)
+  };
+}
+
+function gpaSentence(gpa, credits, remaining, needed, spec) {
+  if (gpa === null) return 'No marks entered yet.';
+  const so = credits + ' of the 16 core credits in, the core GPA is ' + gpa.toFixed(3) + '. ';
+  if (remaining === 0) {
+    return so + (gpa >= spec.gpa
+      ? 'That clears the ' + spec.division + ' bar of ' + spec.gpa.toFixed(3) + '.'
+      : 'That is under the ' + spec.division + ' bar of ' + spec.gpa.toFixed(3) + '.');
+  }
+  if (needed <= 0) {
+    return so + 'The ' + spec.division + ' bar of ' + spec.gpa.toFixed(3) +
+      ' is already clear no matter what the last ' + remaining + ' credits do.';
+  }
+  if (needed > 4) {
+    return so + 'The ' + spec.division + ' bar of ' + spec.gpa.toFixed(3) +
+      ' can no longer be reached on these courses, ie, the remaining ' + remaining +
+      ' credits would have to be worth more than a straight A.';
+  }
+  return so + 'The last ' + remaining + ' credits have to average ' + needed.toFixed(2) +
+    ' to clear the ' + spec.division + ' bar of ' + spec.gpa.toFixed(3) + '.';
+}
+
+// ---------------------------------------------------------------------------
 // The timeline
 // ---------------------------------------------------------------------------
 // Dated, so the back end can say what is next rather than what exists.
@@ -492,6 +626,8 @@ const api = {
   MYTHS: MYTHS,
   checkCourse: checkCourse,
   convertMark: convertMark,
+  parseCourseLines: parseCourseLines,
+  coreGpa: coreGpa,
   nextMilestones: nextMilestones,
   overdue: overdue
 };
