@@ -17,6 +17,7 @@
   var S = window.Swim, C = window.Convert, St = window.Standards, R = window.Recruiting;
   var SWIMMER = window.SwimmerData.SWIMMER;
   var SEED = window.SwimmerData.SEED_RESULTS;
+  var rankings = window.SwimmerData.seedRankings();
   if (!S || !SWIMMER) return;
 
   var today = new Date().toISOString().slice(0, 10);
@@ -72,6 +73,7 @@
       var id = S.eventId(p.distance, p.stroke, p.course);
       var best = bests[id];
       if (!best) return '';
+      var rank = window.SwimmerData.rankFor(rankings, id);
 
       var gap = St ? St.gapToCut(S.parseTime, best.hundredths, 'can-jr-trials', id) : null;
       var courseLabel = best.course === 'LCM' ? 'Long Course' : (best.course === 'SCM' ? 'Short Course' : 'Yards');
@@ -224,12 +226,18 @@
     // The seed renders immediately so the page is never blank or stale-looking
     // while the network is slow. The stored list replaces it when it arrives.
     render(clean(SEED));
-    fetch('/api/results', { headers: { accept: 'application/json' } })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (data) {
-        if (data && Array.isArray(data.results) && data.results.length) render(clean(data.results));
-      })
-      .catch(function () { /* the seed is already on screen */ });
+    Promise.all([
+      fetch('/api/results', { headers: { accept: 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+      fetch('/api/profile', { headers: { accept: 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    ]).then(function (both) {
+      var stored = both[0];
+      var profile = both[1];
+      if (profile && profile.profile) rankings = window.SwimmerData.rankingsFrom(profile.profile);
+      var list = stored && Array.isArray(stored.results) && stored.results.length ? stored.results : SEED;
+      render(clean(list));
+    });
     logVisit();
   }
 

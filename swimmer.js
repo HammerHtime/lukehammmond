@@ -124,6 +124,52 @@ const SEED_RESULTS = [
   { distance: 400, stroke: 'im', course: 'LCM', time: '4:52.37', date: '2026-07-11', meet: 'Ontario Swim Championships' }
 ];
 
-const api = { SWIMMER: SWIMMER, SEED_RESULTS: SEED_RESULTS };
+// Rankings change every time the national lists are republished, so they are
+// the one part of the profile that must be editable without touching code.
+//
+// The rule that matters: once anything has been saved from the back end, the
+// saved map is the whole truth. A cleared field means "no ranking", NOT "fall
+// back to what was hardcoded". Otherwise clearing a stale #4 would silently
+// restore it, which is the opposite of what clearing a field means.
+//
+// Before anything has ever been saved, the seed below is used, so the page is
+// never blank on day one.
+function seedRankings() {
+  const out = {};
+  (SWIMMER.primary || []).forEach(function (p) {
+    if (!p.rank) return;
+    out[p.distance + '-' + p.stroke + '-' + p.course] = { rank: p.rank, basis: p.rankBasis || '' };
+  });
+  return out;
+}
+
+function rankingsFrom(profile) {
+  if (!profile || !profile.rankings || typeof profile.rankings !== 'object') return seedRankings();
+  const out = {};
+  Object.keys(profile.rankings).forEach(function (eventId) {
+    const entry = profile.rankings[eventId];
+    const rank = Number(entry && typeof entry === 'object' ? entry.rank : entry);
+    // A blank, a zero, or anything unreadable means no ranking on this event,
+    // and no badge on the page.
+    if (!Number.isFinite(rank) || rank < 1) return;
+    out[eventId] = {
+      rank: Math.round(rank),
+      basis: String((entry && entry.basis) || 'Canada, for age')
+    };
+  });
+  return out;
+}
+
+function rankFor(rankings, eventId) {
+  return (rankings && rankings[eventId]) || null;
+}
+
+const api = {
+  SWIMMER: SWIMMER,
+  SEED_RESULTS: SEED_RESULTS,
+  seedRankings: seedRankings,
+  rankingsFrom: rankingsFrom,
+  rankFor: rankFor
+};
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof window !== 'undefined') window.SwimmerData = api;

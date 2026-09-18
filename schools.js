@@ -87,10 +87,17 @@ const SCHOOLS = [
     verified: true, verifiedOn: '2026-09-18',
     assistant: "", assistantEmail: "",
     contactNote: "First year as head coach, 2026-27. The sport coaches page is stale and does not list him. No assistant emails published.", name: "Saint Peter's University", division: 'D1', conference: 'MAAC',
-    state: 'NJ', country: 'USA', priority: 'P1', confidence: 'Medium',
-    note: 'Distance times look relevant to roster depth, but the current roster has not been gone through swimmer by swimmer.',
-    benchmarks: []
-  },
+    state: 'NJ', country: 'USA', priority: 'P1', confidence: 'High',
+    note: "One very strong distance swimmer and very little behind him. Nunez Barreras was MAAC 400 IM runner-up and 1650 bronze.",
+    benchmarks: [
+      { event: '500-free-SCY', times: ["4:32.25", "4:43.08"],
+        basis: 'roster', context: "2026 MAAC, the only two men entered", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" },
+      { event: '1650-free-SCY', times: ["15:51.06", "16:26.31"],
+        basis: 'roster', context: "2026 MAAC, 3rd place and 17th", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" },
+      { event: '400-im-SCY', times: ["3:53.31", "4:02.14"],
+        basis: 'roster', context: "2026 MAAC, runner-up and 17th", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
   {
     id: 'manhattan',
     coach: "Brian Hansbury", coachTitle: "Head Coach, Swimming & Diving",
@@ -99,10 +106,15 @@ const SCHOOLS = [
     verified: true, verifiedOn: '2026-09-18',
     assistant: "", assistantEmail: "",
     contactNote: "The address really does begin with j while the coach is displayed as Brian. Read twice on the page. Do not correct it to bhansbury.", name: 'Manhattan University', division: 'D1', conference: 'MAAC',
-    state: 'NY', country: 'USA', priority: 'P1', confidence: 'Medium',
-    note: 'Potential roster fit already. Wants better individual swimmer data before the call is firm.',
-    benchmarks: []
-  },
+    state: 'NY', country: 'USA', priority: 'P1', confidence: 'High',
+    note: "Thinnest programme of the six, 9th of 9 MAAC men's teams. Luke's times would make him the fastest man in every distance event immediately, and his mile would sit within a fraction of a second of an eight-year-old school record.",
+    benchmarks: [
+      { event: '500-free-SCY', times: ["5:06.98", "5:54.80"],
+        basis: 'roster', context: "2026 MAAC, 39th and 40th of 40", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" },
+      { event: '1650-free-SCY', times: ["17:19.96"],
+        basis: 'roster', context: "2026 MAAC, 27th of 28, the only man entered", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
   {
     id: 'clarkson',
     coach: "Marc Danin", coachTitle: "Head Coach - Swimming & Diving",
@@ -111,10 +123,17 @@ const SCHOOLS = [
     verified: true, verifiedOn: '2026-09-18',
     assistant: "", assistantEmail: "",
     contactNote: "Assistant: Finn Halstead, halstefw@clarkson.edu.", name: 'Clarkson University', division: 'D3', conference: 'Liberty League',
-    state: 'NY', country: 'USA', priority: 'P1', confidence: 'Medium',
-    note: 'Geographically sensible and a potentially good swimming fit, particularly if the academics match.',
-    benchmarks: []
-  },
+    state: 'NY', country: 'USA', priority: 'P1', confidence: 'High',
+    note: "Fourth of nine Liberty League men's teams.",
+    benchmarks: [
+      { event: '500-free-SCY', times: ["4:40.43", "4:45.04", "5:03.42", "5:03.79", "5:13.41"],
+        basis: 'roster', context: "2026 Liberty League, five men", sourceUrl: "https://athletics.ithaca.edu/sports/2026/1/29/2026-liberty-league-swimming-diving-championships-portal.aspx" },
+      { event: '1650-free-SCY', times: ["16:48.39", "17:08.27", "17:49.52"],
+        basis: 'roster', context: "2026 Liberty League, three men", sourceUrl: "https://athletics.ithaca.edu/sports/2026/1/29/2026-liberty-league-swimming-diving-championships-portal.aspx" },
+      { event: '400-im-SCY', times: ["4:06.33", "4:20.50", "4:37.98", "4:50.44"],
+        basis: 'roster', context: "2026 Liberty League, four men", sourceUrl: "https://athletics.ithaca.edu/sports/2026/1/29/2026-liberty-league-swimming-diving-championships-portal.aspx" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
 
   // ---------- P2. Realistic if he keeps progressing. ----------
   {
@@ -186,10 +205,17 @@ const SCHOOLS = [
     verified: true, verifiedOn: '2026-09-18',
     assistant: "", assistantEmail: "",
     contactNote: "SHARED programme mailbox, not a personal address. RPI publishes no individual coach emails at all. Address the email to Coach O'Brien by name.", name: 'Rensselaer Polytechnic Institute', division: 'D3', conference: 'Liberty League',
-    state: 'NY', country: 'USA', priority: 'P2', confidence: 'Low',
-    note: 'Could become very interesting depending on what he eventually wants academically. No swimmer times gathered yet.',
-    benchmarks: []
-  },
+    state: 'NY', country: 'USA', priority: 'P2', confidence: 'High',
+    note: "Third of nine Liberty League men's teams. Sam Ciegler carries the distance group.",
+    benchmarks: [
+      { event: '500-free-SCY', times: ["4:35.02", "4:44.64", "4:49.18", "4:50.43", "4:53.09"],
+        basis: 'roster', context: "2026 Liberty League, five men", sourceUrl: "https://athletics.ithaca.edu/sports/2026/1/29/2026-liberty-league-swimming-diving-championships-portal.aspx" },
+      { event: '1650-free-SCY', times: ["16:18.79", "16:45.39", "16:58.10"],
+        basis: 'roster', context: "2026 Liberty League, three men", sourceUrl: "https://athletics.ithaca.edu/sports/2026/1/29/2026-liberty-league-swimming-diving-championships-portal.aspx" },
+      { event: '400-im-SCY', times: ["4:06.55", "4:14.89", "4:15.11", "4:16.90", "4:25.28"],
+        basis: 'roster', context: "2026 Liberty League, five men", sourceUrl: "https://athletics.ithaca.edu/sports/2026/1/29/2026-liberty-league-swimming-diving-championships-portal.aspx" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
   {
     id: 'marist',
     coach: "Billy Gordon", coachTitle: "Head Coach",
@@ -232,8 +258,16 @@ const SCHOOLS = [
     verified: true, verifiedOn: '2026-09-18',
     assistant: "Emma Brown", assistantEmail: "ebrown3@fairfield.edu",
     contactNote: "Emma Brown is Associate Head Coach and the best second contact.", name: 'Fairfield University', division: 'D1', conference: 'MAAC',
-    state: 'CT', country: 'USA', priority: 'P3', confidence: 'Low', benchmarks: [],
-    note: 'Same thinking as Bucknell. Swimmer times still to be gathered.'
+    state: 'CT', country: 'USA', priority: 'P3', confidence: 'High', benchmarks: [
+      { event: '500-free-SCY', times: ["4:26.25", "4:29.25", "4:33.53", "4:39.21"],
+        basis: 'roster', context: "2026 MAAC, four men. Fairfield won the team title.", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" },
+      { event: '1650-free-SCY', times: ["15:55.39", "16:21.49", "16:46.63"],
+        basis: 'roster', context: "2026 MAAC, three men", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" },
+      { event: '400-im-SCY', times: ["3:51.32", "3:57.99", "3:58.10", "4:01.61", "4:06.60", "4:08.02", "4:10.42"],
+        basis: 'roster', context: "2026 MAAC, seven men. 3:51.32 won the conference.", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',
+    note: "Fairfield won the 2026 MAAC men's team title, their first. Deepest distance group on the board, so sitting inside their range says more here than it would elsewhere.",
   },
   {
     id: 'iona',
@@ -243,8 +277,16 @@ const SCHOOLS = [
     verified: true, verifiedOn: '2026-09-18',
     assistant: "Mauro Pacsi", assistantEmail: "mpacsi@iona.edu",
     contactNote: "icgaels.com now redirects to ionagaels.com. Mauro Pacsi is Associate Head Coach and the best second contact.", name: 'Iona University', division: 'D1', conference: 'MAAC',
-    state: 'NY', country: 'USA', priority: 'P3', confidence: 'Low', benchmarks: [],
-    note: 'Same thinking as Bucknell. Swimmer times still to be gathered.'
+    state: 'NY', country: 'USA', priority: 'P3', confidence: 'High', benchmarks: [
+      { event: '500-free-SCY', times: ["4:34.64", "4:36.59", "4:37.23", "4:48.18", "4:54.04"],
+        basis: 'roster', context: "2026 MAAC, five men", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" },
+      { event: '1650-free-SCY', times: ["16:09.73", "16:22.10", "17:11.07"],
+        basis: 'roster', context: "2026 MAAC, three men", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" },
+      { event: '400-im-SCY', times: ["4:05.84", "4:11.66"],
+        basis: 'roster', context: "2026 MAAC, two men. 4:05.84 is the faster prelim swim.", sourceUrl: "https://swimmeetresults.tech/MAAC-2026/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',
+    note: "Their 500 conference record holder, 4:19.62 in 2025, was no longer competing in 2026, ie, the distance group got softer.",
   },
   {
     id: 'loyolamd',
@@ -278,12 +320,39 @@ const CONTACT_FIELDS = {
   assistant: '', assistantEmail: '', contactNote: '',
   // The working columns. This is what turns the board into a record of what
   // was actually done, rather than a snapshot of one afternoon's research.
+  logo: '',
   status: 'Not contacted', lastContact: '', coachReply: '', questionnaire: '',
   nextAction: '', sourceUrl: '', notes: '', benchmarksCheckedOn: ''
 };
 
 function aidFor(division) {
   return AID[division] || '';
+}
+
+// The school's mark, beside its name on the board.
+//
+// Derived from the athletics domain already recorded in staffUrl rather than
+// stored separately, so a school can never end up wearing another school's
+// badge. An explicit logo field overrides it. If neither resolves, the board
+// falls back to initials, ie, a missing image never leaves a broken icon.
+function logoFor(school) {
+  if (!school) return '';
+  if (school.logo) return school.logo;
+  const host = hostOf(school.staffUrl);
+  if (!host) return '';
+  return 'https://www.google.com/s2/favicons?sz=64&domain=' + encodeURIComponent(host);
+}
+
+function hostOf(url) {
+  const m = /^https?:\/\/([^/?#]+)/i.exec(String(url || ''));
+  return m ? m[1].toLowerCase() : '';
+}
+
+// Two letters when there is no mark to show.
+function initialsFor(school) {
+  const words = String((school && school.name) || '').split(/\s+/)
+    .filter(function (w) { return /^[A-Za-z]/.test(w) && !/^(of|the|at)$/i.test(w); });
+  return words.slice(0, 2).map(function (w) { return w[0].toUpperCase(); }).join('');
 }
 
 function seedSchools() {
@@ -346,6 +415,7 @@ function normaliseSchool(raw) {
       workingTarget: input.workingTarget && typeof input.workingTarget === 'object' ? input.workingTarget : {},
       benchmarksCheckedOn: String(input.benchmarksCheckedOn || '').trim(),
       athleticAid: String(input.athleticAid || '').trim() || aidFor(division),
+      logo: String(input.logo || '').trim(),
       status: String(input.status || '').trim() || 'Not contacted',
       lastContact: String(input.lastContact || '').trim(),
       coachReply: String(input.coachReply || '').trim(),
@@ -481,6 +551,9 @@ const api = {
   SCHOOLS: SCHOOLS,
   AID: AID,
   aidFor: aidFor,
+  logoFor: logoFor,
+  hostOf: hostOf,
+  initialsFor: initialsFor,
   seedSchools: seedSchools,
   isSendable: isSendable,
   isEmail: isEmail,

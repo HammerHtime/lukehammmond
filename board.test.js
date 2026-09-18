@@ -138,9 +138,11 @@ check('Marist spans target to reach', row('marist').computedFit, 'Target / reach
 
 // A school with no swimmer times found is not assessed. That is silence, not
 // a verdict, and it must never be scored as though the gap were zero.
-check('Saint Peters is not assessed', row('saintpeters').computedFit, 'Not assessed');
-check('Saint Peters gets no suggested priority', row('saintpeters').suggestedPriority, null);
-check('Saint Peters does not report a disagreement', row('saintpeters').disagrees, false);
+// Hamilton is the example because it still has none. Saint Peter's used to be
+// here and now has real 2026 MAAC times, which is the system working.
+check('Hamilton is not assessed', row('hamilton').computedFit, 'Not assessed');
+check('Hamilton gets no suggested priority', row('hamilton').suggestedPriority, null);
+check('Hamilton does not report a disagreement', row('hamilton').disagrees, false);
 
 // The engine reads Bucknell one band kinder than the recorded call, because
 // the recorded benchmark is the slower end of their distance group. The board
@@ -151,7 +153,7 @@ check('and says so', row('bucknell').disagrees, true);
 
 // Confidence is about evidence, never about odds.
 check('high confidence where real times exist', row('stbonaventure').confidence, 'High');
-check('low confidence where none were gathered', row('fairfield').confidence, 'Low');
+check('low confidence where none were gathered', row('hamilton').confidence, 'Low');
 
 // A champion and a roster time are not the same statement.
 check('RIT is benchmarked against a champion', row('rit').comparisons[0].basis, 'champion');
@@ -239,6 +241,60 @@ check('a blank never overwrites a verified contact',
 check('a nonsense address is refused', Sc.normaliseSchool({ name: 'A', division: 'D1', email: 'not-an-address' }).ok, false);
 check('a school with no division is refused', Sc.normaliseSchool({ name: 'A' }).ok, false);
 check('verified is false without an address', Sc.normaliseSchool({ name: 'A', division: 'D1', verified: true }).school.verified, false);
+
+// ---------- rankings, editable and clearable ----------
+const SD = require('./swimmer.js');
+check('the seed carries four rankings', Object.keys(SD.seedRankings()).length, 4);
+check('nothing saved yet falls back to the seed', Object.keys(SD.rankingsFrom(null)).length, 4);
+
+// The rule that matters. A cleared box means no ranking, not a revert to the
+// hardcoded one, otherwise clearing a stale number silently restores it.
+const cleared = SD.rankingsFrom({ rankings: { '200-free-LCM': 4 } });
+check('a saved map is the whole truth', Object.keys(cleared).length, 1);
+check('and keeps the one that was set', cleared['200-free-LCM'].rank, 4);
+check('an empty map means no rankings at all', Object.keys(SD.rankingsFrom({ rankings: {} })).length, 0);
+check('a blank clears', Object.keys(SD.rankingsFrom({ rankings: { '200-free-LCM': '' } })).length, 0);
+check('a zero clears', Object.keys(SD.rankingsFrom({ rankings: { '200-free-LCM': 0 } })).length, 0);
+check('rubbish clears', Object.keys(SD.rankingsFrom({ rankings: { '200-free-LCM': 'first' } })).length, 0);
+check('a plain number works as well as an object', SD.rankingsFrom({ rankings: { '400-free-LCM': 2 } })['400-free-LCM'].rank, 2);
+check('a missing event has no ranking', SD.rankFor(SD.seedRankings(), '100-fly-LCM'), null);
+
+// ---------- school logos ----------
+const gannon = schools.filter(function (s) { return s.id === 'gannon'; })[0];
+ok('a logo is derived from the athletics domain', Sc.logoFor(gannon).indexOf('gannonsports.com') !== -1);
+check('the host is read from the recorded page', Sc.hostOf('https://gobonnies.com/sports/x'), 'gobonnies.com');
+check('a bad url yields no host', Sc.hostOf('not a url'), '');
+check('no source page means no logo', Sc.logoFor({ name: 'X' }), '');
+check('an explicit logo wins', Sc.logoFor({ name: 'X', logo: 'https://example.org/x.png' }), 'https://example.org/x.png');
+check('initials fall back cleanly', Sc.initialsFor({ name: 'St. Bonaventure University' }), 'SB');
+check('initials skip the joining words', Sc.initialsFor({ name: 'Rensselaer Polytechnic Institute' }), 'RP');
+
+// ---------- the six schools that gained real times ----------
+// They read "Not assessed" until the 2026 conference results were gathered.
+// Every one now carries the meet it came from.
+['saintpeters', 'manhattan', 'clarkson', 'rpi', 'fairfield', 'iona'].forEach(function (id) {
+  const r = row(id);
+  ok(id + ' is now assessed', r.evidenceCount > 0);
+  ok(id + ' cites its source', r.comparisons.every(function (c) { return Boolean(c.sourceUrl); }));
+  check(id + ' is now high confidence', r.confidence, 'High');
+});
+check('only two schools remain unassessed',
+  rows.filter(function (r) { return r.evidenceCount === 0; }).length, 2);
+
+// Manhattan's whole distance group is slower than him, so he is ahead outright
+// rather than merely inside the range.
+ok('Manhattan reads ahead on the 500', row('manhattan').comparisons[0].ahead);
+check('Manhattan is a current fit', row('manhattan').computedFit, 'Current fit');
+
+// Fairfield won the conference and he still lands inside their range. The
+// engine says P1, the board says P3. Reporting that clash is the point.
+check('Fairfield is recorded P3', row('fairfield').recordedPriority, 'P3');
+check('the engine reads Fairfield higher', row('fairfield').suggestedPriority, 'P1');
+ok('and flags the clash', row('fairfield').disagrees);
+// RPI, Fairfield and Iona all read higher than recorded now that their
+// conference times are in, and Bucknell reads higher off its own benchmark.
+check('four schools now disagree with the recorded call',
+  rows.filter(function (r) { return r.disagrees; }).length, 4);
 
 console.log((failed === 0 ? '  PASS' : '  FAIL') + '  board.test.js  ' + (passed + failed) + ' checks, ' + failed + ' failed');
 process.exit(failed === 0 ? 0 : 1);

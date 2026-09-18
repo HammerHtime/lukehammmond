@@ -53,10 +53,28 @@ request from this environment. A Netlify function runs from a different
 network and may do better, but it should not be assumed. Until then benchmarks
 carry a benchmarksCheckedOn date and go stale visibly rather than silently.
 
-### Eight schools have no swimmer times
-Saint Peter's, Manhattan, Clarkson, RPI, Fairfield, Iona, Loyola Maryland and
-Hamilton read "Not assessed". Gathering their distance times is the highest
-value research left, because six of them are already recorded P1 or P2.
+### Two schools have no swimmer times
+Loyola Maryland and Hamilton read "Not assessed". Six of the original eight
+now carry real 2026 conference results, ie, the MAAC Championships and the
+Liberty League Championships, each citing the meet it came from.
+
+### Four schools now disagree with their recorded priority
+This is the engine doing its job, and each one is a decision for Andrew.
+- RPI, recorded P2, reads P1. Luke sits inside their distance group in all
+  three events.
+- Fairfield, recorded P3, reads P1. They won the 2026 MAAC men's title and he
+  still lands inside their range. The deepest programme on the board, so this
+  one is worth a proper look.
+- Iona, recorded P3, reads P1. Their 500 conference record holder stopped
+  competing, ie, the distance group got softer.
+- Bucknell, recorded P3, reads P2, because the recorded benchmark is 15:46
+  rather than 15:35.
+
+Worth knowing about Manhattan: his times would make him the fastest man in
+every distance event there immediately, and his mile would sit within a
+fraction of a second of an eight-year-old school record. They finished ninth
+of nine MAAC men's teams. That cuts both ways and is a conversation, not a
+verdict.
 
 ### Coaching staff go stale fast
 Five of the seventeen changed head coach in the last eighteen months, and

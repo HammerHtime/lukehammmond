@@ -151,6 +151,16 @@
     <div class="msg info" id="wiMsg"></div>
   </div></div>
 
+  <h2>National rankings</h2>
+  <div class="card"><div class="pad">
+    <p class="hint" style="margin:0 0 12px">These sit beside the time on the public page.
+      Clear a box and the badge disappears from the site. Leave them all clear and the
+      ranking strip goes entirely.</p>
+    <div id="rankRows"></div>
+    <button class="go" id="saveRanks" style="margin-top:6px">Save the rankings</button>
+    <div class="msg" id="rankMsg"></div>
+  </div></div>
+
   <h2>Schools and contacts</h2>
   <div class="card scroll"><table id="schoolTable"></table></div>
   <div class="card" style="margin-top:12px"><div class="pad">
@@ -247,11 +257,13 @@
     el('date').value = today;
     Promise.all([
       fetch('/api/results').then(function (r) { return r.json(); }).catch(function () { return {}; }),
-      api('/api/schools').catch(function () { return { schools: [] }; })
+      api('/api/schools').catch(function () { return { schools: [] }; }),
+      fetch('/api/profile').then(function (r) { return r.json(); }).catch(function () { return {}; })
     ]).then(function (both) {
       var raw = both[0] && Array.isArray(both[0].results) && both[0].results.length ? both[0].results : SEED;
       results = clean(raw);
       schools = both[1].schools || [];
+      if (both[2] && both[2].profile) rankings = window.SwimmerData.rankingsFrom(both[2].profile);
       buildPickers();
       renderAll();
     });
@@ -264,6 +276,7 @@
   }
 
   function renderAll() {
+    renderRankings();
     renderBoard();
     renderSchools();
     renderWhatIfEvents();
@@ -382,7 +395,70 @@
     return lines.join('<br>');
   }
 
+  // ---------- rankings ----------
+  // Editable because they change every time the national lists are
+  // republished, and a stale #4 on a public page is worse than no number.
+  var rankings = window.SwimmerData.seedRankings();
+
+  function renderRankings() {
+    var bests = S.personalBests(results);
+    // Every event he has actually swum can carry a ranking, not just the four
+    // featured ones, because next season's best event may not be this one.
+    var ids = Object.keys(bests).sort(function (a, b) {
+      return bests[a].distance - bests[b].distance || a.localeCompare(b);
+    });
+    el('rankRows').innerHTML = ids.map(function (id) {
+      var held = rankings[id];
+      return '<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">' +
+        '<div style="flex:1;min-width:0"><strong style="font-size:14px">' + esc(bests[id].name) +
+        ' ' + esc(bests[id].course) + '</strong>' +
+        '<div class="conf">' + esc(bests[id].time) + '</div></div>' +
+        '<input data-rank="' + esc(id) + '" inputmode="numeric" placeholder="\u2014" ' +
+        'value="' + (held ? esc(held.rank) : '') + '" style="width:84px;text-align:center">' +
+        '</div>';
+    }).join('');
+  }
+
+  el('saveRanks').addEventListener('click', function () {
+    var next = {};
+    Array.prototype.forEach.call(el('rankRows').querySelectorAll('input[data-rank]'), function (input) {
+      var value = input.value.trim();
+      if (!value) return;              // cleared means gone, not reverted
+      next[input.dataset.rank] = { rank: Number(value), basis: 'Canada, for age' };
+    });
+    el('saveRanks').disabled = true;
+    api('/api/profile', { method: 'PUT', body: JSON.stringify({ profile: { rankings: next } }) })
+      .then(function () {
+        rankings = window.SwimmerData.rankingsFrom({ rankings: next });
+        renderRankings();
+        var shown = Object.keys(rankings).length;
+        say('rankMsg', 'ok', shown
+          ? 'Saved. ' + shown + ' ranking' + (shown === 1 ? '' : 's') + ' showing on the public page.'
+          : 'Saved. No rankings, so the badges and the ranking strip are gone from the public page.');
+      })
+      .catch(function (err) { say('rankMsg', 'bad', esc(err.message)); })
+      .then(function () { el('saveRanks').disabled = false; });
+  });
+
   // ---------- the board ----------
+  // The school's mark. onerror swaps in initials, so a logo that fails to load
+  // leaves a tidy monogram rather than a broken image icon.
+  function badge(school) {
+    var url = window.Schools ? window.Schools.logoFor(school) : '';
+    var initials = window.Schools ? window.Schools.initialsFor(school) : '';
+    var box = 'width:26px;height:26px;flex:0 0 26px;border-radius:5px;';
+    if (!url) {
+      return '<span style="' + box + 'background:var(--line-soft);color:var(--ink-faint);' +
+        'font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center">' +
+        esc(initials) + '</span>';
+    }
+    return '<img src="' + esc(url) + '" alt="" loading="lazy" style="' + box +
+      'object-fit:contain;background:var(--line-soft)" ' +
+      'onerror="this.outerHTML=\'<span style=&quot;' + box +
+      'background:var(--line-soft);color:var(--ink-faint);font-size:10.5px;font-weight:700;' +
+      'display:flex;align-items:center;justify-content:center&quot;>' + esc(initials) + '</span>\'">';
+  }
+
   function renderBoard() {
     var rows = B.scoreBoard(S, C.yardBests(S, results), schools);
     var head = '<thead><tr><th>School</th><th>Div</th><th>Priority</th><th>Fit</th>' +
@@ -403,8 +479,10 @@
         : '<span class="conf">none gathered</span>';
 
       return '<tr>' +
-        '<td><strong>' + esc(r.school.name) + '</strong>' +
-          (r.school.note ? '<div class="ev-line" style="max-width:260px">' + esc(r.school.note) + '</div>' : '') + '</td>' +
+        '<td><div style="display:flex;gap:9px;align-items:flex-start">' + badge(r.school) +
+          '<div><strong>' + esc(r.school.name) + '</strong>' +
+          (r.school.note ? '<div class="ev-line" style="max-width:260px">' + esc(r.school.note) + '</div>' : '') +
+          '</div></div></td>' +
         '<td>' + esc(r.school.division) + '</td>' +
         '<td><span class="p ' + (p || 'none') + '">' + esc(p || 'unset') + '</span>' +
           (r.disagrees ? '<div class="differs">engine says ' + esc(r.suggestedPriority) + '</div>' : '') + '</td>' +
@@ -454,8 +532,9 @@
     var head = '<thead><tr><th>School</th><th>Coach</th><th>Email</th><th>Confirmed</th><th>Source</th></tr></thead>';
     var body = schools.map(function (s) {
       return '<tr>' +
-        '<td><strong>' + esc(s.name) + '</strong><div class="conf">' + esc(s.division) +
-          (s.conference ? ', ' + esc(s.conference) : '') + '</div></td>' +
+        '<td><div style="display:flex;gap:9px;align-items:center">' + badge(s) +
+          '<div><strong>' + esc(s.name) + '</strong><div class="conf">' + esc(s.division) +
+          (s.conference ? ', ' + esc(s.conference) : '') + '</div></div></div></td>' +
         '<td>' + esc(s.coach || '—') + '</td>' +
         '<td>' + (s.email ? esc(s.email) : '<span class="conf">not found</span>') + '</td>' +
         '<td>' + (s.verified
