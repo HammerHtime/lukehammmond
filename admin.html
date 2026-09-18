@@ -848,8 +848,23 @@
   // One comparison, drawn on a scale. Their swimmers are the grey ticks, the
   // pale band is the range they cover, and the coloured bar is Luke. Reading
   // it takes no arithmetic, which is the whole point.
-  function strip(c) {
+  function strip(c, school) {
     var place = B.placeIn(S, c);
+    var conf = B.conferenceContext(S, school, c);
+    // Nothing to add when the one time on file already is that winning swim.
+    if (conf && conf.sameSwim) conf = null;
+
+    // The conference line. Two different bars, ie, making the squad and
+    // scoring at the championship, and a swimmer choosing where to go needs
+    // both. Silent for conferences whose results are not on file.
+    var confLine = conf
+      ? '<div style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line-soft)">' +
+        '<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;' +
+        'color:var(--ink-faint);font-weight:650;margin-bottom:3px">' + esc(conf.conference) + '</div>' +
+        '<div style="font-size:12.5px;color:var(--ink-soft);line-height:1.5">' +
+        'Won in <strong style="color:var(--ink)">' + esc(conf.winner) + '</strong>. ' +
+        esc(conf.sentence) + '.</div></div>'
+      : '';
     var good = c.ahead || c.inside;
     var tone = good ? 'good' : 'warn';
     var event = esc(c.event.replace('-SCY', '').replace(/-/g, ' '));
@@ -863,7 +878,7 @@
         (c.ahead ? 'He is quicker.' : 'He is ' + esc(c.gapText.replace('+', '')) + ' behind that.') +
         ' Only one time on file here, so there is no squad to rank him in yet.' +
         (c.sourceUrl ? ' <a href="' + esc(c.sourceUrl) + '" target="_blank" rel="noopener">source</a>' : '') +
-        '</p></div>';
+        '</p>' + confLine + '</div>';
     }
 
     // The ladder. Their squad in order with him slotted into it, which answers
@@ -889,7 +904,7 @@
         esc(place.median) + '. ' + esc(c.basisLabel) +
         (c.context ? ', ' + esc(c.context) : '') +
         (c.sourceUrl ? ' <a href="' + esc(c.sourceUrl) + '" target="_blank" rel="noopener">source</a>' : '') +
-      '</p></div>';
+      '</p>' + confLine + '</div>';
   }
 
   function renderBoard() {
@@ -906,6 +921,7 @@
       '<span><i class="legend-swatch" style="background:var(--good)"></i> in the front half, contributing</span>' +
       '<span><i class="legend-swatch" style="background:var(--warn)"></i> in the back half, developing</span>' +
       '<span>Their middle swimmer is the line between the two</span>' +
+      '<span>Under each, the time that won that conference, where the meet results are on file</span>' +
       '</div></div>';
 
     var cards = rows.map(function (r) {
@@ -937,7 +953,8 @@
         (r.school.note ? '<p class="school-note">' + esc(r.school.note) + '</p>' : '') +
 
         (r.comparisons.length
-          ? '<div class="school-strips">' + r.comparisons.map(strip).join('') + '</div>'
+          ? '<div class="school-strips">' + r.comparisons.map(function (c) {
+              return strip(c, r.school); }).join('') + '</div>'
           : '<div class="school-none">No swimmer times gathered for this programme yet, so it ' +
             'is not scored. That is silence, not a verdict.</div>') +
 

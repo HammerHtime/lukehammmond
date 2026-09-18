@@ -211,6 +211,63 @@ function scalePositions(comparison) {
   };
 }
 
+// The conference, which is the other half of the question. Making a squad and
+// scoring at the championship are different bars, and a swimmer choosing where
+// to go needs both.
+//
+// Only conferences whose 2026 championship results were actually read are in
+// here. The others are silent rather than guessed at, which is the same rule
+// the rest of this project runs on.
+const CONFERENCES = {
+  'MAAC': {
+    name: 'MAAC', meet: '2026 MAAC Championships',
+    source: 'https://swimmeetresults.tech/MAAC-2026/', recorded: '2026-09-18',
+    winners: { '500-free-SCY': '4:26.17', '1650-free-SCY': '15:39.33', '400-im-SCY': '3:51.32' }
+  },
+  'Liberty League': {
+    name: 'Liberty League', meet: '2026 Liberty League Championships',
+    source: 'https://athletics.ithaca.edu/sports/2026/1/29/2026-liberty-league-swimming-diving-championships-portal.aspx',
+    recorded: '2026-09-18',
+    winners: { '500-free-SCY': '4:31.98', '1650-free-SCY': '15:50.52', '400-im-SCY': '4:05.21' }
+  }
+};
+
+// Where his time sits against the conference championship, when that meet's
+// results are on file. Returns null rather than a guess for the rest.
+function conferenceContext(swim, school, comparison) {
+  const conf = CONFERENCES[(school && school.conference) || ''];
+  if (!conf || !comparison) return null;
+  const winner = conf.winners[comparison.event];
+  if (!winner) return null;
+
+  const winnerHundredths = swim.parseTime(winner);
+  if (winnerHundredths === null) return null;
+  const gap = comparison.mineHundredths - winnerHundredths;
+
+  // Six of these schools are benchmarked against their own conference winner,
+  // so the strip has already printed that time. Saying it again underneath
+  // reads like two facts when it is one. The context is still returned, with
+  // a flag, because the page is what decides whether to draw it.
+  const sameSwim = Boolean(comparison.theirTimes &&
+    comparison.theirTimes.length === 1 &&
+    comparison.theirTimes[0] === winnerHundredths);
+
+  return {
+    conference: conf.name,
+    sameSwim: sameSwim,
+    meet: conf.meet,
+    winner: winner,
+    source: conf.source,
+    gap: gap,
+    gapText: swim.formatGap(gap),
+    // Winning it is not the point at fifteen. Knowing the distance to the top
+    // of the conference he would be swimming in is.
+    sentence: gap <= 0
+      ? 'Quicker than the time that won the conference'
+      : swim.formatGap(gap).replace('+', '') + ' off the time that won the conference'
+  };
+}
+
 // Where he would actually slot into that squad.
 //
 // This replaces an abstract scale with the question a person actually asks:
@@ -405,6 +462,8 @@ const api = {
   compareGroup: compareGroup,
   scalePositions: scalePositions,
   placeIn: placeIn,
+  CONFERENCES: CONFERENCES,
+  conferenceContext: conferenceContext,
   ordinal: ordinal,
   scoreSchool: scoreSchool,
   scoreBoard: scoreBoard,

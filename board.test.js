@@ -261,6 +261,67 @@ check('a single benchmark yields no ladder', B.placeIn(S, row('niagara').compari
 check('nor does nothing at all', B.placeIn(S, { theirTimes: [] }), null);
 check('ordinals read as words', B.ordinal(4), 'fourth');
 
+// ---------- the conference beside the squad ----------
+// Making a squad and scoring at the championship are two different bars. The
+// ladder answers the first. This answers the second, and only where the
+// championship results were actually read.
+const canisius = row('canisius');
+const canisiusMile = canisius.comparisons.filter(function (c) { return c.event === '1650-free-SCY'; })[0];
+const canisiusConf = B.conferenceContext(S, canisius.school, canisiusMile);
+check('Canisius swims in the MAAC', canisiusConf.conference, 'MAAC');
+check('and the mile was won in 15:39.33', canisiusConf.winner, '15:39.33');
+check('the meet is named', canisiusConf.meet, '2026 MAAC Championships');
+ok('and the results page is on file', /^https:\/\//.test(canisiusConf.source));
+ok('he is behind that time', canisiusConf.gap > 0);
+ok('and it reads as a distance, not a verdict',
+  /off the time that won the conference/.test(canisiusConf.sentence));
+
+// Ithaca sits in a different conference, so the same event gives a different
+// bar. That is the whole reason the column exists.
+const ithaca = row('ithaca');
+const ithacaFive = ithaca.comparisons.filter(function (c) { return c.event === '500-free-SCY'; })[0];
+const ithacaConf = B.conferenceContext(S, ithaca.school, ithacaFive);
+check('Ithaca swims in the Liberty League', ithacaConf.conference, 'Liberty League');
+check('and their 500 was won in 4:31.98', ithacaConf.winner, '4:31.98');
+ok('which is a closer bar than the MAAC 500',
+  ithacaConf.gap < B.conferenceContext(S, row('iona').school,
+    row('iona').comparisons.filter(function (c) { return c.event === '500-free-SCY'; })[0]).gap);
+
+// Silence rather than a guess. Three conferences on this board have no results
+// on file, and inventing a winning time for them would be inventing evidence.
+check('Gannon gets no conference line',
+  B.conferenceContext(S, row('gannon').school, row('gannon').comparisons[0]), null);
+check('nor does the Atlantic 10',
+  B.conferenceContext(S, row('stbonaventure').school, row('stbonaventure').comparisons[0]), null);
+check('nor the Patriot League',
+  B.conferenceContext(S, row('bucknell').school, row('bucknell').comparisons[0]), null);
+check('a school with no conference is silent too',
+  B.conferenceContext(S, { name: 'X' }, canisiusMile), null);
+check('and no comparison is silent',
+  B.conferenceContext(S, canisius.school, null), null);
+
+// Where the only benchmark on file IS the swim that won the conference, the
+// strip has already printed it. The flag lets the page avoid saying one fact
+// twice, without throwing the context away.
+ok('Ithaca 500 is that same winning swim', ithacaConf.sameSwim);
+ok('so is their 400 IM', B.conferenceContext(S, ithaca.school,
+  ithaca.comparisons.filter(function (c) { return c.event === '400-im-SCY'; })[0]).sameSwim);
+ok('Canisius mile is not, ie, their qualifier did not win it', !canisiusConf.sameSwim);
+ok('and a whole squad is never one swim',
+  !B.conferenceContext(S, row('saintpeters').school,
+    row('saintpeters').comparisons.filter(function (c) { return c.theirTimes.length > 1; })[0]).sameSwim);
+
+// Every recorded time has to parse, or the column would quietly print nothing
+// while looking like it had been checked.
+Object.keys(B.CONFERENCES).forEach(function (key) {
+  const conf = B.CONFERENCES[key];
+  ok(conf.name + ' cites its results page', /^https:\/\//.test(conf.source));
+  ok(conf.name + ' records when it was read', /^\d{4}-\d\d-\d\d$/.test(conf.recorded));
+  Object.keys(conf.winners).forEach(function (ev) {
+    ok(conf.name + ' ' + ev + ' is a readable time', S.parseTime(conf.winners[ev]) !== null);
+  });
+});
+
 // ---------- the comparison scale ----------
 // It draws, it does not decide. These checks exist to keep it that way.
 const bonnies = row('stbonaventure').comparisons[0];
