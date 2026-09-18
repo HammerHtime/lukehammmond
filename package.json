@@ -1,0 +1,15 @@
+{
+  "name": "lukehammond",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Luke Hammond's swimming recruiting profile and board. See CLAUDE.md.",
+  "scripts": {
+    "test": "node board.test.js",
+    "lint": "node --check swim.js && node --check swimmer.js && node --check convert.js && node --check standards.js && node --check schools.js && node --check board.js && node --check recruiting.js && node --check board.test.js",
+    "check": "npm run lint && npm test"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
