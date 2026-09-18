@@ -1030,6 +1030,13 @@
             'is not scored. That is silence, not a verdict.</div>') +
 
         '<div class="school-actions">' +
+          // Bottom left, where Andrew asked for it. Same two-click confirm and
+          // the same save path as the table, so there is one way removing works
+          // rather than two. It sits in its own group with a gap, because a
+          // destructive control flush against the primary button is a misclick
+          // waiting to happen.
+          '<button class="drop" data-drop="' + esc(r.school.id) + '">hide</button>' +
+          '<span style="width:6px"></span>' +
           (r.school.email
             ? '<button class="minor" data-email="' + esc(r.school.id) + '">Email ' +
               esc(r.school.coach ? 'Coach ' + R.lastName(r.school.coach) : 'the coach') + '</button>'
@@ -1043,6 +1050,8 @@
     }).join('');
 
     el('boardTable').innerHTML = legend + cards;
+
+    wireDrops(el('boardTable'));
 
     // Each button carries its own school, so the draft is always for the coach
     // named on that card. Writing to the wrong coach is the one mistake this
@@ -1165,20 +1174,33 @@
     el('schoolTable').innerHTML = head + '<tbody>' + (body ||
       '<tr><td colspan="6" class="conf">Nothing matches that.</td></tr>') + '</tbody>';
 
-    // Two clicks to remove, because there is no undo and the list took a lot of
-    // gathering. The first click arms the button and says what will go.
-    Array.prototype.forEach.call(el('schoolTable').querySelectorAll('[data-drop]'), function (b) {
+    wireDrops(el('schoolTable'));
+  }
+
+  // Two clicks to remove, because there is no undo and the list took a lot of
+  // gathering. The first click arms the button and names what would go.
+  //
+  // Shared by the board cards and the table, so the two can never drift apart.
+  // Disarming reaches across BOTH, ie, arming a card cancels an armed row.
+  function wireDrops(root) {
+    if (!root) return;
+    Array.prototype.forEach.call(root.querySelectorAll('[data-drop]'), function (b) {
+      var resting = b.textContent;
       b.addEventListener('click', function () {
-        var id = b.dataset.drop;
-        var school = schools.filter(function (x) { return x.id === id; })[0];
+        var school = schools.filter(function (x) { return x.id === b.dataset.drop; })[0];
         if (!school) return;
         if (b.classList.contains('sure')) { dropSchool(school); return; }
-        Array.prototype.forEach.call(el('schoolTable').querySelectorAll('.drop.sure'), function (o) {
-          o.classList.remove('sure'); o.textContent = 'remove';
-        });
+        disarmDrops();
         b.classList.add('sure');
-        b.textContent = 'remove ' + school.name + '?';
+        b.textContent = (resting === 'hide' ? 'hide ' : 'remove ') + school.name + '?';
       });
+    });
+  }
+
+  function disarmDrops() {
+    Array.prototype.forEach.call(document.querySelectorAll('.drop.sure'), function (o) {
+      o.classList.remove('sure');
+      o.textContent = o.closest('.school') ? 'hide' : 'remove';
     });
   }
 

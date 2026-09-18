@@ -255,7 +255,20 @@ check('American is benchmarked against a roster swimmer', row('american').compar
 const adminSrc2 = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
 ok('every row carries a remove button', /data-drop="' \+ esc\(s\.id\)/.test(adminSrc2));
 ok('the first click only arms it', /b\.classList\.contains\('sure'\)/.test(adminSrc2));
-ok('and names what would go', /'remove ' \+ school\.name \+ '\?'/.test(adminSrc2));
+ok('and names what would go', /school\.name \+ '\?'/.test(adminSrc2));
+// The same control sits at the bottom left of every board card, where a school
+// is actually being looked at, and it shares one handler with the table so the
+// two can never drift apart.
+ok('every card carries a hide button',
+  /'<button class="drop" data-drop="' \+ esc\(r\.school\.id\)/.test(adminSrc2));
+ok('the board wires the same handler', /wireDrops\(el\('boardTable'\)\)/.test(adminSrc2));
+ok('and so does the table', /wireDrops\(el\('schoolTable'\)\)/.test(adminSrc2));
+ok('arming one disarms every other, in both places',
+  /document\.querySelectorAll\('\.drop\.sure'\)/.test(adminSrc2));
+// A destructive control flush against the primary button is a misclick waiting
+// to happen, so it is separated from Email.
+ok('it is spaced off the email button',
+  /data-drop="' \+ esc\(r\.school\.id\) \+ '">hide<\/button>' \+\s*'<span style="width:6px">/.test(adminSrc2));
 ok('arming one disarms the others', /querySelectorAll\('\.drop\.sure'\)/.test(adminSrc2));
 ok('removing saves the list without it',
   /schools\.filter\(function \(s\) \{ return s\.id !== school\.id; \}\)/.test(adminSrc2));
