@@ -43,6 +43,7 @@
     compTable(results, bests);
     clubCoach();
     clubLines(results);
+    progression(results);
     coachPanel(yards);
     gallery();
   }
@@ -250,6 +251,67 @@
     return '<p style="color:var(--muted);font-size:0.8rem;line-height:1.7;margin-top:1.75rem;">' +
       'Luke is class of ' + esc(SWIMMER.classOf) + '. Under NCAA Division I rules a coach cannot reply ' +
       'until ' + esc(R.friendlyDate(w.replyDate)) + '. He would rather you had his times before then.</p>';
+  }
+
+  // The progression table. Season best, season by season, with what came off.
+  //
+  // This is the highest value element on the page and the one thing it does
+  // better than a results database, which shows a best time while hiding the
+  // slope that produced it. Coaches named rate of improvement as one of two
+  // swimming criteria, so this is the half a database cannot show.
+  //
+  // Which events appear is decided by World Aquatics points, not by opinion.
+  // Points mean the same thing in every event and both courses, so they settle
+  // what to lead with rather than leaving it to be argued about.
+  function progression(results) {
+    var host = el('progression');
+    if (!host) return;
+
+    var top = S.rankedByPoints(results, 4);
+    var curves = top.map(function (best) {
+      return S.progression(results, best.distance, best.stroke, best.course);
+    }).filter(Boolean).filter(function (c) { return c.seasons.length > 1; });
+    if (!curves.length) { host.innerHTML = ''; return; }
+
+    host.innerHTML =
+      '<p class="section-label">Rate of Improvement</p>' +
+      '<h2 class="section-title" style="margin-bottom:0.75rem;">Season by Season</h2>' +
+      '<p style="color:var(--muted);font-size:0.875rem;max-width:700px;line-height:1.7;' +
+      'margin-bottom:2rem;">His four strongest events, chosen by World Aquatics points rather ' +
+      'than by preference, with the season best for each year and what came off it. Points are ' +
+      'the same scale in every event and both courses, ie, they compare a 400 freestyle against ' +
+      'a 400 individual medley honestly.</p>' +
+      '<div style="display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));">' +
+      curves.map(function (c) {
+        return '<div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.07);' +
+          'border-radius:4px;padding:1.35rem;">' +
+          '<div style="font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;' +
+          'color:var(--aqua);font-weight:500;margin-bottom:0.9rem;">' + esc(c.name) + '</div>' +
+          c.seasons.map(function (s) {
+            return '<div style="display:flex;justify-content:space-between;align-items:baseline;' +
+              'gap:10px;padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+              '<span style="color:var(--muted);font-size:0.78rem;">' + esc(s.season) + '</span>' +
+              '<span style="font-variant-numeric:tabular-nums;color:var(--white);' +
+              'font-size:0.95rem;">' + esc(s.time) + '</span>' +
+              '<span style="font-variant-numeric:tabular-nums;font-size:0.78rem;color:' +
+              (s.droppedBy ? 'var(--gold)' : 'var(--muted)') + ';min-width:62px;text-align:right;">' +
+              (s.droppedBy ? esc(S.formatGap(s.droppedBy)) : '\u2014') + '</span></div>';
+          }).join('') +
+          '<div style="margin-top:0.9rem;font-size:0.8rem;color:var(--white);">' +
+          '<strong style="color:var(--gold);">' + esc(S.formatGap(c.totalDrop)) + '</strong> in ' +
+          (c.seasons.length - 1) + ' season' + (c.seasons.length === 2 ? '' : 's') +
+          (c.pointsGained ? ', <strong>+' + esc(c.pointsGained) + '</strong> points' : '') +
+          '</div>' +
+          (c.everySeason
+            ? '<div style="margin-top:0.35rem;font-size:0.74rem;color:var(--aqua);">' +
+              'Faster every season on record.</div>'
+            : '') +
+          '</div>';
+      }).join('') + '</div>';
+
+    host.classList.add('visible');
+    host.style.opacity = '1';
+    host.style.transform = 'none';
   }
 
   // Everything that names the club. It was written into the markup in four

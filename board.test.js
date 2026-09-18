@@ -56,7 +56,7 @@ ok('there is a 100 IM in short course metres', S.isRealEvent(100, 'im', 'SCM'));
 const normalised = SEED_RESULTS.map(function (r) { return S.normaliseResult(r); });
 check('every seeded result is valid', normalised.filter(function (n) { return !n.ok; }).length, 0);
 const results = normalised.map(function (n) { return n.result; });
-check('all thirty five swims survive', results.length, 35);
+
 
 check('a bad course is refused', S.normaliseResult({ distance: 200, stroke: 'free', course: 'SCX', time: '1:58.35', date: '2025-11-06' }).ok, false);
 check('an unswum event is refused', S.normaliseResult({ distance: 500, stroke: 'free', course: 'LCM', time: '4:37.20', date: '2025-11-06' }).ok, false);
@@ -69,25 +69,70 @@ check('the best 400 free long course', bests['400-free-LCM'].time, '4:10.86');
 check('the best 1500 free long course', bests['1500-free-LCM'].time, '16:59.80');
 check('the best 400 IM long course', bests['400-im-LCM'].time, '4:52.37');
 
+// ---------- four seasons, and the curve ----------
+check('four seasons are on record', [2023, 2024, 2025, 2026].every(function (y) {
+  return results.some(function (r) { return r.season === y; }); }), true);
+check('one hundred and twenty nine swims', results.length, 129);
+ok('every swim carries its points', results.every(function (r) { return r.points > 0; }));
+
+// Relay lead-off splits are not in here. The source lists them separately with
+// no points, and a lead-off sitting in a bests table quietly flatters a
+// swimmer. Nothing should have a 'Lap' meet or a missing points value.
+ok('no relay lead-offs leaked in', !results.some(function (r) { return /lap/i.test(r.meet); }));
+
+// Points are the only number that means the same thing in every event and both
+// courses, so they settle what to lead with.
+const ranked = S.rankedByPoints(results, 5);
+check('the strongest event is the 400 free long course', ranked[0].event, '400-free-LCM');
+check('and it scores', ranked[0].points, 674);
+ok('points descend', ranked.every(function (r, i) { return i === 0 || ranked[i - 1].points >= r.points; }));
+ok('the 400 IM is not his strongest, whatever it feels like',
+  ranked.slice(0, 3).every(function (r) { return r.stroke === 'free'; }));
+
+// The curve. The thing a results database cannot show.
+const curve = S.progression(results, 400, 'free', 'LCM');
+check('four seasons of the 400 free', curve.seasons.length, 4);
+check('it starts here', curve.seasons[0].time, '5:20.53');
+check('and it is here now', curve.current.time, '4:10.86');
+check('which is this much faster', S.formatGap(curve.totalDrop), '-1:09.67');
+check('and this many points better', curve.pointsGained, 351);
+check('faster every single season', curve.everySeason, true);
+check('the first season has nothing to improve on', curve.seasons[0].droppedBy, null);
+ok('and every later one does', curve.seasons.slice(1).every(function (s) { return s.droppedBy < 0; }));
+check('an event never swum has no curve', S.progression(results, 500, 'free', 'SCY'), null);
+
+// The mile and the 800 tell the same story, which is what makes it a profile
+// rather than one good swim.
+ok('the 1500 improved every season', S.progression(results, 1500, 'free', 'LCM').everySeason);
+ok('so did the 800', S.progression(results, 800, 'free', 'LCM').everySeason);
+ok('and the 400 IM', S.progression(results, 400, 'im', 'LCM').everySeason);
+
 // ---------- metres to yards ----------
 // Eight of the ten supplied pairs reproduce exactly and two land a hundredth
 // out, because the factors are held to four decimals. One hundredth is the
 // stated tolerance. Tightening it by tuning a factor would be fitting noise.
 const yards = C.yardBests(S, results);
-const SUPPLIED = {
-  '50-free-SCY': '22.72', '100-free-SCY': '48.22', '200-free-SCY': '1:43.58',
-  '500-free-SCY': '4:37.20', '1000-free-SCY': '9:38.45', '1650-free-SCY': '16:24.10',
-  '100-back-SCY': '53.58', '200-back-SCY': '1:53.96', '200-im-SCY': '1:59.91',
-  '400-im-SCY': '4:12.90'
-};
-Object.keys(SUPPLIED).forEach(function (eventId) {
-  const got = yards[eventId];
-  ok('a yard equivalent exists for ' + eventId, Boolean(got));
-  if (!got) return;
-  const drift = Math.abs(got.hundredths - S.parseTime(SUPPLIED[eventId]));
-  ok(eventId + ' is within a hundredth of the supplied conversion', drift <= 1);
-  ok(eventId + ' is marked an estimate', got.estimated === true);
+// The supplied pairs are the source of the FACTORS, not a snapshot of his
+// times. He has since gone faster, so his converted times have moved and
+// should have. What must still hold is that each factor reproduces the pair it
+// was derived from. Checking his current time against an old conversion was
+// testing the wrong thing, and it failed the moment the data improved, which
+// is the test doing the right thing for the wrong reason.
+C.MAPPINGS.forEach(function (m) {
+  const from = S.parseTime(m.pair[0]);
+  const to = S.parseTime(m.pair[1]);
+  const drift = Math.abs(Math.round(from * m.factor) - to);
+  ok(m.from + ' reproduces the pair it came from', drift <= 1);
 });
+
+// And every mapped event he has swum still gets a conversion, marked as one.
+['50-free-SCY', '100-free-SCY', '200-free-SCY', '500-free-SCY',
+ '1000-free-SCY', '1650-free-SCY', '100-back-SCY', '200-back-SCY',
+ '200-im-SCY', '400-im-SCY'].forEach(function (eventId) {
+  ok('a yard equivalent exists for ' + eventId, Boolean(yards[eventId]));
+  if (yards[eventId]) ok(eventId + ' is marked an estimate', yards[eventId].estimated === true);
+});
+
 check('the 500 comes from the 400 metres', yards['500-free-SCY'].from.event, '400-free-LCM');
 check('the mile comes from the 1500 metres', yards['1650-free-SCY'].from.event, '1500-free-LCM');
 check('an event with no mapping gets no conversion', C.toYards(S, bests['200-breast-LCM']), null);

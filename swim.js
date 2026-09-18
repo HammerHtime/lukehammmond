@@ -194,6 +194,15 @@ function normaliseResult(raw) {
       // SwimCloud marks some swims with a letter, ie, R for a relay lead-off.
       // We carry the letter through rather than interpret it.
       flag: String(input.flag || '').trim().toUpperCase().slice(0, 2),
+      // World Aquatics points. The only number on a swim that means the same
+      // thing in every event and both courses, so it is the only honest way to
+      // ask which of his events is actually his best.
+      points: Number.isFinite(Number(input.points)) && Number(input.points) > 0
+        ? Math.round(Number(input.points)) : null,
+      // The season the swim belongs to, as the source groups them. Kept as
+      // given rather than derived from the date, because a swim in November
+      // belongs to the season that ends the following summer.
+      season: Number.isFinite(Number(input.season)) ? Number(input.season) : null,
       note: String(input.note || '').trim()
     }
   };
@@ -270,6 +279,74 @@ function primaryEvents(results, limit) {
     });
 }
 
+// The improvement curve, one event, season by season.
+//
+// This is the single highest value thing a recruiting page can show, and the
+// one thing it does better than a results database. Coaches named rate of
+// improvement as one of two swimming criteria, and a database shows a best
+// time while hiding the slope that produced it.
+function progression(results, distance, stroke, course) {
+  const id = eventId(distance, stroke, course);
+  const bySeason = {};
+
+  (results || []).forEach(function (r) {
+    if (r.event !== id || !r.season) return;
+    const held = bySeason[r.season];
+    if (!held || r.hundredths < held.hundredths) bySeason[r.season] = r;
+  });
+
+  const seasons = Object.keys(bySeason).map(Number).sort(function (a, b) { return a - b; });
+  if (!seasons.length) return null;
+
+  const points = seasons.map(function (year, i) {
+    const swim = bySeason[year];
+    const previous = i > 0 ? bySeason[seasons[i - 1]] : null;
+    return {
+      season: year,
+      time: swim.time,
+      hundredths: swim.hundredths,
+      points: swim.points,
+      meet: swim.meet,
+      date: swim.date,
+      // Negative is a drop, ie, faster. Null for the first season, because
+      // there is nothing to improve on yet and a zero would imply there was.
+      droppedBy: previous ? swim.hundredths - previous.hundredths : null,
+      pointsGained: previous && swim.points && previous.points ? swim.points - previous.points : null
+    };
+  });
+
+  const first = points[0];
+  const last = points[points.length - 1];
+
+  return {
+    event: id,
+    name: eventName(distance, stroke) + ' ' + course,
+    seasons: points,
+    // The headline, ie, what has come off across the whole record.
+    totalDrop: points.length > 1 ? last.hundredths - first.hundredths : null,
+    pointsGained: points.length > 1 && first.points && last.points ? last.points - first.points : null,
+    current: last,
+    // Improving every single season is a different statement from improving
+    // overall, and it is the stronger one.
+    everySeason: points.slice(1).every(function (p) { return p.droppedBy !== null && p.droppedBy < 0; })
+  };
+}
+
+// His events ranked by points rather than by how they feel. Points are the
+// same scale in every event and both courses, so this settles the question of
+// what to lead with instead of arguing about it.
+function rankedByPoints(results, limit) {
+  const best = {};
+  (results || []).forEach(function (r) {
+    if (!r.points) return;
+    const held = best[r.event];
+    if (!held || r.points > held.points) best[r.event] = r;
+  });
+  return Object.keys(best).map(function (id) { return best[id]; })
+    .sort(function (a, b) { return b.points - a.points; })
+    .slice(0, limit || 10);
+}
+
 // Results newest first, for the "recent swims" list.
 function recentResults(results, limit) {
   return (results || [])
@@ -299,6 +376,8 @@ const api = {
   personalBests: personalBests,
   bestsByCourse: bestsByCourse,
   primaryEvents: primaryEvents,
+  progression: progression,
+  rankedByPoints: rankedByPoints,
   recentResults: recentResults
 };
 
