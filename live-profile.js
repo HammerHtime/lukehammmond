@@ -18,6 +18,7 @@
   var SWIMMER = window.SwimmerData.SWIMMER;
   var SEED = window.SwimmerData.SEED_RESULTS;
   var rankings = window.SwimmerData.seedRankings();
+  var photos = [];
   if (!S || !SWIMMER) return;
 
   var today = new Date().toISOString().slice(0, 10);
@@ -40,6 +41,7 @@
     rankingLines(bests);
     compTable(results, bests);
     coachPanel(yards);
+    gallery();
   }
 
   // Age goes stale every birthday. A graduating class never does, and it is
@@ -182,13 +184,21 @@
     var cells = order.map(function (id) {
       var y = yards[id];
       if (!y) return '';
+      var actual = esc(y.from.time) + ' ' + esc(y.from.event.split('-').pop());
       return '<div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.07);' +
         'border-radius:4px;padding:1.25rem 1.35rem;">' +
-        '<div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;' +
-        'color:var(--aqua);font-weight:500;">' + esc(y.name) + '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">' +
+        '<span style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;' +
+        'color:var(--aqua);font-weight:500;">' + esc(y.name) + '</span>' +
+        '<span style="font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;' +
+        'color:var(--gold);border:1px solid var(--gold);border-radius:2px;padding:1px 5px;' +
+        'font-weight:600;white-space:nowrap">Converted</span></div>' +
         '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:2.1rem;line-height:1.1;' +
-        'margin:0.35rem 0 0.15rem;color:var(--white);">' + esc(y.time) + '</div>' +
-        '<div style="font-size:0.72rem;color:var(--muted);">converted from ' + esc(y.from.time) + '</div>' +
+        'margin:0.35rem 0 0.35rem;color:var(--white);">' + esc(y.time) +
+        '<span style="font-size:0.8rem;font-family:\'DM Sans\',sans-serif;color:var(--gold);' +
+        'margin-left:0.35rem;">est.</span></div>' +
+        '<div style="font-size:0.72rem;color:var(--muted);line-height:1.5;">' +
+        '<span style="color:var(--white);">Actually swum:</span> ' + actual + '</div>' +
         '</div>';
     }).join('');
     if (!cells) return;
@@ -206,10 +216,15 @@
     block.innerHTML =
       '<p class="section-label">For College Coaches</p>' +
       '<h2 class="section-title" style="margin-bottom:0.75rem;">Short Course Yards</h2>' +
+      '<p style="display:inline-block;color:var(--gold);border:1px solid var(--gold);' +
+      'border-radius:3px;padding:0.4rem 0.8rem;font-size:0.7rem;letter-spacing:0.16em;' +
+      'text-transform:uppercase;font-weight:600;margin-bottom:1.25rem;">' +
+      'Converted estimates. Not times Luke has swum.</p>' +
       '<p style="color:var(--muted);font-size:0.875rem;max-width:700px;line-height:1.7;margin-bottom:2rem;">' +
-      'Luke races metres. These are his yard equivalents, so the times can be read against an NCAA roster ' +
-      'without conversion. They are <span style="color:var(--gold);">estimates</span>. The metric swim each ' +
-      'one came from is shown beneath it, and those are the times that actually happened.</p>' +
+      'Luke races metres and every NCAA programme races yards, so these are his metric bests converted, ' +
+      'to save you the arithmetic. <span style="color:var(--white);">He has never raced a short course ' +
+      'yards pool.</span> Each card shows the metric swim it was converted from, and those are the ' +
+      'times that actually happened, at the meets listed above.</p>' +
       '<div style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));">' +
       cells + '</div>' +
       contactRuleLine();
@@ -233,6 +248,43 @@
     return '<p style="color:var(--muted);font-size:0.8rem;line-height:1.7;margin-top:1.75rem;">' +
       'Luke is class of ' + esc(SWIMMER.classOf) + '. Under NCAA Division I rules a coach cannot reply ' +
       'until ' + esc(R.friendlyDate(w.replyDate)) + '. He would rather you had his times before then.</p>';
+  }
+
+  // The gallery, and the picture at the top of the page.
+  //
+  // The page shipped with six fixed slots, two of which pointed at files that
+  // were never uploaded and rendered broken. It now shows exactly the photos
+  // in the library, however many that is, with the one marked main leading.
+  // Nothing stored means the shipped photos stay, so the page is never empty
+  // on the day the library is.
+  function gallery() {
+    var P = window.Photos;
+    if (!P || !photos.length) return;
+
+    var list = P.galleryOrder(photos);
+    var grid = el('gallery-grid');
+    if (grid) {
+      grid.innerHTML = list.map(function (photo, index) {
+        // The first tile is the tall one, the way the hand-built layout had it.
+        var lead = index === 0 ? ' style="grid-row: 1 / 3; min-height: 480px;"' : '';
+        return '<div class="gallery-item has-photo"' + lead + '>' +
+          '<img class="slot-photo" src="' + esc(P.urlFor(photo)) + '" alt="' +
+          esc(photo.caption || 'Luke Hammond swimming') + '" loading="lazy">' +
+          '<div class="gallery-overlay"><span class="gallery-overlay-icon">\uff0b</span></div>' +
+          '</div>';
+      }).join('');
+    }
+
+    // The main photo also leads the About section, which is the first picture
+    // of him anyone scrolling the page meets.
+    var main = P.mainPhoto(list);
+    if (main) {
+      var about = document.querySelector('[data-slot="about-photo"] img.slot-photo');
+      if (about) {
+        about.src = P.urlFor(main);
+        about.alt = main.caption || 'Luke Hammond swimming';
+      }
+    }
   }
 
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -269,11 +321,14 @@
       fetch('/api/results', { headers: { accept: 'application/json' } })
         .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
       fetch('/api/profile', { headers: { accept: 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+      fetch('/api/photos', { headers: { accept: 'application/json' } })
         .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-    ]).then(function (both) {
-      var stored = both[0];
-      var profile = both[1];
+    ]).then(function (all) {
+      var stored = all[0];
+      var profile = all[1];
       if (profile && profile.profile) rankings = window.SwimmerData.rankingsFrom(profile.profile);
+      photos = (all[2] && all[2].photos) || [];
       var list = stored && Array.isArray(stored.results) && stored.results.length ? stored.results : SEED;
       render(clean(list));
     });

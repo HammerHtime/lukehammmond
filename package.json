@@ -6,7 +6,7 @@
   "description": "Luke Hammond's swimming recruiting profile and board. See CLAUDE.md.",
   "scripts": {
     "test": "node board.test.js && node browser.test.js",
-    "lint": "node --check swim.js && node --check swimmer.js && node --check convert.js && node --check standards.js && node --check schools.js && node --check school-utils.js && node --check board.js && node --check recruiting.js && node --check board.test.js && node --check browser.test.js",
+    "lint": "node --check swim.js && node --check swimmer.js && node --check convert.js && node --check standards.js && node --check schools.js && node --check photos.js && node --check school-utils.js && node --check board.js && node --check recruiting.js && node --check board.test.js && node --check browser.test.js",
     "check": "npm run lint && npm test"
   },
   "dependencies": {

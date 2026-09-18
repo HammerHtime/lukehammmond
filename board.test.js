@@ -276,6 +276,55 @@ check('a nonsense address is refused', Sc.normaliseSchool({ name: 'A', division:
 check('a school with no division is refused', Sc.normaliseSchool({ name: 'A' }).ok, false);
 check('verified is false without an address', Sc.normaliseSchool({ name: 'A', division: 'D1', verified: true }).school.verified, false);
 
+// ---------- the photo library ----------
+const Ph = require('./photos.js');
+
+function photo(id, day, main) {
+  const made = Ph.normalisePhoto({ id: id, type: 'image/jpeg', bytes: 100000, addedOn: day, main: main });
+  ok('photo ' + id + ' is valid', made.ok);
+  return made.photo;
+}
+
+check('a photo needs a usable id', Ph.normalisePhoto({ id: 'x', type: 'image/jpeg', bytes: 1 }).ok, false);
+check('a photo needs a real image type', Ph.normalisePhoto({ id: 'abc123', type: 'text/html', bytes: 1 }).ok, false);
+check('an empty file is refused', Ph.normalisePhoto({ id: 'abc123', type: 'image/jpeg', bytes: 0 }).ok, false);
+check('an oversized file is refused', Ph.normalisePhoto({ id: 'abc123', type: 'image/jpeg', bytes: 99e6 }).ok, false);
+check('a PDF is not an image', Ph.isAllowedType('application/pdf'), false);
+check('a caption is trimmed to something sane', Ph.normalisePhoto({
+  id: 'abc123', type: 'image/jpeg', bytes: 10, caption: 'x'.repeat(400) }).photo.caption.length, 140);
+
+// A gallery is never headless and never two-headed.
+let lib = [];
+check('an empty library has no main', Ph.mainPhoto(lib), null);
+lib = Ph.addPhoto(lib, photo('aaaaaa', '2026-01-10'));
+check('the first photo added leads', Ph.mainPhoto(lib).id, 'aaaaaa');
+lib = Ph.addPhoto(lib, photo('bbbbbb', '2026-09-01'));
+check('a newer photo does not steal the lead', Ph.mainPhoto(lib).id, 'aaaaaa');
+check('exactly one photo is ever main', lib.filter(function (p) { return p.main; }).length, 1);
+
+lib = Ph.setMain(lib, 'bbbbbb');
+check('choosing a main moves it', Ph.mainPhoto(lib).id, 'bbbbbb');
+check('and unmarks the other', lib.filter(function (p) { return p.main; }).length, 1);
+check('the main leads the gallery order', Ph.galleryOrder(lib)[0].id, 'bbbbbb');
+
+lib = Ph.addPhoto(lib, photo('cccccc', '2026-09-15'));
+check('behind the main, newest first', Ph.galleryOrder(lib).map(function (p) { return p.id; }), ['bbbbbb', 'cccccc', 'aaaaaa']);
+
+// Removing the lead promotes the next rather than leaving the page headless.
+lib = Ph.removePhoto(lib, 'bbbbbb');
+check('removing the main promotes another', Ph.mainPhoto(lib).id, 'cccccc');
+check('and it is still exactly one', lib.filter(function (p) { return p.main; }).length, 1);
+check('the removed photo is gone', lib.filter(function (p) { return p.id === 'bbbbbb'; }).length, 0);
+
+// Re-adding the same id replaces rather than duplicating.
+lib = Ph.addPhoto(lib, photo('cccccc', '2026-09-15'));
+check('the same id never appears twice', lib.filter(function (p) { return p.id === 'cccccc'; }).length, 1);
+
+check('removing everything empties cleanly',
+  Ph.removePhoto(Ph.removePhoto(lib, 'cccccc'), 'aaaaaa').length, 0);
+check('a url is built from the id', Ph.urlFor({ id: 'abc123' }), '/api/photo/abc123');
+check('no photo means no url', Ph.urlFor(null), '');
+
 // ---------- rankings, editable and clearable ----------
 const SD = require('./swimmer.js');
 check('the seed carries four rankings', Object.keys(SD.seedRankings()).length, 4);
