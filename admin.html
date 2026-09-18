@@ -240,15 +240,6 @@
     <div class="msg" id="importMsg"></div>
   </div></div>
 
-  <h2>Questionnaire answers</h2>
-  <div class="card"><div class="pad">
-    <p class="hint" style="margin:0 0 10px" id="qSource"></p>
-    <div class="msg info show" id="qReady" style="margin:0 0 14px"></div>
-    <div id="qFields"></div>
-    <button class="go" id="qSave" style="margin-top:6px">Save the answers</button>
-    <div class="msg" id="qMsg"></div>
-  </div></div>
-
   <h2>Interest emails</h2>
   <div class="card"><div class="pad">
     <p class="hint" id="windowNote" style="margin:0 0 12px"></p>
@@ -263,7 +254,6 @@
 <script src="convert.js"></script>
 <script src="school-utils.js"></script>
 <script src="roster.js"></script>
-<script src="questionnaire.js"></script>
 <script src="eligibility.js"></script>
 <script src="photos.js"></script>
 <script src="standards.js"></script>
@@ -344,10 +334,7 @@
       var raw = both[0] && Array.isArray(both[0].results) && both[0].results.length ? both[0].results : SEED;
       results = clean(raw);
       schools = both[1].schools || [];
-      if (both[2] && both[2].profile) {
-        rankings = window.SwimmerData.rankingsFrom(both[2].profile);
-        answers = both[2].profile.questionnaire || {};
-      }
+      if (both[2] && both[2].profile) rankings = window.SwimmerData.rankingsFrom(both[2].profile);
       photos = (both[3] && both[3].photos) || [];
       buildPickers();
       renderAll();
@@ -363,7 +350,6 @@
   function renderAll() {
     renderEligibility();
     renderRosterCount();
-    renderQuestionnaire();
     renderPhotos();
     renderRankings();
     renderBoard();
@@ -731,9 +717,7 @@
       next[input.dataset.rank] = { rank: Number(value), basis: 'Canada, for age' };
     });
     el('saveRanks').disabled = true;
-    api('/api/profile', { method: 'PUT', body: JSON.stringify({
-      profile: { rankings: next, questionnaire: answers }
-    }) })
+    api('/api/profile', { method: 'PUT', body: JSON.stringify({ profile: { rankings: next } }) })
       .then(function () {
         rankings = window.SwimmerData.rankingsFrom({ rankings: next });
         renderRankings();
@@ -971,107 +955,6 @@
       })
       .catch(function (err) { say('importMsg', 'bad', esc(err.message)); });
   });
-
-  // ---------- questionnaire answers ----------
-  // Schools ask the same things over and over. Having them in one place turns
-  // an evening of hunting for a counsellor's phone number into a few minutes
-  // of copying. The count beside each field is how many of 21 real forms
-  // actually asked for it, so the order is evidence rather than a guess.
-  var answers = {};
-
-  function autoFilled() {
-    var bests = S.personalBests(results);
-    var lines = Object.keys(bests).map(function (id) { return bests[id]; })
-      .sort(function (a, b) { return a.distance - b.distance || a.stroke.localeCompare(b.stroke); })
-      .map(function (b) { return b.name + ' ' + b.course + '  ' + b.time + '  (' + b.meet + ', ' + b.date + ')'; });
-
-    return {
-      bestTimes: lines.join('\n'),
-      club: SWIMMER.club,
-      clubCoach: SWIMMER.coach + (SWIMMER.contact.coachEmail ? ', ' + SWIMMER.contact.coachEmail : ''),
-      athleticHonours: (SWIMMER.recognition || []).map(function (r) { return r.label; }).join('; '),
-      video: SWIMMER.swimcloud,
-      gradYear: String(SWIMMER.classOf),
-      course: 'He races METRES. Label every time SCM or LCM. An unlabelled time is read as yards.'
-    };
-  }
-
-  function renderQuestionnaire() {
-    var Q = window.Questionnaire;
-    if (!Q) return;
-    var auto = autoFilled();
-    var ready = Q.readiness(answers, auto);
-
-    el('qSource').textContent = Q.FIELDS.length + ' fields, taken from ' + Q.SOURCE + ', ' + Q.RECORDED + '.';
-
-    el('qReady').innerHTML = '<strong>' + ready.mustAnswered + ' of ' + ready.mustTotal +
-      '</strong> of the fields most forms ask for are ready.' +
-      (ready.next ? '<br>Next to find: <strong>' + esc(ready.next.label) + '</strong>' : '<br>Everything a form is likely to ask for is on file.');
-
-    el('qFields').innerHTML = Q.groups().map(function (g) {
-      return '<div style="margin-bottom:18px">' +
-        '<div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;' +
-        'color:var(--ink-faint);font-weight:650;margin-bottom:9px">' + esc(g.name) + '</div>' +
-        g.fields.map(function (f) {
-          var value = f.auto && auto[f.key] ? auto[f.key] : (answers[f.key] || '');
-          var many = f.auto || value.indexOf('\n') !== -1 || value.length > 60;
-          return '<div style="margin-bottom:11px">' +
-            '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px">' +
-            '<label style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)">' +
-            esc(f.label) + '</label>' +
-            '<span class="conf" style="white-space:nowrap">' + f.asked + ' of 21 ask' +
-            (f.auto ? ' \u00b7 filled in' : '') + '</span></div>' +
-            (many
-              ? '<textarea data-q="' + esc(f.key) + '" style="min-height:' +
-                (f.auto ? '96' : '64') + 'px">' + esc(value) + '</textarea>'
-              : '<input data-q="' + esc(f.key) + '" value="' + esc(value) + '">') +
-            (f.note ? '<p class="hint" style="margin:5px 0 0">' + esc(f.note) + '</p>' : '') +
-            '<button class="minor" data-copy="' + esc(f.key) + '" style="margin-top:5px;font-size:12px;padding:5px 10px">Copy</button>' +
-            '</div>';
-        }).join('') + '</div>';
-    }).join('');
-
-    Array.prototype.forEach.call(el('qFields').querySelectorAll('[data-copy]'), function (b) {
-      b.addEventListener('click', function () {
-        var box = el('qFields').querySelector('[data-q="' + b.dataset.copy + '"]');
-        if (!box) return;
-        navigator.clipboard.writeText(box.value).then(function () {
-          b.textContent = 'Copied';
-          setTimeout(function () { b.textContent = 'Copy'; }, 1200);
-        });
-      });
-    });
-  }
-
-  el('qSave').addEventListener('click', function () {
-    var next = {};
-    Array.prototype.forEach.call(el('qFields').querySelectorAll('[data-q]'), function (box) {
-      var value = box.value.trim();
-      if (value) next[box.dataset.q] = value;
-    });
-    el('qSave').disabled = true;
-    // Kept alongside the rankings in the same profile record, so one read
-    // fetches everything the back end needs about Luke that is not a swim.
-    api('/api/profile', { method: 'PUT', body: JSON.stringify({
-      profile: { rankings: rankingsPayload(), questionnaire: next }
-    }) })
-      .then(function () {
-        answers = next;
-        renderQuestionnaire();
-        say('qMsg', 'ok', 'Saved.');
-      })
-      .catch(function (err) { say('qMsg', 'bad', esc(err.message)); })
-      .then(function () { el('qSave').disabled = false; });
-  });
-
-  // Saving either half of the profile must not wipe the other half.
-  function rankingsPayload() {
-    var out = {};
-    Object.keys(rankings).forEach(function (id) {
-      out[id] = { rank: rankings[id].rank, basis: rankings[id].basis };
-    });
-    return out;
-  }
 
   // ---------- emails ----------
   function renderWindow() {

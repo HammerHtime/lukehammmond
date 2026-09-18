@@ -34,7 +34,7 @@ function check(name, actual, expected) {
 // The script tags each page carries, in order. Keep these in step with the
 // pages, which is what the last test in this file checks.
 const PUBLIC = ['swim.js', 'swimmer.js', 'convert.js', 'photos.js', 'recruiting.js'];
-const ADMIN = ['swim.js', 'swimmer.js', 'convert.js', 'school-utils.js', 'roster.js', 'questionnaire.js', 'eligibility.js', 'photos.js', 'standards.js', 'board.js', 'recruiting.js'];
+const ADMIN = ['swim.js', 'swimmer.js', 'convert.js', 'school-utils.js', 'roster.js', 'eligibility.js', 'photos.js', 'standards.js', 'board.js', 'recruiting.js'];
 
 // One shared global, no `module`, exactly as a browser presents it.
 function loadLikeABrowser(files) {
@@ -95,7 +95,6 @@ if (adminScope) {
   ok('and never handed the seed', adminScope.Schools.seedSchools === undefined);
   ok('the board engine works in the browser', typeof adminScope.Board.scoreBoard === 'function');
   ok('the roster is published', Boolean(adminScope.Roster));
-  ok('the questionnaire is published', Boolean(adminScope.Questionnaire));
   ok('the eligibility rules are published', Boolean(adminScope.Eligibility));
   check('and carries every programme', adminScope.Roster.counts().total, 458);
 }
