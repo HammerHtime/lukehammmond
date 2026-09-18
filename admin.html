@@ -167,6 +167,23 @@
     <div class="msg" id="saveMsg"></div>
   </div></div>
 
+  <h2>Eligibility, what is next</h2>
+  <div class="card"><div class="pad">
+    <div id="eligNext"></div>
+    <div style="margin-top:16px">
+      <label for="courseCode">Will a course count toward the NCAA core?</label>
+      <p class="hint" style="margin:0 0 8px">Type an Ontario course code, ie, ENG4U or PSK4U.</p>
+      <input id="courseCode" placeholder="ENG4U" autocomplete="off" style="text-transform:uppercase">
+      <div class="msg" id="courseMsg"></div>
+    </div>
+    <div style="margin-top:16px">
+      <label for="markPct">What is a mark worth?</label>
+      <p class="hint" style="margin:0 0 8px">Ontario percentages convert coarsely. One mark can be worth a whole grade point.</p>
+      <input id="markPct" inputmode="numeric" placeholder="79" autocomplete="off" style="max-width:120px">
+      <div class="msg" id="markMsg"></div>
+    </div>
+  </div></div>
+
   <h2>Photos</h2>
   <div class="card"><div class="pad">
     <p class="hint" style="margin:0 0 12px">Add as many as you like. Pictures are shrunk in
@@ -247,6 +264,7 @@
 <script src="school-utils.js"></script>
 <script src="roster.js"></script>
 <script src="questionnaire.js"></script>
+<script src="eligibility.js"></script>
 <script src="photos.js"></script>
 <script src="standards.js"></script>
 <script src="board.js"></script>
@@ -343,6 +361,7 @@
   }
 
   function renderAll() {
+    renderEligibility();
     renderRosterCount();
     renderQuestionnaire();
     renderPhotos();
@@ -464,6 +483,49 @@
     }
     return lines.join('<br>');
   }
+
+  // ---------- eligibility ----------
+  function renderEligibility() {
+    var E = window.Eligibility;
+    if (!E) return;
+    var next = E.nextMilestones(today, 5);
+    el('eligNext').innerHTML = next.map(function (m) {
+      var urgent = m.by === 'now' || m.by.indexOf('HARD') !== -1;
+      return '<div style="border-left:3px solid ' + (urgent ? 'var(--warn)' : 'var(--line)') +
+        ';padding:2px 0 2px 12px;margin-bottom:13px">' +
+        '<div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;' +
+        'color:' + (urgent ? 'var(--warn)' : 'var(--ink-faint)') + '">' + esc(m.by) + '</div>' +
+        '<div style="font-weight:640;margin:2px 0 3px">' + esc(m.title) + '</div>' +
+        '<div class="ev-line" style="max-width:62ch">' + esc(m.detail) + '</div>' +
+        (m.why ? '<div class="ev-line" style="max-width:62ch;color:var(--ink)">' + esc(m.why) + '</div>' : '') +
+        '</div>';
+    }).join('');
+  }
+
+  el('courseCode').addEventListener('input', function () {
+    var E = window.Eligibility;
+    var value = el('courseCode').value.trim();
+    if (value.length < 6) { hide('courseMsg'); return; }
+    var r = E.checkCourse(value);
+    if (!r.ok) { say('courseMsg', 'bad', esc(r.reason)); return; }
+    say('courseMsg', r.approved === true ? 'ok' : (r.approved === false ? 'bad' : 'info'),
+      '<strong>' + (r.approved === true ? 'Counts, ' + r.credit + ' credit' :
+        (r.approved === false ? 'No NCAA credit' : 'Judged case by case')) + '</strong>' +
+      (r.name ? ' \u00b7 ' + esc(r.name) : '') + (r.level ? ' \u00b7 ' + esc(r.level) : '') +
+      '<br>' + esc(r.note));
+  });
+
+  el('markPct').addEventListener('input', function () {
+    var E = window.Eligibility;
+    var m = E.convertMark(el('markPct').value);
+    if (!m) { hide('markMsg'); return; }
+    say('markMsg', m.marksToNextPoint && m.marksToNextPoint <= 3 ? 'bad' : 'info',
+      '<strong>' + m.percent + '% is a ' + m.letter + ', worth ' + m.points + '.0</strong><br>' +
+      (m.marksToNextPoint
+        ? '<strong>' + m.marksToNextPoint + ' more mark' + (m.marksToNextPoint === 1 ? '' : 's') +
+          ' would be worth a whole grade point more.</strong>'
+        : 'Top band. The ' + m.wasted + ' marks above 80 earn nothing extra, ie, a 95 and an 80 are the same to the NCAA.'));
+  });
 
   // ---------- photos ----------
   var photos = [];

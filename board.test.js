@@ -312,6 +312,49 @@ check('a nonsense address is refused', Sc.normaliseSchool({ name: 'A', division:
 check('a school with no division is refused', Sc.normaliseSchool({ name: 'A' }).ok, false);
 check('verified is false without an address', Sc.normaliseSchool({ name: 'A', division: 'D1', verified: true }).school.verified, false);
 
+// ---------- Ontario eligibility ----------
+// Sourced to the NCAA Ontario country sheet dated September 2026, not to a
+// recruiting service. These are the rules that quietly cost an Ontario swimmer
+// a year or a grade point.
+const El = require('./eligibility.js');
+
+// The two courses a swimmer reaches for, and Luke's own stated academic
+// interest, are both worth nothing. This is the most expensive line in the file.
+check('Kinesiology earns no credit', El.checkCourse('PSK4U').approved, false);
+check('Exercise Science earns no credit', El.checkCourse('PSE4U').approved, false);
+check('English University Prep counts', El.checkCourse('ENG4U').approved, true);
+check('and is a full credit', El.checkCourse('ENG4U').credit, 1);
+check('an Applied course earns nothing', El.checkCourse('MFM2P').approved, false);
+check('a Workplace course earns nothing', El.checkCourse('MEL4E').approved, false);
+check('a College Prep course earns nothing', El.checkCourse('MCT4C').approved, false);
+check('Civics counts, at half a credit', El.checkCourse('CHV2O').credit, 0.5);
+check('Locally Developed is not assumed either way', El.checkCourse('ABC3L').approved, null);
+check('rubbish is refused', El.checkCourse('nope').ok, false);
+check('the grade is read from the fourth character', El.checkCourse('SBI4U').grade, 4);
+
+// The 80 percent cliff. A 79 and a 70 are both worth 3.0, an 80 and a 100 both
+// 4.0, so one mark at the boundary is worth a whole grade point.
+check('79 percent is a B', El.convertMark(79).points, 3);
+check('80 percent is an A', El.convertMark(80).points, 4);
+check('and 79 is one mark away', El.convertMark(79).marksToNextPoint, 1);
+check('95 wastes fifteen marks', El.convertMark(95).wasted, 15);
+check('a mark at the top has nowhere to go', El.convertMark(100).marksToNextPoint, 0);
+check('a nonsense mark returns nothing', El.convertMark(120), null);
+
+// The timeline has to be able to say what is next, not just what exists.
+const soon = El.nextMilestones('2026-09-18', 5);
+check('five things are next', soon.length, 5);
+ok('and they are in date order', soon[0].date <= soon[4].date);
+ok('four of them are due now', soon.filter(function (m) { return m.by === 'now'; }).length === 4);
+ok('the June 2027 date is on the list', El.MILESTONES.some(function (m) { return m.date === '2027-06-15'; }));
+ok('so is the seventh semester deadline', El.MILESTONES.some(function (m) { return m.by.indexOf('HARD') !== -1; }));
+check('nothing is overdue yet', El.overdue('2026-09-18').length, 0);
+
+// Carding is permitted. Families believe the opposite, and the app must not
+// repeat the myth.
+ok('the carding myth is recorded and corrected',
+  El.MYTHS.some(function (m) { return /[Cc]arding/.test(m.myth) && /permits|Bylaw 12\.1\.3\.1/.test(m.truth); }));
+
 // ---------- the questionnaire ----------
 // Built from 21 real forms read field by field, so every count is evidence.
 const Qn = require('./questionnaire.js');
@@ -348,7 +391,15 @@ check('a blank string does not count as an answer', Qn.readiness({ email: '   ' 
 // hand or copied from a recruiting site. That matters: the popular published
 // lists carry programmes cut years ago and miss ones recently added.
 const Ro = require('./roster.js');
-check('every programme is present', Ro.counts().total, 442);
+check('every programme is present', Ro.counts().total, 458);
+check('NAIA, from a different source entirely', Ro.counts().NAIA, 16);
+ok('and every NAIA entry says so', Ro.ROSTER.filter(function (s) { return s.division === 'NAIA'; })
+  .every(function (s) { return s.src === 'cscaa'; }));
+// Private versus public decides the money for a Canadian more than the swim
+// does: a private college gives merit aid a coach's letter can move, a public
+// campus is cheaper on sticker and gives an international almost nothing.
+ok('private and public are recorded', Ro.ROSTER.filter(function (s) { return s.private === true; }).length > 250);
+check('Ithaca is private', Ro.search('ithaca')[0].private, true);
 check('Division I', Ro.counts().D1, 137);
 check('Division II', Ro.counts().D2, 77);
 check('Division III', Ro.counts().D3, 228);
