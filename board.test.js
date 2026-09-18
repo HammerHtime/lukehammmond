@@ -992,6 +992,70 @@ check('removing everything empties cleanly',
 check('a url is built from the id', Ph.urlFor({ id: 'abc123' }), '/api/photo/abc123');
 check('no photo means no url', Ph.urlFor(null), '');
 
+// ---------- the sixteen core courses ----------
+// Sixteen is a shape to fill, not a total to reach. A student can hold twenty
+// approved credits and still fail because the English is short.
+// Division I from the NCAA Guide 2026-27. Division II from Division II Manual
+// Bylaw 14.2.8.2.1, revised 7/21/26.
+check('Division I wants sixteen', El.CORE.D1.total, 16);
+check('at a 2.3 core GPA', El.CORE.D1.gpa, 2.3);
+check('Division II wants sixteen too', El.CORE.D2.total, 16);
+check('at 2.2', El.CORE.D2.gpa, 2.2);
+check('the areas add up to sixteen in D1',
+  El.CORE.D1.areas.reduce(function (n, a) { return n + a.years; }, 0), 16);
+check('and in D2', El.CORE.D2.areas.reduce(function (n, a) { return n + a.years; }, 0), 16);
+// The difference that actually bites: D1 wants a fourth year of English and D2
+// does not, and only D1 locks ten of them in before the seventh semester.
+check('D1 wants four years of English', El.CORE.D1.areas[0].years, 4);
+check('D2 wants three', El.CORE.D2.areas[0].years, 3);
+check('only D1 has the lock-in', El.CORE.D2.lockIn, null);
+check('and it is ten, seven of them core', [El.CORE.D1.lockIn.count, El.CORE.D1.lockIn.inCore], [10, 7]);
+// Division III sets no NCAA academic bar at all, and saying "sixteen" there
+// would be inventing a rule.
+check('Division III sets no requirement', El.auditCore(['ENG4U'], 'D3').applies, false);
+ok('and says who decides instead', /university decides/.test(El.auditCore(['ENG4U'], 'D3').note));
+
+// Subject areas come from how the NCAA Ontario sheet groups its own approved
+// titles, not from what the subject sounds like.
+check('English is English', El.areaOf('ENG4U'), 'english');
+check('a native language course is too', El.areaOf('FRA3U'), 'english');
+check('maths is maths', El.areaOf('MHF4U'), 'math');
+check('science is science', El.areaOf('SBI3U'), 'science');
+check('history is social science', El.areaOf('CHC2D'), 'social');
+check('geography as well', El.areaOf('CGC1D'), 'social');
+check('core French is a language', El.areaOf('FSF3U'), 'language');
+check('philosophy has its own slot', El.areaOf('HZT4U'), 'philosophy');
+// Computer science is listed by the NCAA under BOTH maths and science. It is
+// recorded as maths, which is the safer of the two.
+check('computer science is filed under maths', El.areaOf('ICS4U'), 'math');
+check('a gym code is in no core area', El.areaOf('PPL4O'), null);
+
+// A full Ontario path that clears Division I.
+const fullPath = El.auditCore(['ENG1D', 'ENG2D', 'ENG3U', 'ENG4U', 'MPM1D', 'MPM2D', 'MCR3U',
+  'MHF4U', 'SNC1D', 'SNC2D', 'SBI3U', 'SCH4U', 'CHC2D', 'CGC1D', 'FSF1D', 'FSF2D'], 'D1');
+check('sixteen credits counted', fullPath.credits, 16);
+ok('and the shape is filled', fullPath.met);
+ok('every area met', fullPath.areas.every(function (a) { return a.met; }));
+
+// Twenty approved credits in the wrong shape still fails, which is the whole
+// reason this is a table and not a number.
+const lopsided = El.auditCore(['MPM1D', 'MPM2D', 'MCR3U', 'MHF4U', 'MCV4U', 'MDM4U',
+  'SNC1D', 'SNC2D', 'SBI3U', 'SCH4U', 'SPH4U', 'ICS4U', 'CHC2D', 'CGC1D', 'ENG1D', 'ENG2D'], 'D1');
+check('sixteen credits again', lopsided.credits, 16);
+ok('but it does not qualify', !lopsided.met);
+ok('and it names English as the hole', /english/.test(lopsided.sentence));
+
+// Courses that earn nothing are reported, not silently dropped.
+const withDuds = El.auditCore(['PSK4U', 'ENG4C', 'AMU3M', 'ENG4U'], 'D1');
+check('three of those four count for nothing', withDuds.rejected.length, 3);
+check('and only the U level English counts', withDuds.credits, 1);
+ok('kinesiology is named in the rejects',
+  withDuds.rejected.some(function (r) { return r.code === 'PSK4U'; }));
+// Civics is half a credit, so it can never fill a whole year on its own.
+check('Civics counts half', El.auditCore(['CHV2O'], 'D1').credits, 0.5);
+check('an empty list clears nothing', El.auditCore([], 'D1').met, false);
+check('and an unknown division is refused', El.auditCore(['ENG4U'], 'D9'), null);
+
 // ---------- de-streamed Grade 9, ie, the codes on his actual transcript ----------
 // Ontario de-streamed Grade 9 in 2021 and the new codes end in W, which is not
 // in the NCAA fifth-character table because the table predates them. The

@@ -117,6 +117,150 @@ function checkCourse(code) {
 }
 
 // ---------------------------------------------------------------------------
+// The sixteen core courses
+// ---------------------------------------------------------------------------
+// Sixteen is not a total to reach, it is a shape to fill. A student can have
+// twenty approved credits and still fail, because the English is short and the
+// extras went somewhere that does not count.
+//
+// Division I: NCAA Guide for the College-Bound Student-Athlete 2026-27,
+// Division I core-course requirement table.
+// Division II: NCAA Division II Manual, Bylaw 14.2.8.2.1, revised 7/21/26
+// effective 8/1/26. Both read 18 September 2026.
+//
+// Division III sets no NCAA academic requirement at all. The university decides,
+// and its own admissions bar is usually far higher than anything below.
+const CORE = {
+  D1: {
+    division: 'NCAA Division I', total: 16, gpa: 2.3,
+    // The 10/7 rule, which only Division I has.
+    lockIn: { count: 10, inCore: 7, when: 'before the start of the seventh semester' },
+    areas: [
+      { key: 'english', name: 'English', years: 4 },
+      { key: 'math', name: 'Mathematics, at Algebra I or higher', years: 3 },
+      { key: 'science', name: 'Natural or physical science, with a lab year if the school offers one', years: 2 },
+      { key: 'extraCore', name: 'More English, maths or science', years: 1 },
+      { key: 'social', name: 'Social science', years: 2 },
+      { key: 'extra', name: 'Anything above, or a language, philosophy or comparative religion', years: 4 }
+    ]
+  },
+  D2: {
+    division: 'NCAA Division II', total: 16, gpa: 2.2,
+    lockIn: null,
+    areas: [
+      { key: 'english', name: 'English', years: 3 },
+      { key: 'math', name: 'Mathematics, at Algebra I or higher', years: 2 },
+      { key: 'science', name: 'Natural or physical science', years: 2 },
+      { key: 'extraCore', name: 'More English, maths or science', years: 3 },
+      { key: 'social', name: 'Social science', years: 2 },
+      { key: 'extra', name: 'Anything above, or a language, philosophy or comparative religion', years: 4 }
+    ]
+  },
+  D3: {
+    division: 'NCAA Division III', total: null, gpa: null, lockIn: null, areas: [],
+    note: 'Division III sets no NCAA academic requirement. The university decides, and its own admissions bar is normally the harder one.'
+  }
+};
+
+// Which NCAA area an Ontario course falls in, by the first three letters of the
+// code. Taken from how the NCAA Ontario sheet itself groups its approved
+// titles, not from what the subject sounds like.
+//
+// Computer science, ie, ICS, is listed by the NCAA under BOTH maths and
+// science. It is recorded here as maths, which is the safer of the two, and the
+// note says so rather than letting it look settled.
+const AREAS = {
+  english: ['ENG', 'EAE', 'ENL', 'EAU', 'EAL', 'NBE', 'ETS', 'EWC', 'EAT', 'ETC', 'FRA', 'FRL'],
+  math: ['MPM', 'MTH', 'MCR', 'MCF', 'MHF', 'MCV', 'MDM', 'MGA', 'MCB', 'ICS'],
+  science: ['SNC', 'SBI', 'SCH', 'SPH', 'SES', 'SVN'],
+  social: ['CHC', 'CHV', 'CHA', 'CHI', 'CHW', 'CHY', 'CGC', 'CGD', 'CGF', 'CGO', 'CGR', 'CGU',
+    'CGW', 'CIA', 'CIE', 'CIU', 'CLN', 'CPW', 'HSB', 'HSC', 'HSE', 'HSG', 'HSP', 'HHG', 'HHS',
+    'NDA', 'NDG', 'NDW', 'LVV'],
+  language: ['FSF', 'FEF', 'FIF', 'LWS', 'LWI', 'LWG', 'LWP', 'LKD', 'LKJ', 'LKM', 'LBG', 'LVG',
+    'LVL', 'LYH', 'LRP', 'LRQ', 'LRZ', 'LRU', 'LLU', 'LBC', 'LPV'],
+  philosophy: ['HZT', 'HZB', 'HRT', 'HRE']
+};
+
+function areaOf(code) {
+  const c = String(code || '').trim().toUpperCase().slice(0, 3);
+  const keys = Object.keys(AREAS);
+  for (let i = 0; i < keys.length; i += 1) {
+    if (AREAS[keys[i]].indexOf(c) !== -1) return keys[i];
+  }
+  return null;
+}
+
+// Fill the shape, in the order the NCAA fills it, ie, the named areas first and
+// only then the flexible ones. Doing it the other way round would let a
+// language soak up a slot that English needed and report a pass that is not one.
+function auditCore(codes, division) {
+  const spec = CORE[String(division || 'D1').toUpperCase()];
+  if (!spec) return null;
+  if (!spec.total) {
+    return { division: spec.division, applies: false, note: spec.note, areas: [], credits: 0 };
+  }
+
+  const counted = { english: 0, math: 0, science: 0, social: 0, language: 0, philosophy: 0 };
+  const rejected = [];
+  let credits = 0;
+
+  (codes || []).forEach(function (code) {
+    const checked = checkCourse(code);
+    if (!checked.ok || checked.approved !== true) {
+      rejected.push({ code: String(code).toUpperCase(), why: checked.reason || checked.note });
+      return;
+    }
+    const area = areaOf(code);
+    if (!area) {
+      rejected.push({ code: String(code).toUpperCase(), why: 'Approved level, but not in an NCAA core subject area.' });
+      return;
+    }
+    counted[area] += checked.credit;
+    credits += checked.credit;
+  });
+
+  // The pools, spent in order. What is left over at each step is what can go
+  // toward the flexible slots underneath.
+  const left = Object.assign({}, counted);
+  const filled = spec.areas.map(function (a) {
+    let have = 0;
+    if (a.key === 'extraCore') {
+      // Whatever English, maths and science is left over once their own slots
+      // are filled. Which of the three it comes out of changes nothing but the
+      // bookkeeping, so it is spent in a fixed order.
+      have = Math.min(left.english + left.math + left.science, a.years);
+      let need = have;
+      ['english', 'math', 'science'].forEach(function (k) {
+        const spend = Math.min(left[k], need);
+        left[k] -= spend;
+        need -= spend;
+      });
+    } else if (a.key === 'extra') {
+      have = left.english + left.math + left.science + left.social + left.language + left.philosophy;
+      have = Math.min(have, a.years);
+    } else {
+      have = Math.min(left[a.key], a.years);
+      left[a.key] -= have;
+    }
+    return {
+      key: a.key, name: a.name, need: a.years, have: have,
+      short: Math.max(0, a.years - have), met: have >= a.years
+    };
+  });
+
+  const short = filled.filter(function (f) { return !f.met; });
+  return {
+    division: spec.division, applies: true, gpa: spec.gpa, lockIn: spec.lockIn,
+    total: spec.total, credits: credits, areas: filled, rejected: rejected,
+    met: short.length === 0 && credits >= spec.total,
+    short: short,
+    sentence: short.length === 0 && credits >= spec.total
+      ? 'The shape is filled for ' + spec.division + '.'
+      : 'Short in ' + short.map(function (f) { return f.name.split(',')[0].toLowerCase(); }).join(', ') + '.'
+  };
+}
+
+// ---------------------------------------------------------------------------
 // How an Ontario mark converts
 // ---------------------------------------------------------------------------
 // Coarse, and that coarseness is worth money. A 79 and a 70 are both 3.0. An
@@ -273,6 +417,10 @@ const api = {
   NOT_APPROVED: NOT_APPROVED,
   HALF_CREDIT: HALF_CREDIT,
   DESTREAMED: DESTREAMED,
+  CORE: CORE,
+  AREAS: AREAS,
+  areaOf: areaOf,
+  auditCore: auditCore,
   BANDS: BANDS,
   MILESTONES: MILESTONES,
   milestones: milestones,
