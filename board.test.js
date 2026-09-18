@@ -227,6 +227,40 @@ check('low confidence where none were gathered', row('hamilton').confidence, 'Lo
 check('RIT is benchmarked against a champion', row('rit').comparisons[0].basis, 'champion');
 check('American is benchmarked against a roster swimmer', row('american').comparisons[0].basis, 'roster');
 
+// ---------- where he would slot into the squad ----------
+// The bar was not understood, and that is a design failure rather than a
+// reading failure. "Fourth fastest of five" needs no explaining.
+const bonniesPlace = B.placeIn(S, row('stbonaventure').comparisons[0]);
+check('he slots in fifth of six', bonniesPlace.position, 5);
+check('the squad counts him', bonniesPlace.of, 6);
+check('four of them are quicker', bonniesPlace.behind, 4);
+check('and he is quicker than one', bonniesPlace.fasterThan, 1);
+ok('the ladder holds everyone including him', bonniesPlace.ladder.length === 6);
+check('and he is in the right rung', bonniesPlace.ladder[4].mine, true);
+ok('the ladder is in order', bonniesPlace.ladder.every(function (r, i, all) {
+  return i === 0 || all[i - 1].hundredths <= r.hundredths; }));
+
+// The middle swimmer, not the mean. One slow swim drags an average somewhere
+// no real swimmer sits.
+check('Clarkson has him fastest', B.placeIn(S, row('clarkson').comparisons[0]).position, 1);
+ok('and he beats their middle', B.placeIn(S, row('clarkson').comparisons[0]).aboveMedian);
+ok('at St Bonaventure he does not', !bonniesPlace.aboveMedian);
+
+// This board exists to help Luke choose, so every rung says what the year
+// would look like, not whether he is good enough.
+ok('leading a group reads as leading it',
+  /lead their distance group/.test(B.placeIn(S, row('clarkson').comparisons[0]).meaning));
+ok('the back half reads as developing',
+  /back half/.test(bonniesPlace.meaning));
+ok('and being last says how long before he races',
+  /before he races/.test(B.placeIn(S, row('saintpeters').comparisons[2]).meaning));
+
+// One benchmark cannot be ranked against, and inventing a squad from it would
+// be inventing evidence.
+check('a single benchmark yields no ladder', B.placeIn(S, row('niagara').comparisons[0]), null);
+check('nor does nothing at all', B.placeIn(S, { theirTimes: [] }), null);
+check('ordinals read as words', B.ordinal(4), 'fourth');
+
 // ---------- the comparison scale ----------
 // It draws, it does not decide. These checks exist to keep it that way.
 const bonnies = row('stbonaventure').comparisons[0];
@@ -370,7 +404,7 @@ const clubDraft = R.draftEmail({
 ok('the email names the club', clubDraft.body.indexOf('Mississauga Swim Club') !== -1);
 ok('and does not put it in the wrong town',
   clubDraft.body.indexOf('Mississauga Swim Club in Etobicoke') === -1);
-ok('while still saying where he lives', clubDraft.body.indexOf('I live in Etobicoke') !== -1);
+ok('while still saying where he lives', clubDraft.body.indexOf('from Etobicoke, Ontario') !== -1);
 ok('and names the new coach', clubDraft.body.indexOf('Aris Bousoulegkas') !== -1);
 
 // ---------- the club coach ----------
@@ -392,7 +426,7 @@ const withCoach = R.draftEmail({
   results: results, today: '2026-09-18', profileUrl: 'https://example.org',
   school: { id: 'x', name: 'X', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
 });
-ok('and names them once one is set', withCoach.body.indexOf('My club coach is A New Coach') !== -1);
+ok('and names them once one is set', withCoach.body.indexOf('My coach A New Coach') !== -1);
 
 // The old name must not survive anywhere, including the hand-written markup,
 // which is where two of the four copies were.
@@ -410,11 +444,30 @@ const draft = R.draftEmail({
   school: { id: 'canisius', name: 'Canisius University', coach: 'Pat Smith', email: 'coach@canisius.edu', division: 'D1' }
 });
 ok('the email greets the coach by name', draft.body.indexOf('Dear Coach Smith') === 0);
+// The rewrite briefly stopped naming the school anywhere in the body. Without
+// a personal note there was nothing school-specific at all, which is worse
+// than the form letter it replaced.
 ok('the email names the school', draft.body.indexOf('Canisius University') !== -1);
 ok('the email carries the 400 free', draft.body.indexOf('4:10.86') !== -1);
 ok('the email carries the profile link', draft.body.indexOf('https://example.org?c=canisius') !== -1);
 ok('the email explains the reply date', draft.body.indexOf('15 June 2027') !== -1);
-check('the email has no warnings when the school is complete', draft.warnings.length, 0);
+// A school with a contact but no personal note still warns, deliberately. The
+// thing that gets an email deleted is that it could have gone to two hundred
+// programmes, and no template can supply the line that fixes that.
+check('a school with no personal note still warns', draft.warnings.length, 1);
+ok('and the warning says what to do', /why this school/i.test(draft.warnings[0]));
+const personalised = R.draftEmail({
+  swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
+  profileUrl: 'https://example.org',
+  school: { id: 'canisius', name: 'Canisius University', coach: 'Pat Smith',
+    email: 'coach@canisius.edu', division: 'D1',
+    personalNote: 'Buffalo is an easy drive from home and I have watched your distance group.' }
+});
+check('a personalised one raises nothing', personalised.warnings.length, 0);
+ok('and it uses the line rather than the generic one',
+  personalised.body.indexOf('Buffalo is an easy drive') !== -1);
+ok('dropping the generic sentence when it does',
+  personalised.body.indexOf('I\u2019ve been looking at') === -1);
 
 // The email for a real school, end to end.
 const realDraft = R.draftEmail({
@@ -424,13 +477,46 @@ const realDraft = R.draftEmail({
 });
 check('it is addressed to the verified address', realDraft.to, 'medo001@gannon.edu');
 ok('it greets Coach Medo', realDraft.body.indexOf('Dear Coach Medo') === 0);
-check('and raises no warnings', realDraft.warnings.length, 0);
+check('and warns only that it needs a personal line', realDraft.warnings.length, 1);
 
 const noContact = R.draftEmail({
   swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
   profileUrl: 'https://example.org', school: { id: 'x', name: 'X', division: 'D1' }
 });
-check('a missing coach email is a warning', noContact.warnings.length, 1);
+check('a missing coach email is a warning', noContact.warnings.length, 2);
+
+// ---------- the email reads like a person wrote it ----------
+// It read like a form letter. Coaches described inboxes in the hundreds, and
+// the thing that gets one deleted is that it could have gone to anyone.
+const voice = R.draftEmail({
+  swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
+  profileUrl: 'https://example.org',
+  school: { id: 'x', name: 'X University', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
+});
+ok('it does not open with "My name is"', voice.body.indexOf('My name is') === -1);
+ok('nor announce that it is writing', voice.body.indexOf('I am writing because') === -1);
+ok('nobody "carries" a GPA', voice.body.indexOf('carry a') === -1);
+ok('and it does not thank them for their time', voice.body.indexOf('Thank you for your time') === -1);
+
+// The Junior Trials gap came off. A US coach carries his own standards and a
+// Canadian cut is noise to him, which was already true of the page.
+ok('no Junior Trials gap', voice.body.indexOf('Junior Trials') === -1);
+
+// The improvement curve went in, because it is the strongest thing he has and
+// the first version left it out completely.
+ok('the curve is in the email', voice.body.indexOf('is my main event') !== -1);
+ok('said in words, not as a signed duration', voice.body.indexOf('a minute and ten seconds') !== -1);
+ok('and it claims every season only when true', voice.body.indexOf('faster every season') !== -1);
+
+// Small numbers are spelled out in a sentence.
+check('a gap under a minute', R.plainGap(S, -213), 'two seconds');
+check('a gap over one', R.plainGap(S, -6967), 'a minute and ten seconds');
+check('an exact minute', R.plainGap(S, -6000), 'a minute');
+check('and big numbers stay numerals', R.plainGap(S, -3050), '30 seconds');
+
+// The 400 IM is not the "400 im".
+check('an initialism survives being said aloud', R.spoken({ distance: 400, stroke: 'im' }), '400 IM');
+check('an ordinary stroke does not', R.spoken({ distance: 400, stroke: 'free' }), '400 free');
 
 // ---------- the importer ----------
 const pasted = Sc.parsePaste([

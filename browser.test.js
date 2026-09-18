@@ -132,7 +132,9 @@ ok('the hero box says it is a ranking', /Ranked in Canada/.test(profileSource));
 ok('the page never calls a ranking a place', !/>Place</.test(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8')));
 
 const recruitSource = fs.readFileSync(path.join(__dirname, 'recruiting.js'), 'utf8');
-ok('the coach email calls it a ranking too', /ranked #/.test(recruitSource));
+// The email says "#2 in Canada for my age", which is a ranking stated as one
+// without the word. What it must never do is imply a finishing place.
+ok('the coach email states a ranking, not a placing', /in Canada for my age/.test(recruitSource));
 
 // ---------- the pages load what this file claims they load ----------
 function tagsIn(page) {

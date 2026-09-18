@@ -99,6 +99,42 @@
   details summary{cursor:pointer;font-size:13px;color:var(--pool);font-weight:600}
   details[open] summary{margin-bottom:7px}
 
+  /* Each school is its own card. In a table they ran together and it was hard
+     to tell where one ended and the next began. */
+  .school{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+  .school-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:4px}
+  .school-name{font-size:16.5px;font-weight:680;letter-spacing:-.01em;line-height:1.25}
+  .school-where{font-size:12.5px;color:var(--ink-faint);margin-top:2px}
+  .school-tags{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:10px 0 0}
+  .tag{font-size:11.5px;font-weight:640;border-radius:6px;padding:3px 9px;
+    background:var(--line-soft);color:var(--ink-soft);white-space:nowrap}
+  .tag.fit{background:var(--pool-wash);color:var(--pool)}
+  .tag.fit-good{background:var(--good-wash);color:var(--good)}
+  .tag.fit-warn{background:var(--warn-wash);color:var(--warn)}
+  .school-note{font-size:13px;color:var(--ink-soft);line-height:1.55;margin:11px 0 0;max-width:72ch}
+  .school-strips{margin-top:16px;padding-top:15px;border-top:1px solid var(--line-soft);
+    display:grid;gap:18px 26px;grid-template-columns:1fr}
+  @media(min-width:700px){.school-strips{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}}
+  .school-none{margin-top:14px;padding-top:13px;border-top:1px solid var(--line-soft);
+    font-size:13px;color:var(--ink-faint)}
+  .school-actions{margin-top:15px;padding-top:14px;border-top:1px solid var(--line-soft);
+    display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+
+  /* How to read the strips. It needs saying once, at the top, in the thing
+     itself. Explaining it in conversation does not help anyone looking at it
+     six months from now. */
+  .legend{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:15px 17px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .legend h3{margin:0 0 4px;font-size:13.5px;font-weight:680}
+  .legend p{margin:0 0 12px;font-size:13px;color:var(--ink-soft);line-height:1.55;max-width:74ch}
+  .legend-key{display:flex;gap:20px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft)}
+  .legend-key span{display:flex;align-items:center;gap:7px}
+  .legend-swatch{display:inline-block;width:3px;height:15px;border-radius:2px}
+  .legend-tick{display:inline-block;width:2px;height:11px;background:var(--ink-faint);border-radius:1px}
+  .legend-band{display:inline-block;width:26px;height:8px;background:var(--pool-wash);
+    border:1px solid var(--line);border-radius:3px}
+
   /* The comparison strip. Fast is on the left, the way a results sheet reads. */
   .cmp{min-width:0}
   .cmp-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;
@@ -197,7 +233,7 @@
   </div></div>
 
   <h2>The board</h2>
-  <div class="card scroll"><table id="boardTable"></table></div>
+  <div id="boardTable"></div>
   <p class="hint" id="boardNote"></p>
 
   <h2>What a drop would unlock</h2>
@@ -279,6 +315,9 @@
   'use strict';
   var S = window.Swim, C = window.Convert, St = window.Standards,
       B = window.Board, R = window.Recruiting;
+  // The programme line needs the yards conversion, and recruiting.js does not
+  // import convert.js. Handed over explicitly rather than reached for.
+  if (R && R.useConverter && C) R.useConverter(function (swim, result) { return C.toYards(swim, result); });
   var SWIMMER = window.SwimmerData.SWIMMER, SEED = window.SwimmerData.SEED_RESULTS;
 
   function el(id) { return document.getElementById(id); }
@@ -810,84 +849,166 @@
   // pale band is the range they cover, and the coloured bar is Luke. Reading
   // it takes no arithmetic, which is the whole point.
   function strip(c) {
-    var sc = B.scalePositions(c);
-    if (!sc) return '';
+    var place = B.placeIn(S, c);
     var good = c.ahead || c.inside;
     var tone = good ? 'good' : 'warn';
+    var event = esc(c.event.replace('-SCY', '').replace(/-/g, ' '));
 
-    var ticks = sc.theirs.map(function (t) {
-      return '<span class="cmp-tick" style="left:' + t.pos.toFixed(2) + '%"></span>';
+    // One benchmark cannot be ranked against. Say what is known and stop.
+    if (!place) {
+      return '<div class="cmp">' +
+        '<div class="cmp-head"><span class="cmp-ev">' + event + '</span>' +
+        '<span class="cmp-mine ' + tone + '">' + esc(c.mine) + '</span></div>' +
+        '<p class="cmp-basis">Their ' + esc(c.basisLabel) + ' swam ' + esc(c.theirs) + '. ' +
+        (c.ahead ? 'He is quicker.' : 'He is ' + esc(c.gapText.replace('+', '')) + ' behind that.') +
+        ' Only one time on file here, so there is no squad to rank him in yet.' +
+        (c.sourceUrl ? ' <a href="' + esc(c.sourceUrl) + '" target="_blank" rel="noopener">source</a>' : '') +
+        '</p></div>';
+    }
+
+    // The ladder. Their squad in order with him slotted into it, which answers
+    // "where would I fit" without anyone having to interpret a scale.
+    var ladder = place.ladder.map(function (row) {
+      return '<div style="display:flex;align-items:center;gap:9px;padding:3px 0;' +
+        (row.mine ? 'font-weight:700;' : 'color:var(--ink-soft);') + '">' +
+        '<span style="width:11px;color:' + (row.mine ? 'var(--' + tone + ')' : 'var(--line)') +
+        ';font-size:12px">' + (row.mine ? '\u25b8' : '\u00b7') + '</span>' +
+        '<span style="font-variant-numeric:tabular-nums;font-size:13.5px;' +
+        (row.mine ? 'color:var(--' + tone + ')' : '') + '">' + esc(row.time) + '</span>' +
+        (row.mine ? '<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;' +
+          'color:var(--' + tone + ')">Luke</span>' : '') +
+        '</div>';
     }).join('');
 
-    var band = sc.band
-      ? '<span class="cmp-band" style="left:' + sc.band.from.toFixed(2) + '%;width:' +
-        Math.max(0.6, sc.band.to - sc.band.from).toFixed(2) + '%"></span>'
-      : '';
-
-    // The two ends are pinned left and right so they can never collide, and
-    // his own time sits up on the head line where it has room. A label
-    // positioned over the mark overlapped whenever two times were close.
-    var ends = sc.theirs.length > 1
-      ? '<span>' + esc(S.formatTime(sc.fastest)) + '</span><span>' + esc(S.formatTime(sc.slowest)) + '</span>'
-      : '<span>their ' + esc(S.formatTime(sc.fastest)) + '</span><span></span>';
-
     return '<div class="cmp">' +
-      '<div class="cmp-head"><span class="cmp-ev">' +
-        esc(c.event.replace('-SCY', '').replace(/-/g, ' ')) + '</span>' +
-        '<span><span class="cmp-mine ' + tone + '">' + esc(c.mine) + '</span> ' +
-        '<span class="cmp-verdict ' + tone + '">' + esc(sc.verdict) + '</span></span></div>' +
-      '<div class="cmp-track"><span class="cmp-rail"></span>' + band + ticks +
-        '<span class="cmp-me ' + tone + '" style="left:' + sc.mine.pos.toFixed(2) + '%"></span></div>' +
-      '<div class="cmp-scale">' + ends + '</div>' +
-      '<div class="cmp-basis">' + esc(c.basisLabel) + (c.context ? ', ' + esc(c.context) : '') +
+      '<div class="cmp-head"><span class="cmp-ev">' + event + '</span>' +
+      '<span class="cmp-verdict ' + tone + '">' + esc(place.sentence) + '</span></div>' +
+      '<div style="margin:8px 0 0">' + ladder + '</div>' +
+      '<p class="cmp-basis" style="margin-top:10px">' + esc(place.meaning) + '</p>' +
+      '<p class="cmp-basis" style="margin-top:6px;opacity:.8">Their middle swimmer is ' +
+        esc(place.median) + '. ' + esc(c.basisLabel) +
+        (c.context ? ', ' + esc(c.context) : '') +
         (c.sourceUrl ? ' <a href="' + esc(c.sourceUrl) + '" target="_blank" rel="noopener">source</a>' : '') +
-      '</div></div>';
+      '</p></div>';
   }
 
   function renderBoard() {
     var rows = B.scoreBoard(S, C.yardBests(S, results), schools);
-    var head = '<thead><tr><th>School</th><th>Priority</th><th>Fit</th>' +
-      '<th>Confidence</th><th>Status</th></tr></thead>';
 
-    var body = rows.map(function (r) {
+    var legend =
+      '<div class="legend">' +
+      '<h3>How to read each event</h3>' +
+      '<p>Every event below shows that programme\u2019s swimmers in order, quickest first, ' +
+      'with Luke slotted into where his converted time would put him. The question it answers ' +
+      'is not whether he is fast enough for them. It is what his year would look like if he ' +
+      'went there, ie, would he be racing, chasing, or waiting.</p>' +
+      '<div class="legend-key">' +
+      '<span><i class="legend-swatch" style="background:var(--good)"></i> in the front half, contributing</span>' +
+      '<span><i class="legend-swatch" style="background:var(--warn)"></i> in the back half, developing</span>' +
+      '<span>Their middle swimmer is the line between the two</span>' +
+      '</div></div>';
+
+    var cards = rows.map(function (r) {
       var p = r.recordedPriority || '';
-      // Two rows per school. The summary across the top, then the comparison
-      // strips on their own full width row underneath. Seven columns and a
-      // picture will not share one line, and squeezing them clips the picture.
-      var summary = '<tr class="row-top">' +
-        '<td><div style="display:flex;gap:9px;align-items:flex-start">' + badge(r.school) +
-          '<div><strong>' + esc(r.school.name) + '</strong>' +
-          '<div class="conf">' + esc(r.school.division) +
-            (r.school.conference ? ', ' + esc(r.school.conference) : '') + '</div>' +
-          '</div></div></td>' +
-        '<td><span class="p ' + (p || 'none') + '">' + esc(p || 'unset') + '</span>' +
-          (r.disagrees ? '<div class="differs">engine says ' + esc(r.suggestedPriority) + '</div>' : '') + '</td>' +
-        '<td>' + esc(r.computedFit) + '</td>' +
-        '<td class="conf">' + esc(r.confidence) + '</td>' +
-        '<td>' + esc(r.school.status || 'Not contacted') +
-          (r.school.lastContact ? '<div class="conf">' + esc(r.school.lastContact) + '</div>' : '') + '</td>' +
-        '</tr>';
+      var tone = r.bestFit === 'Current fit' ? 'fit-good'
+        : (r.computedFit === 'Not assessed' ? '' : (r.worstFit === 'Reach' ? 'fit-warn' : 'fit'));
 
-      var detail = '<tr class="row-detail"><td colspan="5">' +
+      return '<div class="school">' +
+        '<div class="school-head">' + badge(r.school) +
+          '<div style="min-width:0;flex:1">' +
+            '<div class="school-name">' + esc(r.school.name) + '</div>' +
+            '<div class="school-where">' + esc(r.school.division) +
+              (r.school.conference ? ' \u00b7 ' + esc(r.school.conference) : '') +
+              (r.school.state ? ' \u00b7 ' + esc(r.school.state) : '') + '</div>' +
+          '</div>' +
+          '<span class="p ' + (p || 'none') + '">' + esc(p || 'unset') + '</span>' +
+        '</div>' +
+
+        '<div class="school-tags">' +
+          (r.computedFit !== 'Not assessed'
+            ? '<span class="tag ' + tone + '">' + esc(r.computedFit) + '</span>' : '') +
+          '<span class="tag">' + esc(r.confidence) + ' confidence</span>' +
+          '<span class="tag">' + esc(r.school.status || 'Not contacted') + '</span>' +
+          (r.school.verified ? '<span class="tag fit-good">contact on file</span>' : '') +
+          (r.disagrees
+            ? '<span class="tag fit-warn">engine reads it ' + esc(r.suggestedPriority) + '</span>' : '') +
+        '</div>' +
+
         (r.school.note ? '<p class="school-note">' + esc(r.school.note) + '</p>' : '') +
-        (r.comparisons.length
-          ? '<div class="cmp-grid">' + r.comparisons.map(strip).join('') + '</div>'
-          : '<p class="conf" style="margin:0">No swimmer times gathered for this programme yet, ' +
-            'so it is not scored. That is silence, not a verdict.</p>') +
-        '</td></tr>';
 
-      return summary + detail;
+        (r.comparisons.length
+          ? '<div class="school-strips">' + r.comparisons.map(strip).join('') + '</div>'
+          : '<div class="school-none">No swimmer times gathered for this programme yet, so it ' +
+            'is not scored. That is silence, not a verdict.</div>') +
+
+        '<div class="school-actions">' +
+          (r.school.email
+            ? '<button class="minor" data-email="' + esc(r.school.id) + '">Email ' +
+              esc(r.school.coach ? 'Coach ' + R.lastName(r.school.coach) : 'the coach') + '</button>'
+            : '<span class="conf">No coach address on file, so there is nobody to write to yet.</span>') +
+          (r.school.staffUrl
+            ? '<a class="minor" style="text-decoration:none" href="' + esc(r.school.staffUrl) +
+              '" target="_blank" rel="noopener">Staff page</a>' : '') +
+        '</div>' +
+        '<div data-draft="' + esc(r.school.id) + '"></div>' +
+        '</div>';
     }).join('');
 
-    el('boardTable').innerHTML = head + '<tbody>' + body + '</tbody>';
+    el('boardTable').innerHTML = legend + cards;
+
+    // Each button carries its own school, so the draft is always for the coach
+    // named on that card. Writing to the wrong coach is the one mistake this
+    // screen could make that a person would not catch.
+    Array.prototype.forEach.call(el('boardTable').querySelectorAll('[data-email]'), function (b) {
+      b.addEventListener('click', function () { draftFor(b.dataset.email); });
+    });
 
     var unassessed = rows.filter(function (r) { return r.evidenceCount === 0; }).length;
     var disagreeing = rows.filter(function (r) { return r.disagrees; }).length;
     el('boardNote').innerHTML =
       'Priority is relevance, not quality. Confidence is about the evidence, not the odds. ' +
-      (unassessed ? '<strong>' + unassessed + '</strong> schools have no swimmer times gathered, ' +
-        'so they read not assessed rather than being scored on nothing. ' : '') +
-      (disagreeing ? '<strong>' + disagreeing + '</strong> disagree with the recorded priority.' : '');
+      (unassessed ? '<strong>' + unassessed + '</strong> have no swimmer times gathered. ' : '') +
+      (disagreeing ? '<strong>' + disagreeing + '</strong> read differently to the recorded priority.' : '');
+  }
+
+  // The draft, written for one school and shown on that school's own card.
+  function draftFor(schoolId) {
+    var school = schools.filter(function (s) { return s.id === schoolId; })[0];
+    var host = el('boardTable').querySelector('[data-draft="' + schoolId + '"]');
+    if (!school || !host) return;
+
+    // Already open, so close it. A board of seventeen open drafts is unusable.
+    if (host.innerHTML) { host.innerHTML = ''; return; }
+
+    var draft = R.draftEmail({
+      swim: S, standards: St, swimmer: SWIMMER, results: results, rankings: rankings,
+      today: today, profileUrl: location.origin, school: school
+    });
+
+    var mailto = 'mailto:' + encodeURIComponent(draft.to) +
+      '?subject=' + encodeURIComponent(draft.subject) +
+      '&body=' + encodeURIComponent(draft.body);
+
+    host.innerHTML =
+      '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)">' +
+      (draft.warnings.length
+        ? '<div class="msg show bad" style="margin:0 0 11px">' +
+          draft.warnings.map(esc).join('<br>') + '</div>' : '') +
+      '<p class="hint" style="margin:0 0 8px"><strong>To</strong> ' + esc(draft.to) +
+      '<br><strong>Subject</strong> ' + esc(draft.subject) + '</p>' +
+      '<pre class="draft">' + esc(draft.body) + '</pre>' +
+      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
+      '<a class="minor" style="text-decoration:none" href="' + esc(mailto) + '">Open in your email</a>' +
+      '<button class="minor" data-copydraft="' + esc(schoolId) + '">Copy the text</button>' +
+      '<button class="minor" data-closedraft="' + esc(schoolId) + '">Close</button>' +
+      '</div></div>';
+
+    var copy = host.querySelector('[data-copydraft]');
+    if (copy) copy.addEventListener('click', function () {
+      navigator.clipboard.writeText(draft.body).then(function () { copy.textContent = 'Copied'; });
+    });
+    var close = host.querySelector('[data-closedraft]');
+    if (close) close.addEventListener('click', function () { host.innerHTML = ''; });
   }
 
   // ---------- what a drop unlocks ----------
@@ -1033,8 +1154,8 @@
     var school = schools.filter(function (s) { return s.id === el('draftSchool').value; })[0];
     if (!school) return;
     var draft = R.draftEmail({
-      swim: S, standards: St, swimmer: SWIMMER, results: results, today: today,
-      profileUrl: location.origin, school: school
+      swim: S, standards: St, swimmer: SWIMMER, results: results, rankings: rankings,
+      today: today, profileUrl: location.origin, school: school
     });
 
     var warn = draft.warnings.length

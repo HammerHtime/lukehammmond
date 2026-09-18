@@ -211,6 +211,86 @@ function scalePositions(comparison) {
   };
 }
 
+// Where he would actually slot into that squad.
+//
+// This replaces an abstract scale with the question a person actually asks:
+// if he walked into that programme tomorrow, who on it is faster than him?
+// "Fourth fastest of five" needs no explaining. A bar does.
+//
+// Returns null when there is only one benchmark, because you cannot rank
+// somebody against a single swimmer and pretending otherwise would invent a
+// squad that was never measured.
+function placeIn(swim, comparison) {
+  if (!comparison || !comparison.theirTimes || comparison.theirTimes.length < 2) return null;
+
+  const theirs = comparison.theirTimes.slice().sort(function (a, b) { return a - b; });
+  const mine = comparison.mineHundredths;
+
+  const fasterThanHim = theirs.filter(function (t) { return t < mine; }).length;
+  const position = fasterThanHim + 1;
+  const of = theirs.length + 1;          // the squad with him added to it
+
+  // The middle swimmer, not the mean. With four or five times a single slow
+  // swim drags an average somewhere no real swimmer sits.
+  const middle = theirs.length % 2
+    ? theirs[(theirs.length - 1) / 2]
+    : Math.round((theirs[theirs.length / 2 - 1] + theirs[theirs.length / 2]) / 2);
+
+  // The squad in order with him in it, which is the thing to draw.
+  const ladder = theirs.map(function (t) {
+    return { hundredths: t, time: swim.formatTime(t), mine: false };
+  });
+  ladder.splice(fasterThanHim, 0, { hundredths: mine, time: comparison.mine, mine: true });
+
+  return {
+    position: position,
+    of: of,
+    fasterThan: theirs.length - fasterThanHim,
+    behind: fasterThanHim,
+    median: swim.formatTime(middle),
+    medianHundredths: middle,
+    // Beating the middle swimmer is the line between contributing and making
+    // up numbers, and it is a fairer read than beating their best.
+    aboveMedian: mine <= middle,
+    ladder: ladder,
+    // Said once, in words, so the picture and the caption cannot disagree.
+    sentence: position === 1
+      ? 'Fastest on their squad'
+      : position === of
+        ? 'Slowest of the ' + of
+        : ordinal(position) + ' fastest of ' + of,
+    // What it means for LUKE, which is the question this board exists to
+    // answer. He is choosing where to go, not auditioning. Leading a group and
+    // developing behind one are both fine answers, they are just different
+    // years of his life, and he should pick knowing which he is buying.
+    meaning: meaningOf(position, of, mine <= middle)
+  };
+}
+
+function meaningOf(position, of, aboveMedian) {
+  if (position === 1) {
+    return 'He would lead their distance group from day one. Good for racing and for confidence, ' +
+      'less good for having someone quicker to train behind.';
+  }
+  if (position === of) {
+    return 'He would be developing behind everyone there. That can be the right choice if the ' +
+      'coaching is what he wants, but it is a year or two before he races.';
+  }
+  if (aboveMedian) {
+    return 'He would be in the front half of their group, ie, contributing rather than making up ' +
+      'numbers, with people ahead of him to chase.';
+  }
+  return 'He would be in the back half of their group. Training with people quicker than him, ' +
+    'which develops a swimmer, but not scoring straight away.';
+}
+
+const ORDINALS = ['', 'fastest', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh',
+  'eighth', 'ninth', 'tenth'];
+
+function ordinal(n) {
+  return ORDINALS[n] || (n + 'th');
+}
+
 // Score one school against his current yard bests.
 function scoreSchool(swim, yardBests, school) {
   const comparisons = [];
@@ -324,6 +404,8 @@ const api = {
   compareOne: compareOne,
   compareGroup: compareGroup,
   scalePositions: scalePositions,
+  placeIn: placeIn,
+  ordinal: ordinal,
   scoreSchool: scoreSchool,
   scoreBoard: scoreBoard,
   suggestPriority: suggestPriority,

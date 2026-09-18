@@ -45,6 +45,10 @@ const SWIMMER = {
     gpa: '3.5',
     gpaScale: '4.0',
     interests: ['History', 'Exercise Science and Kinesiology'],
+    // What the email says. The full list reads "History and Exercise Science
+    // and Kinesiology" once it is joined with "and", which is one "and" too
+    // many for a sentence.
+    interestsShort: 'history and exercise science',
     note: 'Intended field of study, not yet declared.'
   },
 
@@ -56,6 +60,11 @@ const SWIMMER = {
     'Ontario Aerobic Development Program.',
     'Ranked inside the top five in Canada for age across four distance freestyle events.'
   ],
+
+  // One line, in his voice, for the coach email. Written out rather than
+  // assembled from fields, because a sentence assembled from fields reads like
+  // one.
+  training: 'I train six days a week, about fifteen hours in the water.',
 
   interests: ['History', 'Kinesiology', 'Open water swimming', 'Strength training'],
 
