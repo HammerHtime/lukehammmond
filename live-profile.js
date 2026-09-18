@@ -37,6 +37,7 @@
     heroEyebrow();
     heroStats(bests);
     timeCards(results, bests);
+    rankingLines(bests);
     compTable(results);
     coachPanel(yards);
   }
@@ -121,6 +122,37 @@
     if (cards) node.innerHTML = cards;
   }
 
+  // The Best Times section carried its rankings as a sentence typed by hand.
+  // Once the badges became editable those two got out of step, ie, the sentence
+  // claimed #3, #5 and #6 while the badges above it read #4, #2, #3 and #5.
+  // Both now come from the same place, so they cannot disagree.
+  function rankingLines(bests) {
+    var intro = el('times-intro');
+    if (intro) {
+      var listed = Object.keys(rankings).map(function (id) {
+        var best = bests[id];
+        if (!best) return null;
+        return { rank: rankings[id].rank, name: best.name, course: best.course };
+      }).filter(Boolean).sort(function (a, b) { return a.rank - b.rank; });
+
+      intro.innerHTML = listed.length
+        ? '<span style="color:var(--aqua);">Ranked in Canada for age: ' +
+          listed.map(function (r) {
+            return '#' + esc(r.rank) + ' ' + esc(r.name) + ' ' + esc(r.course);
+          }).join(' \u00b7 ') + '.</span>'
+        : '';
+      // No rankings means no sentence, rather than an empty coloured line.
+      intro.style.display = listed.length ? '' : 'none';
+    }
+
+    var foot = el('times-footnote');
+    if (foot) {
+      // The age was written into this line as "14-year-old males", which goes
+      // wrong on his next birthday. The graduating class does not.
+      foot.textContent = '\u2605 Rankings are for age, Canada. Class of ' + SWIMMER.classOf;
+    }
+  }
+
   function compTable(results) {
     var table = el('comp-table');
     if (!table) return;
@@ -161,7 +193,14 @@
     }).join('');
     if (!cells) return;
 
+    // Rendering happens twice by design, ie, seed first so the page is never
+    // blank, then the stored results. An insert that does not replace shows
+    // this panel twice, which is exactly what it did.
+    var existing = document.getElementById('coach-panel');
+    if (existing) existing.parentNode.removeChild(existing);
+
     var block = document.createElement('div');
+    block.id = 'coach-panel';
     block.className = 'reveal';
     block.style.cssText = 'max-width:1200px;margin:0 auto 3.5rem;padding:0 4rem;';
     block.innerHTML =
