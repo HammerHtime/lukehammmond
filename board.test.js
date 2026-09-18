@@ -11,6 +11,7 @@ const Sc = require('./schools.js');
 const B = require('./board.js');
 const R = require('./recruiting.js');
 const { SWIMMER, SEED_RESULTS } = require('./swimmer.js');
+const Ro = require('./roster.js');
 
 let passed = 0;
 let failed = 0;
@@ -726,6 +727,32 @@ ok('and does not put it in the wrong town',
 ok('while still saying where he lives', clubDraft.body.indexOf('from Etobicoke, Ontario') !== -1);
 ok('and names the new coach', clubDraft.body.indexOf('Aris Bousoulegkas') !== -1);
 
+// ---------- a school with no men's swimming is not a school ----------
+// Andrew's rule: if a university does not offer swimming, take it off the list
+// entirely. The NCAA directory's sport code covers swimming AND diving
+// together, which is how a diving-only programme ends up in a swimming list.
+//
+// Miami is the case. Every one of its 162 men's points at the 2026 ACC
+// championships came from 1m, 3m and platform diving, and no Miami man entered
+// a single swimming event. Checked line by line through the 155-page results
+// file rather than taken on trust.
+ok('Miami is recorded as not fielding men\u2019s swimming',
+  Boolean(Ro.NO_MENS_SWIMMING['University of Miami (Florida)']));
+ok('with the evidence, not just the verdict',
+  /No Miami man entered a single swimming event/.test(Ro.NO_MENS_SWIMMING['University of Miami (Florida)']));
+check('the search never offers it',
+  Ro.search('miami', 5).filter(function (h) { return h.name === 'University of Miami (Florida)'; }).length, 0);
+// Miami of Ohio is a different school and does swim, so it must survive.
+check('but Miami of Ohio still does',
+  Ro.search('miami', 5).filter(function (h) { return h.name === 'Miami University (Ohio)'; }).length, 1);
+// The count the admin page prints must be what it will actually offer.
+check('the count is of programmes that swim', Ro.counts().total, Ro.sponsoring().length);
+check('and it is one short of the raw directory', Ro.ROSTER.length - Ro.counts().total, 1);
+check('with the drop stated', Ro.counts().dropped, 1);
+// And none of them may reach the board itself.
+check('no school on the board fails the rule',
+  schools.filter(function (s) { return Ro.NO_MENS_SWIMMING[s.name]; }).length, 0);
+
 // ---------- a ranking brings its own event onto the public page ----------
 // Andrew added a ninth in the 200 back and a sixth in the 400 IM in the back
 // end and nothing appeared. The cards came from a hardcoded list of four
@@ -1095,8 +1122,10 @@ ok('the carding myth is recorded and corrected',
 // Generated from the NCAA's own membership directory rather than assembled by
 // hand or copied from a recruiting site. That matters: the popular published
 // lists carry programmes cut years ago and miss ones recently added.
-const Ro = require('./roster.js');
-check('every programme is present', Ro.counts().total, 484);
+// The directory holds 484. One of them, Miami, fields men's diving and no
+// men's swimming, so 483 is what the search offers and what the page counts.
+check('the directory holds every programme', Ro.ROSTER.length, 484);
+check('and 483 of them actually swim', Ro.counts().total, 483);
 check('NAIA, from a different source entirely', Ro.counts().NAIA, 16);
 ok('and every NAIA entry says so', Ro.ROSTER.filter(function (s) { return s.division === 'NAIA'; })
   .every(function (s) { return s.src === 'cscaa'; }));
@@ -1105,7 +1134,7 @@ ok('and every NAIA entry says so', Ro.ROSTER.filter(function (s) { return s.divi
 // campus is cheaper on sticker and gives an international almost nothing.
 ok('private and public are recorded', Ro.ROSTER.filter(function (s) { return s.private === true; }).length > 250);
 check('Ithaca is private', Ro.search('ithaca')[0].private, true);
-check('Division I', Ro.counts().D1, 137);
+check('Division I, one short of the directory because of Miami', Ro.counts().D1, 136);
 check('Division II', Ro.counts().D2, 77);
 check('Division III', Ro.counts().D3, 228);
 ok('the roster records where it came from', Ro.SOURCE.indexOf('NCAA') !== -1);

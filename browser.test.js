@@ -96,7 +96,9 @@ if (adminScope) {
   ok('the board engine works in the browser', typeof adminScope.Board.scoreBoard === 'function');
   ok('the roster is published', Boolean(adminScope.Roster));
   ok('the eligibility rules are published', Boolean(adminScope.Eligibility));
-  check('and carries every programme', adminScope.Roster.counts().total, 484);
+  // 483, not 484. Miami is in the NCAA directory under men's swimming and
+  // fields men's diving only, so the search never offers it.
+  check('and carries every programme that swims', adminScope.Roster.counts().total, 483);
 }
 
 // ---------- every front end file keeps its own scope ----------

@@ -48,6 +48,20 @@
 const SOURCE = 'NCAA membership directory, academic year 2027';
 const RECORDED = '2026-09-18';
 
+// Programmes the NCAA directory lists under men's swimming that do NOT actually
+// field a men's swimming team. A school with no swimming is no use to a swimmer
+// and should never be offered, so these are dropped from the list entirely.
+//
+// The directory's sport code covers swimming AND diving together, which is how
+// a diving-only programme ends up in a swimming list. Each entry below records
+// what was checked rather than asserting it.
+const NO_MENS_SWIMMING = {
+  'University of Miami (Florida)':
+    'Men\u2019s DIVING only. Every one of Miami\u2019s 162 men\u2019s points at the 2026 ACC ' +
+    'Championships came from 1m, 3m and platform diving. No Miami man entered a single swimming ' +
+    'event, checked line by line through the 155-page results file. Verified 18 September 2026.'
+};
+
 const ROSTER = [
   { id: "american-university", name: "American University", division: 'D1', conference: "Patriot League", state: 'DC', site: "www.aueagles.com", private: true },
   { id: "arizona-state-university", name: "Arizona State University", division: 'D1', conference: "Big 12 Conference", state: 'AZ', site: "sundevils.com", private: false },
@@ -545,6 +559,7 @@ function search(query, limit) {
   const q = String(query || '').trim().toLowerCase();
   if (q.length < 2) return [];
   const hits = ROSTER.filter(function (s) {
+    if (NO_MENS_SWIMMING[s.name]) return false;
     return s.name.toLowerCase().indexOf(q) !== -1 ||
       s.conference.toLowerCase().indexOf(q) !== -1 ||
       acronymMatches(s.conference, q) ||
@@ -593,14 +608,27 @@ function acronymMatches(name, q) {
   return full === q || full.replace(/c$/, '') === q;
 }
 
+// Counted off what the search will actually offer, not off the raw directory.
+// The admin page prints this as "N programmes sponsor men's swimming", and a
+// diving-only programme does not.
 function counts() {
   const out = {};
-  ROSTER.forEach(function (s) { out[s.division] = (out[s.division] || 0) + 1; });
-  out.total = ROSTER.length;
+  const list = sponsoring();
+  list.forEach(function (s) { out[s.division] = (out[s.division] || 0) + 1; });
+  out.total = list.length;
+  out.dropped = Object.keys(NO_MENS_SWIMMING).length;
   return out;
 }
 
+// Everything the search will actually offer, ie, the directory minus the
+// programmes that do not field men's swimming.
+function sponsoring() {
+  return ROSTER.filter(function (s) { return !NO_MENS_SWIMMING[s.name]; });
+}
+
 const api = {
+  NO_MENS_SWIMMING: NO_MENS_SWIMMING,
+  sponsoring: sponsoring,
   SOURCE: SOURCE,
   RECORDED: RECORDED,
   ROSTER: ROSTER,
