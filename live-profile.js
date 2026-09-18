@@ -82,8 +82,31 @@
     var node = el('times-grid');
     if (!node) return;
 
-    var cards = (SWIMMER.primary || []).map(function (p) {
-      var id = S.eventId(p.distance, p.stroke, p.course);
+    // Which events get a card.
+    //
+    // It used to be the four primary events and nothing else, so adding a
+    // ranking in the back end for, say, the 200 back set the number and then
+    // had nowhere to show it. Andrew expected the event to appear, and he is
+    // right: putting a national ranking on an event IS the statement that it
+    // matters. The ranking is the decision, so it should carry the card.
+    //
+    // Primary events keep their order and always show, ranked or not. Anything
+    // else with a saved ranking follows, best ranking first. Clear the box and
+    // the card goes with it.
+    var shown = (SWIMMER.primary || []).map(function (p) {
+      return { id: S.eventId(p.distance, p.stroke, p.course), primary: true };
+    });
+    var already = {};
+    shown.forEach(function (x) { already[x.id] = true; });
+
+    Object.keys(rankings)
+      .filter(function (id) { return !already[id] && bests[id]; })
+      .map(function (id) { return { id: id, primary: false, rank: rankings[id].rank }; })
+      .sort(function (a, b) { return a.rank - b.rank; })
+      .forEach(function (x) { shown.push(x); });
+
+    var cards = shown.map(function (p) {
+      var id = p.id;
       var best = bests[id];
       if (!best) return '';
       var rank = window.SwimmerData.rankFor(rankings, id);
@@ -110,7 +133,10 @@
         '<span class="flip-hint">tap to flip ↩</span>' +
         '<div class="time-card-inner">' +
           '<div class="time-card-front">' +
-            '<div class="time-event">' + esc(p.distance) + 'm ' + esc(S.STROKE_LABEL[p.stroke]) + '</div>' +
+            // Read off the swim itself, not off the list entry. The list used
+            // to carry distance and stroke and no longer does, and taking them
+            // from it turned every label into a bare "m".
+            '<div class="time-event">' + esc(best.distance) + 'm ' + esc(S.STROKE_LABEL[best.stroke]) + '</div>' +
             '<div class="time-value gold">' + esc(best.time) +
               (rank ? '<span class="time-pb-badge">#' + esc(rank.rank) +
                 ' in Canada</span>' : '') +

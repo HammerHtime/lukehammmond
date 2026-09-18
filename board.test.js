@@ -726,6 +726,43 @@ ok('and does not put it in the wrong town',
 ok('while still saying where he lives', clubDraft.body.indexOf('from Etobicoke, Ontario') !== -1);
 ok('and names the new coach', clubDraft.body.indexOf('Aris Bousoulegkas') !== -1);
 
+// ---------- a ranking brings its own event onto the public page ----------
+// Andrew added a ninth in the 200 back and a sixth in the 400 IM in the back
+// end and nothing appeared. The cards came from a hardcoded list of four
+// events, so the ranking was saved with nowhere to show.
+//
+// Putting a national ranking on an event IS the statement that it matters, so
+// the ranking now carries the card. Clear the box and the card goes with it.
+const liveSrc = require('fs').readFileSync(
+  require('path').join(__dirname, 'live-profile.js'), 'utf8');
+ok('the primary events always show', /var shown = \(SWIMMER\.primary \|\| \[\]\)/.test(liveSrc));
+ok('and anything ranked follows them', /Object\.keys\(rankings\)\s*\n\s*\.filter/.test(liveSrc));
+ok('best ranking first', /\.sort\(function \(a, b\) \{ return a\.rank - b\.rank; \}\)/.test(liveSrc));
+ok('and only where he has actually swum it', /!already\[id\] && bests\[id\]/.test(liveSrc));
+
+// The label reads off the SWIM, not off the list entry. Taking it from the
+// list entry, which no longer carries distance or stroke, turned every card
+// label into a bare "m".
+ok('the card label comes from the swim',
+  /esc\(best\.distance\) \+ 'm ' \+ esc\(S\.STROKE_LABEL\[best\.stroke\]\)/.test(liveSrc));
+// Scoped to the times grid. The hero stats still walk SWIMMER.primary, where
+// those fields do exist, so a file-wide check would be wrong.
+const gridBlock = /var cards = shown\.map\(function \(p\) \{[\s\S]*?'<\/div>';\n\s*\}\)/.exec(liveSrc)[0];
+ok('and the grid never reads them off the list entry', gridBlock.indexOf('esc(p.distance)') === -1);
+
+// ---------- what he actually did when he started ----------
+// The 2022 milestone described his CURRENT training load, ie, six days a week
+// and fifteen hours, as though he had walked in doing it. He started on two
+// days a week and three to four hours.
+const pageSrc = require('fs').readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
+ok('the 2022 entry says what he actually started on',
+  /Started competitive swimming in the spring of 2022, two days a week, three to four hours\./.test(pageSrc));
+ok('and no longer claims fifteen hours from day one',
+  pageSrc.indexOf('spring of 2022 \u2014 6 days a week') === -1);
+// His current load is still stated, in the present tense, where it belongs.
+ok('the about section still carries the real load now',
+  /trains 6 days a week and spends over 15 hours/.test(pageSrc));
+
 // ---------- the club is in a different town to the swimmer ----------
 // He LIVES in Etobicoke and TRAINS in Mississauga. The public contact card was
 // pairing his home town with the club's name, ie, "Mississauga Aquatic Club,
