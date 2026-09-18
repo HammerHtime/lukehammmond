@@ -17,6 +17,14 @@ export default async (request) => {
   if (!isAdmin(request)) return denied();
 
   if (request.method === 'GET') {
+    // The researched list, on request. Once anything has been saved the stored
+    // list is the truth and the seed is never consulted again, which is right.
+    // But it meant schools researched AFTER that first save could never reach
+    // the board at all. This is how they get there.
+    if (new URL(request.url).searchParams.get('seed') === '1') {
+      return json({ schools: lib.seedSchools(), seed: true });
+    }
+
     const stored = await readJson(KEY, null);
     // Nothing saved yet means the board has never been edited, so hand back the
     // researched seed rather than an empty screen.

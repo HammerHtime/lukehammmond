@@ -248,6 +248,36 @@ check('low confidence where none were gathered', row('hamilton').confidence, 'Lo
 check('RIT is benchmarked against a champion', row('rit').comparisons[0].basis, 'champion');
 check('American is benchmarked against a roster swimmer', row('american').comparisons[0].basis, 'roster');
 
+// ---------- schools researched after the first save ----------
+// Once anything is stored the seed is never consulted again. That rule is
+// right, ie, nothing should silently overwrite an edit. But it meant the
+// twenty-six Canadian schools sat in the repo and could never reach a board
+// that had already been saved, which is every board in use.
+const fnSrc0 = require('fs').readFileSync(
+  require('path').join(__dirname, 'netlify', 'functions', 'schools.js'), 'utf8');
+ok('the researched list can be asked for', /searchParams\.get\('seed'\) === '1'/.test(fnSrc0));
+ok('and it is the seed, not the store', /json\(\{ schools: lib\.seedSchools\(\), seed: true \}\)/.test(fnSrc0));
+
+const adminSrc0 = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
+ok('the page asks on load', /fetch\('\/api\/schools\?seed=1'/.test(adminSrc0));
+ok('and offers rather than forces', adminSrc0.indexOf('Bring them onto the board') !== -1);
+// Merge, never replace: a school removed on purpose stays removed, and an
+// edited one keeps the edit.
+ok('it merges rather than replacing',
+  /mergeSchools\(schools, seedList\)/.test(adminSrc0));
+ok('and says what it left alone', /already here and left alone/.test(adminSrc0));
+
+// The merge itself, on the real lists. Seventeen American schools plus five
+// added by hand is what a board in use actually looks like.
+const inUse = schools.filter(function (s) { return s.country === 'USA'; })
+  .concat([{ id: 'x1', name: 'Florida State University', division: 'D1', country: 'USA' }]);
+const topped = Sc.mergeSchools(inUse, schools);
+check('the missing ones are added', topped.added, 26);
+check('the ones already there are left alone', topped.updated, 17);
+check('and the hand-added one survives',
+  topped.schools.filter(function (s) { return s.id === 'x1'; }).length, 1);
+check('nothing is lost', topped.schools.length, inUse.length + 26);
+
 // ---------- taking a school off the board ----------
 // Adding was easy and removing did not exist, so a school added by mistake was
 // there forever. Two clicks, because there is no undo and the list took a lot

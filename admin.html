@@ -305,7 +305,12 @@
   </div></div>
 
   <h2>Schools and contacts</h2>
-  <div class="card"><div class="pad" style="padding-bottom:10px">
+  <div class="card" id="topUpCard" hidden><div class="pad">
+    <p class="hint" id="topUpWhat" style="margin:0 0 10px"></p>
+    <button class="go" id="topUp">Bring them onto the board</button>
+    <div class="msg" id="topUpMsg"></div>
+  </div></div>
+  <div class="card" style="margin-top:12px"><div class="pad" style="padding-bottom:10px">
     <label for="schoolQ">Narrow the list</label>
     <p class="hint" id="schoolCount" style="margin:0 0 8px"></p>
     <input id="schoolQ" placeholder="Name, division, conference, ie, USPORTS or MAAC or Guelph" autocomplete="off">
@@ -433,6 +438,7 @@
       photos = (both[3] && both[3].photos) || [];
       buildPickers();
       renderAll();
+      checkTopUp();
     });
   }
 
@@ -1215,6 +1221,49 @@
       })
       .catch(function (err) { say('schoolMsg', 'bad', esc(err.message)); });
   }
+
+  // Schools researched after the board was first saved cannot reach it on their
+  // own: once anything is stored, the seed is never consulted again. That is
+  // the right rule, ie, nothing should overwrite Andrew's edits, but it meant
+  // twenty-six Canadian schools sat in the repo and never appeared.
+  //
+  // This offers them instead of forcing them, and it merges rather than
+  // replaces, so a removed school stays removed and an edited one keeps the
+  // edit.
+  var seedList = [];
+
+  function checkTopUp() {
+    fetch('/api/schools?seed=1', { headers: { 'x-admin-key': key } })
+      .then(function (r) { return r.json(); })
+      .then(function (body) {
+        seedList = (body && body.schools) || [];
+        var here = {};
+        schools.forEach(function (s) { here[window.Schools.matchKey(s.name)] = true; });
+        var missing = seedList.filter(function (s) { return !here[window.Schools.matchKey(s.name)]; });
+        if (!missing.length) { el('topUpCard').hidden = true; return; }
+        el('topUpCard').hidden = false;
+        el('topUpWhat').innerHTML = '<strong>' + missing.length + '</strong> researched ' +
+          (missing.length === 1 ? 'school is' : 'schools are') + ' not on your board yet, ie, ' +
+          esc(missing.slice(0, 4).map(function (s) { return s.name; }).join(', ')) +
+          (missing.length > 4 ? ' and ' + (missing.length - 4) + ' more' : '') +
+          '. They come with contacts and times already gathered. Anything you have ' +
+          'removed stays removed only until you do this, so leave it if you meant to drop them.';
+      })
+      .catch(function () { el('topUpCard').hidden = true; });
+  }
+
+  el('topUp').addEventListener('click', function () {
+    var merged = window.Schools.mergeSchools(schools, seedList);
+    api('/api/schools', { method: 'PUT', body: JSON.stringify({ schools: merged.schools }) })
+      .then(function () {
+        schools = merged.schools;
+        renderAll();
+        checkTopUp();
+        say('topUpMsg', 'ok', merged.added + ' added, ' + merged.updated +
+          ' already here and left alone. ' + merged.schools.length + ' on the board now.');
+      })
+      .catch(function (err) { say('topUpMsg', 'bad', esc(err.message)); });
+  });
 
   el('schoolQ').addEventListener('input', function () {
     schoolFilter = el('schoolQ').value;
