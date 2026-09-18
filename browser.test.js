@@ -33,7 +33,7 @@ function check(name, actual, expected) {
 
 // The script tags each page carries, in order. Keep these in step with the
 // pages, which is what the last test in this file checks.
-const PUBLIC = ['swim.js', 'swimmer.js', 'convert.js', 'photos.js', 'standards.js', 'recruiting.js'];
+const PUBLIC = ['swim.js', 'swimmer.js', 'convert.js', 'photos.js', 'recruiting.js'];
 const ADMIN = ['swim.js', 'swimmer.js', 'convert.js', 'school-utils.js', 'photos.js', 'standards.js', 'board.js', 'recruiting.js'];
 
 // One shared global, no `module`, exactly as a browser presents it.
@@ -61,7 +61,6 @@ if (publicScope) {
   ok('Swim is published', Boolean(publicScope.Swim));
   ok('SwimmerData is published', Boolean(publicScope.SwimmerData));
   ok('Convert is published', Boolean(publicScope.Convert));
-  ok('Standards is published', Boolean(publicScope.Standards));
   ok('Recruiting is published', Boolean(publicScope.Recruiting));
   ok('Photos is published', Boolean(publicScope.Photos));
 

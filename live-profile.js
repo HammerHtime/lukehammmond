@@ -14,7 +14,7 @@
 (function () {
   'use strict';
 
-  var S = window.Swim, C = window.Convert, St = window.Standards, R = window.Recruiting;
+  var S = window.Swim, C = window.Convert, R = window.Recruiting;
   var SWIMMER = window.SwimmerData.SWIMMER;
   var SEED = window.SwimmerData.SEED_RESULTS;
   var rankings = window.SwimmerData.seedRankings();
@@ -84,31 +84,23 @@
       if (!best) return '';
       var rank = window.SwimmerData.rankFor(rankings, id);
 
-      var gap = St ? St.gapToCut(S.parseTime, best.hundredths, 'can-jr-trials', id) : null;
       var courseLabel = best.course === 'LCM' ? 'Long Course' : (best.course === 'SCM' ? 'Short Course' : 'Yards');
       var when = friendlyMonth(best.date);
 
+      // No progress rail. It tracked the gap to the Canadian Junior Trials
+      // cut, and a US head coach carries his own standards in his head, so on
+      // a coach facing page it is noise sitting underneath the one number that
+      // matters. The gap is still computed and still reported in the back end,
+      // where it is Luke's own target and genuinely useful.
       var progress = '';
-      if (gap) {
-        // How much of the way there, ie, the cut over the current swim. A swim
-        // already under the cut reads as complete rather than over 100.
-        var pct = gap.made ? 100 : Math.max(1, Math.min(99, Math.round((gap.cutHundredths / best.hundredths) * 100)));
-        progress =
-          '<div class="time-progress">' +
-            '<div class="time-progress-label"><span>🏁 Jr Trials cut: ' + esc(gap.cut) + '</span>' +
-            '<span>' + pct + '%</span></div>' +
-            '<div class="time-progress-track">' +
-            '<div class="time-progress-fill gold-fill" data-pct="' + pct + '" style="width:' + pct + '%"></div></div>' +
-          '</div>';
-      }
 
-      var back = gap
-        ? '<div class="back-label">' + (gap.made ? 'Under the Junior Trials standard' : 'Time needed to reach Jr Trials') + '</div>' +
-          '<div class="back-gap">' + (gap.made ? 'Qualified' : '− ' + esc(S.formatGap(gap.behindBy).replace('+', '')) + 's') + '</div>' +
-          '<div class="back-standard">Standard: ' + esc(gap.cut) + ' · Current: ' + esc(best.time) + '</div>'
-        : '<div class="back-label">Best on record</div>' +
-          '<div class="back-gap">' + esc(best.time) + '</div>' +
-          '<div class="back-standard">' + esc(best.meet || '') + '</div>';
+      // The back of the card answers the question a coach actually has about a
+      // time on a page, ie, where and when was it swum.
+      var back =
+        '<div class="back-label">Where it was swum</div>' +
+        '<div class="back-gap" style="font-size:1.15rem;line-height:1.35;">' +
+          esc(best.meet || 'Meet not recorded') + '</div>' +
+        '<div class="back-standard">' + esc(courseLabel) + ' \u00b7 ' + esc(when) + '</div>';
 
       return '<div class="time-card" onclick="flipCard(this)">' +
         '<span class="flip-hint">tap to flip ↩</span>' +
