@@ -79,8 +79,44 @@ const SWIMMER = {
 
   recognition: [
     { label: 'Swim Canada National ID Development Program', detail: 'Selected' },
-    { label: 'Swim Ontario Aerobic Development Program', detail: 'Selected' }
+    { label: 'Swim Ontario Aerobic Development Program', detail: 'Selected' },
+    { label: 'Gold, 400 free', detail: '2026 Ontario Age Group Championships, Markham' },
+    { label: 'Gold, 800 free', detail: '2025 Ontario Swimming Championships' }
   ],
+
+  // The high school. Recorded because two separate pieces of research point at
+  // it: every one of the 21 recruiting questionnaires asks for the school by
+  // name, address and phone, and NCAA core credit depends on the SCHOOL holding
+  // an Eligibility Center account with an approved course list. That check
+  // belongs in Grade 10, ie, now.
+  school: {
+    name: 'Silverthorn Collegiate Institute',
+    programme: 'High Performer Program',
+    ncaaPortalChecked: false
+  },
+
+  // Written about by someone other than us. Coaches discount what a family
+  // says about its own swimmer and do not discount a provincial body saying it.
+  press: [
+    {
+      title: 'Next Wave: Up and Coming Swimmers',
+      publisher: 'Swim Ontario',
+      date: '2026-05-11',
+      url: 'https://www.swimontario.com/news/next-wave-up-and-coming-swimmers-series-lukehammond/',
+      // The piece predates the move to Mississauga and names Lakeshore. Said
+      // here so the date does the explaining rather than a coach wondering
+      // which club is right.
+      note: 'Published while he was at Lakeshore Swim Club.'
+    }
+  ],
+
+  // His own words, from that piece. The coach research was emphatic that what
+  // they look for is agency and a want to get better, and that it is heard
+  // rather than claimed. This is him saying it, quoted by a third party.
+  quote: {
+    text: 'To be honest, I really do think I can go faster.',
+    source: 'Swim Ontario, May 2026'
+  },
 
   // Kept deliberately short. A recruiting page needs a way to reach the family
   // and the club coach. It does not need an address or a date of birth.

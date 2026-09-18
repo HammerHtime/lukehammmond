@@ -266,6 +266,32 @@
       lead.textContent = SWIMMER.about[0];
     }
 
+    var quote = el('about-quote');
+    if (quote && SWIMMER.quote) {
+      quote.innerHTML =
+        '<blockquote style="margin:1.5rem 0;padding-left:1.1rem;' +
+        'border-left:2px solid var(--aqua);">' +
+        '<p style="font-size:1.15rem;line-height:1.6;color:var(--white);margin:0 0 0.5rem;">' +
+        '\u201c' + esc(SWIMMER.quote.text) + '\u201d</p>' +
+        '<footer style="font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;' +
+        'color:var(--muted);">' + esc(SWIMMER.quote.source) + '</footer></blockquote>';
+    }
+
+    var press = el('about-press');
+    if (press && (SWIMMER.press || []).length) {
+      press.innerHTML = '<div style="margin:1.25rem 0;">' +
+        '<div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;' +
+        'color:var(--aqua);font-weight:500;margin-bottom:0.6rem;">Written about</div>' +
+        SWIMMER.press.map(function (item) {
+          return '<a href="' + esc(item.url) + '" target="_blank" rel="noopener" ' +
+            'style="color:var(--white);text-decoration:none;display:block;margin-bottom:0.4rem;">' +
+            esc(item.publisher) + ', \u201c' + esc(item.title) + '\u201d ' +
+            '<span style="color:var(--muted);font-size:0.8rem;">' +
+            esc(friendlyMonth(item.date)) + (item.note ? ' \u00b7 ' + esc(item.note) : '') +
+            '</span></a>';
+        }).join('') + '</div>';
+    }
+
     var card = el('contact-club');
     if (card) {
       card.textContent = club + (SWIMMER.city ? ' \u2014 ' + SWIMMER.city + ', ON' : '');

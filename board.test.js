@@ -256,6 +256,30 @@ ok('so is one marked by country', Sc.isCanadian({ division: 'D1', country: 'Cana
 ok('a US school is not', !Sc.isCanadian({ division: 'D1', country: 'USA' }));
 check('a nonsense division is still refused', Sc.normaliseSchool({ name: 'X', division: 'D9' }).ok, false);
 
+// ---------- third party coverage ----------
+// A provincial body writing about him is worth more than anything we write
+// about him, and the coach research said agency is heard rather than claimed.
+check('the Swim Ontario piece is on file', SWIMMER.press.length, 1);
+ok('with its date', SWIMMER.press[0].date === '2026-05-11');
+ok('and a link', /^https:\/\/www\.swimontario\.com\//.test(SWIMMER.press[0].url));
+// The piece names his old club because it predates the move. Saying so is what
+// stops a coach wondering which club is right.
+ok('and it says which club it was written under', /Lakeshore/.test(SWIMMER.press[0].note));
+ok('his own words are quoted, not paraphrased', SWIMMER.quote.text.indexOf('go faster') !== -1);
+ok('and attributed', SWIMMER.quote.source.indexOf('Swim Ontario') !== -1);
+
+// The two provincial golds, which are results rather than participation.
+ok('the 400 free gold is recorded',
+  SWIMMER.recognition.some(function (r) { return /400 free/.test(r.label) && /Gold/.test(r.label); }));
+ok('the 800 free gold is recorded',
+  SWIMMER.recognition.some(function (r) { return /800 free/.test(r.label) && /Gold/.test(r.label); }));
+
+// The high school, which two separate lines of research both need: every
+// questionnaire asks for it, and NCAA core credit depends on the SCHOOL
+// holding an Eligibility Center account.
+check('the school is recorded', SWIMMER.school.name, 'Silverthorn Collegiate Institute');
+check('and the portal check is openly not done yet', SWIMMER.school.ncaaPortalChecked, false);
+
 // ---------- the club ----------
 // He moved clubs in September 2026. The old name was in the data AND in three
 // places in the hand-written markup, so a club change was a code change. It is
