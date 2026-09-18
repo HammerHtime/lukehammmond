@@ -29,11 +29,20 @@
   status = 404
   force = true
 
-# schools.js is deliberately NOT blocked. The admin screen needs its importer,
-# and the seed list carries no contacts, ie, every email in the file is empty.
-# Confirmed coach addresses live in storage behind the admin key and are served
-# only by the schools function. Blocking the file would break the importer
-# without protecting anything.
+# schools.js carries seventeen coach email addresses, the conference
+# benchmarks, and Luke's recorded priority for every programme. It is served
+# to nobody. The admin screen gets that data from /api/schools, behind the key.
+#
+# This was briefly wrong and worth remembering. The file originally held no
+# contacts, so leaving it public looked harmless and was. Then the contacts
+# were added to it and the reasoning was never revisited, ie, the whole board
+# was public on the first deploy. The pure functions the browser actually needs
+# now live in school-utils.js, which holds no data at all.
+[[redirects]]
+  from = "/schools.js"
+  to = "/404.html"
+  status = 404
+  force = true
 
 [[headers]]
   for = "/*"

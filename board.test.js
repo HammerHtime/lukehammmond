@@ -259,6 +259,19 @@ check('rubbish clears', Object.keys(SD.rankingsFrom({ rankings: { '200-free-LCM'
 check('a plain number works as well as an object', SD.rankingsFrom({ rankings: { '400-free-LCM': 2 } })['400-free-LCM'].rank, 2);
 check('a missing event has no ranking', SD.rankFor(SD.seedRankings(), '100-fly-LCM'), null);
 
+// ---------- the public half holds no data ----------
+// school-utils.js is served to the open web. schools.js is not. This test
+// exists because that line was crossed once: the data file was left public
+// after the coach contacts were added to it, and the whole board went out on
+// the first deploy. A grep is a blunt instrument and that is the point.
+const utilsSource = require('fs').readFileSync(require('path').join(__dirname, 'school-utils.js'), 'utf8');
+ok('the public file carries no email address', !/@[a-z0-9.-]+\.(edu|com|org)/i.test(utilsSource));
+ok('the public file names no school', !/Gannon|Canisius|Bonaventure|Bucknell|Fairfield|Niagara|Marist|Ithaca|Clarkson|Hamilton|Iona|Loyola|Manhattan/i.test(utilsSource));
+ok('the public file carries no benchmark time', !/\d:\d\d\.\d\d/.test(utilsSource));
+ok('the public file carries no priority', !/'P[123]'/.test(utilsSource));
+ok('but it still exports the importer', typeof require('./school-utils.js').parsePaste === 'function');
+ok('and the merge rules', typeof require('./school-utils.js').mergeSchools === 'function');
+
 // ---------- school logos ----------
 const gannon = schools.filter(function (s) { return s.id === 'gannon'; })[0];
 ok('a logo is derived from the athletics domain', Sc.logoFor(gannon).indexOf('gannonsports.com') !== -1);
