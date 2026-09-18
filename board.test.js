@@ -260,15 +260,16 @@ ok('and names what would go', /school\.name \+ '\?'/.test(adminSrc2));
 // is actually being looked at, and it shares one handler with the table so the
 // two can never drift apart.
 ok('every card carries a hide button',
-  /'<button class="drop" data-drop="' \+ esc\(r\.school\.id\)/.test(adminSrc2));
+  /'<button class="drop push" data-drop="' \+ esc\(r\.school\.id\)/.test(adminSrc2));
 ok('the board wires the same handler', /wireDrops\(el\('boardTable'\)\)/.test(adminSrc2));
 ok('and so does the table', /wireDrops\(el\('schoolTable'\)\)/.test(adminSrc2));
 ok('arming one disarms every other, in both places',
   /document\.querySelectorAll\('\.drop\.sure'\)/.test(adminSrc2));
-// A destructive control flush against the primary button is a misclick waiting
-// to happen, so it is separated from Email.
-ok('it is spaced off the email button',
-  /data-drop="' \+ esc\(r\.school\.id\) \+ '">hide<\/button>' \+\s*'<span style="width:6px">/.test(adminSrc2));
+// Bottom right, pushed to the far edge, which puts the one destructive control
+// as far from Email as the row allows.
+ok('the hide button is pushed to the right edge', /\.drop\.push\{margin-left:auto\}/.test(adminSrc2));
+ok('and comes after the staff page link',
+  adminSrc2.indexOf('Staff page</a>') < adminSrc2.indexOf('class="drop push"'));
 ok('arming one disarms the others', /querySelectorAll\('\.drop\.sure'\)/.test(adminSrc2));
 ok('removing saves the list without it',
   /schools\.filter\(function \(s\) \{ return s\.id !== school\.id; \}\)/.test(adminSrc2));
