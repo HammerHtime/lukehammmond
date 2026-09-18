@@ -143,7 +143,7 @@ function milestones(classOf) {
       detail: 'Applied, College, Open and Workplace level courses earn nothing. Kinesiology PSK4U and Exercise Science PSE4U are named as not approved, and they are exactly what a swimmer picks.',
       why: 'Luke\u2019s stated interest is exercise science and kinesiology. Those two courses are worth zero NCAA credit.' },
     { date: (grade10) + '-10-01', by: 'now', title: 'Confirm the age rule with the Eligibility Center',
-      detail: 'The five year clock starts at the earlier of first enrolment, or the academic year after a 19th birthday that falls BEFORE 1 September. A mid-September birthday is 13 days the favourable side of that line, so the trigger does not fire the way it does for a summer birthday.',
+      detail: 'The five year clock starts at the earlier of first enrolment, or the academic year after a 19th birthday that falls BEFORE 1 September. His birthday falls after that date, so the trigger does not fire the way it does for a summer birthday. He is on the favourable side of it.',
       why: 'That reading is arguable for a birth date after 1 September. Get it in writing before betting a year of eligibility on it.' },
     { date: (grade10) + '-11-01', by: 'this term', title: 'Confirm Grade 9 marks are on the transcript',
       detail: 'NCAA warns that many Canadian transcripts omit ninth year marks. Grade 9 core courses count toward the 16.',

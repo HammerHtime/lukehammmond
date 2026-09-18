@@ -363,6 +363,20 @@ check('the last day of August still does', aug31.triggerFires, true);
 ok('and the answer never claims to be settled', sept.confirm.indexOf('Confirm it in') !== -1);
 check('a missing birth date yields nothing', El.ageClock(null, null, 2029), null);
 
+// Nothing anywhere records a full date of birth. The public page shows a birth
+// YEAR, which is standard on a swim recruiting profile because a coach needs
+// the age year for eligibility. The day and month are not the site's business
+// and are not the repo's either, ie, ageClock takes them as arguments and
+// nothing ever passes them.
+const eligSource = require('fs').readFileSync(require('path').join(__dirname, 'eligibility.js'), 'utf8');
+ok('no full date of birth is written down anywhere',
+  !/1[0-9] September 2011|2011-09-|September 14|14 September/.test(eligSource));
+const pageSource = require('fs').readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
+ok('the public page carries a birth year and no more',
+  /Year of Birth/i.test(pageSource) && !/date of birth/i.test(pageSource));
+ok('and nothing on it is a full date',
+  !/\b(0?[1-9]|[12][0-9]|3[01])\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+2011\b/i.test(pageSource));
+
 // The timeline has to be able to say what is next, not just what exists.
 const soon = El.nextMilestones('2026-09-18', 5);
 check('five things are next', soon.length, 5);
