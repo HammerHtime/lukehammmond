@@ -312,6 +312,37 @@ check('a nonsense address is refused', Sc.normaliseSchool({ name: 'A', division:
 check('a school with no division is refused', Sc.normaliseSchool({ name: 'A' }).ok, false);
 check('verified is false without an address', Sc.normaliseSchool({ name: 'A', division: 'D1', verified: true }).school.verified, false);
 
+// ---------- the questionnaire ----------
+// Built from 21 real forms read field by field, so every count is evidence.
+const Qn = require('./questionnaire.js');
+ok('the source is recorded', Qn.SOURCE.indexOf('21') !== -1);
+ok('and the date', Qn.RECORDED === '2026-09-18');
+check('fields are ordered by how often they are asked', Qn.fields()[0].asked, 21);
+ok('every field records a count', Qn.FIELDS.every(function (f) { return Number.isFinite(f.asked) && f.asked > 0; }));
+ok('no field claims more than the forms read', Qn.FIELDS.every(function (f) { return f.asked <= 21; }));
+
+// The finding that shaped the page: not one form asked about volunteering,
+// service or leadership. If a field claiming otherwise is ever added here, it
+// did not come from the research.
+ok('nothing claims forms ask about volunteering',
+  !Qn.FIELDS.some(function (f) { return /volunteer|community service|leadership/i.test(f.label); }));
+
+// The course warning is the single most consequential note in the file, ie, an
+// unlabelled metric time is read as yards and makes him look slower than he is.
+const course = Qn.FIELDS.filter(function (f) { return f.key === 'course'; })[0];
+ok('the course field exists', Boolean(course));
+ok('and warns that unlabelled means yards', /YARDS/.test(course.note));
+
+// Readiness counts what matters, not everything.
+const empty = Qn.readiness({}, {});
+check('nothing filled in means nothing ready', empty.mustAnswered, 0);
+ok('and it names what to find first', Boolean(empty.next));
+const auto = Qn.readiness({}, { bestTimes: true, club: true, clubCoach: true });
+check('what we already know counts', auto.mustAnswered, 3);
+ok('an auto filled field is not still listed as missing',
+  !auto.missing.some(function (f) { return f.key === 'bestTimes'; }));
+check('a blank string does not count as an answer', Qn.readiness({ email: '   ' }, {}).mustAnswered, 0);
+
 // ---------- the full roster ----------
 // Generated from the NCAA's own membership directory rather than assembled by
 // hand or copied from a recruiting site. That matters: the popular published
