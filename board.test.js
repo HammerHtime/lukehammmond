@@ -312,6 +312,48 @@ check('a nonsense address is refused', Sc.normaliseSchool({ name: 'A', division:
 check('a school with no division is refused', Sc.normaliseSchool({ name: 'A' }).ok, false);
 check('verified is false without an address', Sc.normaliseSchool({ name: 'A', division: 'D1', verified: true }).school.verified, false);
 
+// ---------- the full roster ----------
+// Generated from the NCAA's own membership directory rather than assembled by
+// hand or copied from a recruiting site. That matters: the popular published
+// lists carry programmes cut years ago and miss ones recently added.
+const Ro = require('./roster.js');
+check('every programme is present', Ro.counts().total, 442);
+check('Division I', Ro.counts().D1, 137);
+check('Division II', Ro.counts().D2, 77);
+check('Division III', Ro.counts().D3, 228);
+ok('the roster records where it came from', Ro.SOURCE.indexOf('NCAA') !== -1);
+ok('and when', Ro.RECORDED === '2026-09-18');
+
+// The roster holds no contacts. Contacts are researched and live with the
+// schools that matter, not against 442 rows nobody has looked at.
+ok('the roster carries no email addresses',
+  !/@[a-z0-9.-]+\.(edu|com|org)/i.test(JSON.stringify(Ro.ROSTER)));
+
+check('search finds a school by name', Ro.search('bucknell')[0].name, 'Bucknell University');
+ok('search finds a conference by acronym', Ro.search('psac', 50).length > 5);
+ok('and one the directory names differently', Ro.search('maac', 50).length > 5);
+// A state code also matches names containing those letters, ie, Pennsylvania
+// for "ny". That is the right behaviour for a search box a person types into,
+// so the check is that the state is found, not that nothing else is.
+ok('a two letter state finds that state', Ro.search('ny', 400).filter(function (s) { return s.state === 'NY'; }).length > 15);
+check('a single character finds nothing', Ro.search('b').length, 0);
+check('nonsense finds nothing', Ro.search('zzzzzz').length, 0);
+
+// Every school on the board must actually sponsor men's swimming. If one does
+// not appear in the NCAA's men's list, it is either cut, women's only, or
+// misnamed, and all three are worth knowing before an email goes out.
+const missing = [];
+const wrongDivision = [];
+schools.forEach(function (s) {
+  if (Sc.isCanadian(s)) return;                 // U SPORTS is not in an NCAA list
+  const key = Sc.matchKey(s.name);
+  const hit = Ro.ROSTER.filter(function (r) { return Sc.matchKey(r.name) === key; })[0];
+  if (!hit) { missing.push(s.name); return; }
+  if (hit.division !== s.division) wrongDivision.push(s.name + ': board ' + s.division + ', NCAA ' + hit.division);
+});
+check('every board school sponsors mens swimming', missing, []);
+check('and is in the division the board says', wrongDivision, []);
+
 // ---------- the photo library ----------
 const Ph = require('./photos.js');
 

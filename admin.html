@@ -207,6 +207,13 @@
   <h2>Schools and contacts</h2>
   <div class="card scroll"><table id="schoolTable"></table></div>
   <div class="card" style="margin-top:12px"><div class="pad">
+    <label for="rosterQ">Find a programme</label>
+    <p class="hint" id="rosterCount" style="margin:0 0 8px"></p>
+    <input id="rosterQ" placeholder="School, state, conference, ie, MAAC or NY or Bucknell" autocomplete="off">
+    <div id="rosterHits" style="margin-top:10px"></div>
+  </div></div>
+
+  <div class="card" style="margin-top:12px"><div class="pad">
     <label for="paste">Paste rows from a staff directory</label>
     <p class="hint" style="margin:0 0 8px">One school per line. Tabs or commas.
       Columns: school, division, coach, email, conference, state, source URL.
@@ -229,6 +236,7 @@
 <script src="swimmer.js"></script>
 <script src="convert.js"></script>
 <script src="school-utils.js"></script>
+<script src="roster.js"></script>
 <script src="photos.js"></script>
 <script src="standards.js"></script>
 <script src="board.js"></script>
@@ -322,6 +330,7 @@
   }
 
   function renderAll() {
+    renderRosterCount();
     renderPhotos();
     renderRankings();
     renderBoard();
@@ -803,6 +812,65 @@
     }).join('');
     el('schoolTable').innerHTML = head + '<tbody>' + body + '</tbody>';
   }
+
+  // The full universe of programmes, so nothing is missed. It is deliberately
+  // separate from the board: the board is the short list actually being
+  // worked, with benchmarks and contacts. This is everything he could choose
+  // from, and adding one here starts it on the board with nothing assumed.
+  function renderRosterCount() {
+    var R = window.Roster;
+    if (!R) return;
+    var c = R.counts();
+    el('rosterCount').innerHTML = c.total + ' programmes sponsor men\'s swimming, ie, ' +
+      c.D1 + ' Division I, ' + c.D2 + ' Division II, ' + c.D3 + ' Division III. ' +
+      'From the NCAA\'s own directory, ' + esc(R.RECORDED) + '.';
+  }
+
+  el('rosterQ').addEventListener('input', function () {
+    var R = window.Roster;
+    var hits = R.search(el('rosterQ').value, 20);
+    if (!hits.length) { el('rosterHits').innerHTML = ''; return; }
+    var onBoard = {};
+    schools.forEach(function (s) { onBoard[window.Schools.matchKey(s.name)] = true; });
+
+    el('rosterHits').innerHTML = '<div class="scroll"><table><tbody>' + hits.map(function (h) {
+      var already = onBoard[window.Schools.matchKey(h.name)];
+      return '<tr><td><strong>' + esc(h.name) + '</strong>' +
+        (h.provisional ? ' <span class="p P3">provisional</span>' : '') +
+        '<div class="conf">' + esc(h.division) + ', ' + esc(h.conference) +
+        (h.state ? ', ' + esc(h.state) : '') + '</div></td>' +
+        '<td style="text-align:right">' + (already
+          ? '<span class="conf">on the board</span>'
+          : '<button class="minor" data-add="' + esc(h.id) + '">Add to board</button>') +
+        '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+
+    Array.prototype.forEach.call(el('rosterHits').querySelectorAll('[data-add]'), function (b) {
+      b.addEventListener('click', function () {
+        var entry = window.Roster.ROSTER.filter(function (s) { return s.id === b.dataset.add; })[0];
+        if (!entry) return;
+        // Added with no contact, no benchmark and no priority. Everything that
+        // matters still has to be researched, and the board says so by leaving
+        // it "Not assessed" rather than pretending.
+        var made = window.Schools.normaliseSchool({
+          id: entry.id, name: entry.name, division: entry.division,
+          conference: entry.conference, state: entry.state,
+          staffUrl: entry.site ? 'https://' + entry.site : ''
+        });
+        if (!made.ok) { say('importMsg', 'bad', made.errors.map(esc).join(' ')); return; }
+        var merged = window.Schools.mergeSchools(schools, [made.school]);
+        api('/api/schools', { method: 'PUT', body: JSON.stringify({ schools: merged.schools }) })
+          .then(function () {
+            schools = merged.schools;
+            renderAll();
+            el('rosterQ').dispatchEvent(new Event('input'));
+            say('importMsg', 'ok', esc(entry.name) + ' added. It has no contact and no ' +
+              'swimmer times yet, so it reads Not assessed until those are researched.');
+          })
+          .catch(function (err) { say('importMsg', 'bad', esc(err.message)); });
+      });
+    });
+  });
 
   el('importGo').addEventListener('click', function () {
     hide('importMsg');

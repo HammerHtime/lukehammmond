@@ -25,6 +25,36 @@
 - All seventeen coach contacts, read off each school's own athletics site on
   18 September 2026, each carrying the page it came from.
 
+## The full roster, 18 September 2026
+442 NCAA programmes sponsor men's swimming: 137 Division I, 77 Division II,
+228 Division III. Generated from the NCAA's own membership directory rather
+than assembled by hand, and cross-checked against a separate pass that
+verified schools against 2026 conference championship team standings.
+
+Ten spot checks agreed across both methods, including the cases that trip up
+every published list. Liberty is absent, ie, its men's team is a club not a
+varsity programme, and it is the single most common error in public lists.
+Michigan State, Cal Poly, Lindenwood men's, Iowa and UConn are all correctly
+absent. Stonehill, VMI, Queens and Southern Indiana are all correctly present.
+
+The roster is the universe, not the board. The board stays the short list
+being actively worked, with contacts, benchmarks and a recorded priority.
+Adding a school from the roster starts it with none of those, and it reads
+"Not assessed" until they are researched, rather than pretending.
+
+## What the D2 research changed about where he stands
+Division II distance is much faster than the conference results suggested.
+The D2 1650 record is 14:55.42 and sixth at the 2026 national meet was
+15:14.66. Luke's 16:24 equivalent is roughly a minute off national scoring.
+
+That does not make the board wrong, it makes it precise. He is a genuine
+contributor at mid-table D2 on conference times, which is what the board says.
+He is not a top-tier D2 distance recruit, which the board never claimed.
+
+The more useful finding: his 400 IM of 4:12.90 is his most marketable event,
+because IM depth is thinner than distance free depth across most of D2. The
+board should probably lead with it. That is a decision for Andrew.
+
 ## Not built yet
 - Sending. netlify/functions/send.js is not written. See the blocker below.
   The admin screen drafts the email and opens it in your own mail app, which
