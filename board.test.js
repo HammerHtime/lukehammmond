@@ -715,6 +715,37 @@ ok('and does not put it in the wrong town',
 ok('while still saying where he lives', clubDraft.body.indexOf('from Etobicoke, Ontario') !== -1);
 ok('and names the new coach', clubDraft.body.indexOf('Aris Bousoulegkas') !== -1);
 
+// ---------- the club is in a different town to the swimmer ----------
+// He LIVES in Etobicoke and TRAINS in Mississauga. The public contact card was
+// pairing his home town with the club's name, ie, "Mississauga Aquatic Club,
+// Etobicoke", which puts the club somewhere it is not. A coach checking the
+// address would have found nothing there.
+//
+// The same mistake was caught in the coach email once already. This was the
+// copy of it that survived on the public page, which is why both now read from
+// their own field rather than sharing one.
+check('he lives in Etobicoke', SWIMMER.city, 'Etobicoke');
+check('and the club is in Mississauga', SWIMMER.clubCity, 'Mississauga');
+ok('they are not the same town', SWIMMER.city !== SWIMMER.clubCity);
+
+const profileSrc = require('fs').readFileSync(
+  require('path').join(__dirname, 'live-profile.js'), 'utf8');
+ok('the contact card uses the club\u2019s town', /coach\.clubCity \|\| SWIMMER\.clubCity/.test(profileSrc));
+ok('and never the swimmer\u2019s', profileSrc.indexOf("SWIMMER.city") === -1);
+// The province is read, not typed, so a move does not leave a stale "ON".
+ok('the province comes from the data', /', ' \+ SWIMMER\.province/.test(profileSrc));
+// And the em dash went with it. Andrew's rule, on a line a coach reads. The one
+// em dash left in the file is a table cell meaning "no value", which is a
+// glyph rather than punctuation, so it stays.
+const cardLine = /var card = el\('contact-club'\);[\s\S]*?\n    \}/.exec(profileSrc)[0];
+ok('no em dash on the contact card', cardLine.indexOf('\u2014') === -1);
+check('and only one is left in the file, as a placeholder',
+  (profileSrc.match(/\u2014/g) || []).length, 1);
+
+// The email had this fixed already and must stay fixed.
+ok('the email still keeps the club out of the wrong town',
+  clubDraft.body.indexOf('Mississauga Aquatic Club in Etobicoke') === -1);
+
 // ---------- the club coach ----------
 // Coaches said the thing they actually do is telephone the club coach. So a
 // stale name is not a cosmetic problem, it sends a US programme to someone who

@@ -363,7 +363,13 @@
 
     var card = el('contact-club');
     if (card) {
-      card.textContent = club + (SWIMMER.city ? ' \u2014 ' + SWIMMER.city + ', ON' : '');
+      // The club's OWN town, not Luke's. He lives in Etobicoke and trains in
+      // Mississauga, and this line was printing "Mississauga Aquatic Club,
+      // Etobicoke", which puts the club somewhere it is not. The same mistake
+      // was fixed in the coach email once already and this was the copy of it
+      // that survived on the public page.
+      var town = String(coach.clubCity || SWIMMER.clubCity || '').trim();
+      card.textContent = club + (town ? ', ' + town + ', ' + SWIMMER.province : '');
     }
 
     var footer = el('footer-line');

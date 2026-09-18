@@ -33,8 +33,14 @@ const SWIMMER = {
   // the club coach.
   coach: 'Aris Bousoulegkas',
   coachTitle: 'Head Coach, Mississauga Aquatic Club',
+  // Where LUKE lives.
   city: 'Etobicoke',
   province: 'Ontario',
+  // Where the CLUB is, which is a different town. He lives in Etobicoke and
+  // trains in Mississauga. Pairing his home town with the club's name put the
+  // club in the wrong place on the public contact card, and a coach checking
+  // it would have found nothing there.
+  clubCity: 'Mississauga',
   country: 'Canada',
   swimcloud: 'https://www.swimcloud.com/swimmer/3306753/',
 
