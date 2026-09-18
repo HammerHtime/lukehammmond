@@ -258,6 +258,21 @@ const CONFERENCES = {
     source: 'https://sidearmstats.com/Toronto/swimming/evtindex.htm', recorded: '2026-09-18',
     winners: { '400-free-SCM': '3:49.88', '1500-free-SCM': '15:26.45', '400-im-SCM': '4:21.47' }
   },
+  'RSEQ': {
+    name: 'RSEQ', meet: '2026 RSEQ Championships',
+    source: 'https://live.swimrankings.net/49295/', recorded: '2026-09-18',
+    winners: { '400-free-SCM': '3:51.36', '1500-free-SCM': '15:25.43', '400-im-SCM': '4:21.29' }
+  },
+  // Canada West races its championship in NOVEMBER, so the 2025-26 conference
+  // meet was 28 to 30 November 2025 at Lethbridge. That is the current one.
+  'Canada West': {
+    name: 'Canada West', meet: '2025 Canada West Championships',
+    source: 'https://www.winthewest.ca/swim/evtindex.htm', recorded: '2026-09-18',
+    winners: { '400-free-SCM': '3:49.14', '1500-free-SCM': '15:02.62', '400-im-SCM': '4:14.69' }
+  },
+  // The AUS is deliberately absent. It published NO results for its 2026
+  // championship, only day recaps naming winners with no times. Inventing a
+  // number there would be exactly the thing this board never does.
   'Patriot League': {
     name: 'Patriot League', meet: '2026 Patriot League Championships',
     source: 'https://sidearmstats.com/navy/cswim/index.htm', recorded: '2026-09-18',

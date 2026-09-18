@@ -165,11 +165,16 @@ check('an event with no mapping gets no conversion', C.toYards(S, bests['200-bre
 
 // ---------- the board ----------
 const schools = Sc.seedSchools();
-check('the board is seeded', schools.length, 27);
+check('the board is seeded', schools.length, 43);
 // Ten Ontario schools went on 18 September 2026. They are the only ones he can
 // write to today, because U SPORTS puts no calendar on contact.
-check('ten of them are Canadian',
-  schools.filter(function (s) { return s.division === 'USPORTS'; }).length, 10);
+// Every university in Canada with a men's swim team, ie, all 26.
+check('every Canadian programme is on it',
+  schools.filter(function (s) { return s.division === 'USPORTS'; }).length, 26);
+check('ten in Ontario', schools.filter(function (s) { return s.conference === 'OUA'; }).length, 10);
+check('six in Quebec', schools.filter(function (s) { return s.conference === 'RSEQ'; }).length, 6);
+check('six out west', schools.filter(function (s) { return s.conference === 'Canada West'; }).length, 6);
+check('four in the Atlantic', schools.filter(function (s) { return s.conference === 'AUS'; }).length, 4);
 // ---------- the coach contacts ----------
 // Every address was read off the school's own athletics site on 18 September
 // 2026. The test does not check that an address still works, because it cannot.
@@ -178,9 +183,13 @@ check('ten of them are Canadian',
 // Carleton is the one school with no coach address at all. What is recorded is
 // the club manager's address, deliberately, and the card says to ask to be put
 // through rather than pretending it is the coach.
-check('every school but one has a contact', schools.filter(Sc.isSendable).length, 26);
-check('and that one is Carleton',
-  schools.filter(function (s) { return !Sc.isSendable(s); })[0].id, 'carleton');
+// Three schools publish no personal coach address at all. Carleton publishes
+// only a club manager, Sherbrooke and UQTR only a department mailbox. Each is
+// recorded as unsendable rather than dressed up with a guessed address.
+check('forty of forty-three are sendable', schools.filter(Sc.isSendable).length, 40);
+check('and the three that are not are named',
+  schools.filter(function (s) { return !Sc.isSendable(s); }).map(function (s) { return s.id; }),
+  ['carleton', 'sherbrooke', 'uqtr']);
 schools.forEach(function (s) {
   ok(s.name + ' records where the address came from', Boolean(s.staffUrl));
   ok(s.name + ' records when it was checked', Boolean(s.verifiedOn));
@@ -273,7 +282,10 @@ function countTier(label) {
 check('every school lands in exactly one tier',
   countTier('You\u2019d race') + countTier('You\u2019d push') +
   countTier('You\u2019d chase') + countTier('Not scored'), rows.length);
-check('nothing scored is still exactly three', countTier('Not scored'), 3);
+// Nine schools have nothing to compare against. Two never had times gathered,
+// and seven entered nobody in any of his events, which is a fact about the
+// programme rather than a gap in the research.
+check('nine schools have nothing to score', countTier('Not scored'), 9);
 check('Loyola is one of them', tierOf('loyolamd'), 'Not scored');
 check('Queen\u2019s is another, having entered nobody', tierOf('queens'), 'Not scored');
 check('Canisius is not', tierOf('canisius'), 'You\u2019d race');
@@ -407,9 +419,18 @@ check('and the Patriot League', B.conferenceContext(S, row('bucknell').school,
 // The OUA races metres, not yards, and there is no men's 800 free.
 check('the OUA answers in metres', B.conferenceContext(S, row('laurier').school,
   row('laurier').comparisons.filter(function (c) { return c.event === '400-im-SCM'; })[0]).winner, '4:21.47');
-check('every conference on the board is now on file',
+// The AUS is the one conference with no times, because it published none for
+// its 2026 championship, only day recaps naming winners. Dalhousie is the only
+// scored school in it, and its card shows no conference line rather than a
+// guess.
+check('only the AUS has no conference times',
   rows.filter(function (r) { return r.comparisons.length &&
-    !B.conferenceContext(S, r.school, r.comparisons[0]); }).length, 0);
+    !B.conferenceContext(S, r.school, r.comparisons[0]); })
+    .map(function (r) { return r.school.conference; }), ['AUS']);
+check('Canada West answers in metres', B.conferenceContext(S, row('victoria').school,
+  row('victoria').comparisons.filter(function (c) { return c.event === '400-im-SCM'; })[0]).winner, '4:14.69');
+check('and so does the RSEQ', B.conferenceContext(S, row('mcgill').school,
+  row('mcgill').comparisons.filter(function (c) { return c.event === '1500-free-SCM'; })[0]).winner, '15:25.43');
 check('a school with no conference is silent too',
   B.conferenceContext(S, { name: 'X' }, canisiusMile), null);
 check('and no comparison is silent',
@@ -1199,8 +1220,12 @@ check('initials skip the joining words', Sc.initialsFor({ name: 'Rensselaer Poly
 // Loyola and Hamilton have no times gathered. Queen's entered no men in any of
 // the three events at the 2026 OUA championships, which is not the same thing,
 // but it reads the same on the board and should.
-check('three schools remain unassessed',
-  rows.filter(function (r) { return r.evidenceCount === 0; }).length, 3);
+check('nine schools remain unassessed',
+  rows.filter(function (r) { return r.evidenceCount === 0; }).length, 9);
+// Lethbridge and Manitoba both field men and neither entered one in the 400
+// free, the 1500 or the 400 IM. That is the roster, not a missing source.
+check('Lethbridge fielded nobody in his events', row('lethbridge').evidenceCount, 0);
+check('nor did Manitoba', row('manitoba').evidenceCount, 0);
 
 // Manhattan's whole distance group is slower than him, so he is ahead outright
 // rather than merely inside the range.

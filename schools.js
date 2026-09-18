@@ -521,6 +521,304 @@ const SCHOOLS = [
     note: "Tenth and last with 80 points, and effectively a sprint-only group. Queen's entered NO men in the 400 free, the 1500 free or the 400 IM at the 2026 OUA championships, so there is no distance training group here at all.",
     benchmarks: [],
     benchmarksCheckedOn: '2026-09-18',  }
+,
+
+  // ---------- The rest of Canada, ie, RSEQ, Canada West and the AUS. ----------
+  //
+  // Same rule as Ontario: these compare against times he has actually swum,
+  // because U SPORTS races short course metres and so does he.
+  //
+  // Three things to know before reading these cards.
+  //
+  // Canada West races its championship in NOVEMBER, so the 2025-26 conference
+  // meet was 28 to 30 November 2025 at Lethbridge. That is the current one, not
+  // an old one.
+  //
+  // The AUS published NO results at all for its 2026 championship, only day
+  // recaps naming winners. So Dalhousie and UNB carry only national-meet times
+  // and Mount Allison and Memorial carry none. That is a missing source, not a
+  // missing programme.
+  //
+  // An empty benchmark array where a school simply entered nobody is recorded
+  // deliberately. Lethbridge and Manitoba both have men's teams and neither put
+  // a man in the 400 free, the 1500 or the 400 IM. That is a fact about the
+  // programme and the card should say it.
+  {
+    id: 'ubc',
+    coach: "Derrick Schoof", coachTitle: "Head Coach, Swimming",
+    email: "derrick.schoof@ubc.ca",
+    staffUrl: "https://gothunderbirds.ca/sports/swimming-and-diving/roster/coaches/derrick-schoof/4719",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Sarah Rudolf", assistantEmail: "sarah.rudolf@ubc.ca",
+    contactNote: "The address is only on his individual bio page, not in the staff directory.",
+    name: 'University of British Columbia', division: 'USPORTS', conference: 'Canada West',
+    state: 'BC', country: 'Canada', priority: '', confidence: 'High',
+    note: "The national power and it is not close. UBC won all four U SPORTS and Canada West banners in 2025-26 and swept the 400 free, 1500 free and 400 IM national titles. Read every time here as national-final standard.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:44.87", "3:45.52", "3:46.36", "3:47.98", "3:58.45"],
+        basis: 'roster', context: "2026 U SPORTS, five men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '1500-free-SCM', times: ["14:53.64", "14:55.39", "15:24.01", "15:32.64"],
+        basis: 'roster', context: "2026 U SPORTS, four men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '400-im-SCM', times: ["4:09.72", "4:12.66", "4:14.69", "4:17.80", "4:21.54"],
+        basis: 'roster', context: "2026 U SPORTS, plus Kirk's 2025 Canada West title", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'calgary',
+    coach: "Mike Blondal", coachTitle: "Head Coach",
+    email: "blondal@ucalgary.ca",
+    staffUrl: "https://godinos.com/sports/swimming-and-diving/roster/coaches/mike-blondal/2702",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Nick Lapointe", assistantEmail: "",
+    contactNote: "The roster page still lists Ray Betuzzi as assistant with his address. He has left for the Calgary Patriots club. Nick Lapointe was announced 20 August 2026 and publishes no address. Blondal's own bio text stops at 2011 but he is confirmed in his 33rd season.",
+    name: 'University of Calgary', division: 'USPORTS', conference: 'Canada West',
+    state: 'AB', country: 'Canada', priority: '', confidence: 'High',
+    note: "The second national power, third at 2026 U SPORTS. The deepest distance roster in the country after UBC, ie, six men scored in the national 1500 and seven made the 400 IM field. Hosts the 2027 U SPORTS championships.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:46.39", "3:49.87", "3:54.89", "3:55.39", "4:00.74", "4:02.88"],
+        basis: 'roster', context: "2026 U SPORTS, six men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '1500-free-SCM', times: ["15:12.59", "15:16.06", "15:16.88", "15:24.37", "15:53.85", "15:56.50"],
+        basis: 'roster', context: "2026 U SPORTS, six men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '400-im-SCM', times: ["4:17.98", "4:18.37", "4:20.04", "4:21.77", "4:23.94", "4:27.12", "4:29.50"],
+        basis: 'roster', context: "2026 U SPORTS, seven men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'victoria',
+    coach: "Ryan Clouston", coachTitle: "Head Coach",
+    email: "ryanpc@uvic.ca",
+    staffUrl: "https://govikesgo.com/sports/swimming-and-diving/roster/coaches/ryan-clouston/1140",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Eight coaches are listed and he is the only one with a published address. It is a short form, ie, ryanpc, so do not guess a UVic address from any pattern.",
+    name: 'University of Victoria', division: 'USPORTS', conference: 'Canada West',
+    state: 'BC', country: 'Canada', priority: '', confidence: 'High',
+    note: "Third in Canada West, seventh at 2026 U SPORTS. Distance heavy relative to its scoring, ie, five men in the national 400 free field and three in the 1500, none in an A final. Their times sit right in the zone he is aiming at, which makes this arguably the best fit in Canada West.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:57.28", "3:58.70", "3:59.59", "3:59.73", "4:00.61", "4:00.72", "4:02.27"],
+        basis: 'roster', context: "2026 U SPORTS and 2025 Canada West, five men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '1500-free-SCM', times: ["15:52.63", "15:54.68", "16:04.85"],
+        basis: 'roster', context: "2026 U SPORTS, three men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '400-im-SCM', times: ["4:26.97", "4:28.44", "4:29.49", "4:33.00", "4:35.04", "4:37.91", "4:38.18", "4:43.94"],
+        basis: 'roster', context: "2026 U SPORTS and 2025 Canada West, five men", sourceUrl: "https://www.winthewest.ca/swim/251128F014.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'lethbridge',
+    coach: "Peter Schori", coachTitle: "Swimming Head Coach",
+    email: "peter.schori@uleth.ca",
+    staffUrl: "https://gohorns.ca/sports/swimming-and-diving/roster/coaches/peter-schori/653",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "One-man coaching staff, the only swimming coach listed anywhere on the Pronghorns site.",
+    name: 'University of Lethbridge', division: 'USPORTS', conference: 'Canada West',
+    state: 'AB', country: 'Canada', priority: '', confidence: 'High',
+    note: "Hosted the 2025 Canada West championships and finished fourth. Lethbridge entered men at that meet but put NOBODY in the 400 free, the 1500 or the 400 IM. There is no distance or IM group here at all, which is either wide open or a warning depending on what he wants.",
+    benchmarks: [],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'manitoba',
+    coach: "Vlastimil Cerny", coachTitle: "Head Coach - Swimming",
+    email: "vlastimil.cerny@umanitoba.ca",
+    staffUrl: "https://gobisons.ca/sports/swimming-and-diving/roster/coaches/vlastimil-cerny/1430",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Craig McCormick", assistantEmail: "craig.mccormick@umanitoba.ca",
+    contactNote: "Page is current, the bio names his 34th season in 2026-27. He goes by Vlastik.",
+    name: 'University of Manitoba', division: 'USPORTS', conference: 'Canada West',
+    state: 'MB', country: 'Canada', priority: '', confidence: 'High',
+    note: "Fifth in Canada West. Same gap as Lethbridge, ie, Manitoba raced men at the conference meet and entered nobody in the 400 free, the 1500 or the 400 IM. For scale, their 400 free school record is 4:05.77.",
+    benchmarks: [],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'regina',
+    coach: "Baylee Munro", coachTitle: "Women's and Men's Swimming Head Coach",
+    email: "baylee.munro@uregina.ca",
+    staffUrl: "https://reginacougars.com/sports/swimming-and-diving/roster/coaches/baylee-munro/1669",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Jacob Dakiniewich", assistantEmail: "",
+    contactNote: "The title is published in that exact word order.",
+    name: 'University of Regina', division: 'USPORTS', conference: 'Canada West',
+    state: 'SK', country: 'Canada', priority: '', confidence: 'Medium',
+    note: "Smallest Canada West men's programme, but unlike Lethbridge and Manitoba they DO race the distance and IM events, so there is a training group. Their conference times are the closest in Canada West to his, ie, the strongest case on this side for scoring immediately. The 1500 time is a seed, not a swum result, because the official results file was never updated past the psych sheet.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["4:08.20", "5:07.90", "5:19.19"],
+        basis: 'roster', context: "2025 Canada West B final, three men", sourceUrl: "https://www.winthewest.ca/swim/251128F036.htm" },
+      { event: '400-im-SCM', times: ["4:36.48", "5:02.06"],
+        basis: 'roster', context: "2025 Canada West final, two men", sourceUrl: "https://www.winthewest.ca/swim/251128F014.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'mcgill',
+    coach: "Peter Carpenter", coachTitle: "Swimming, head coach",
+    email: "peter.carpenter@mcgill.ca",
+    staffUrl: "https://mcgillathletics.ca/staff-directory/peter-carpenter/41",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Nikki van Noord", assistantEmail: "nikki.vannoord@mcgill.ca",
+    contactNote: "His bio carries the line 'updated Sept. 23, 2020' and still describes his 12th season. The address is live and correct, the biography is six years old. Van Noord only became full-time associate coach in June 2026.",
+    name: 'McGill University', division: 'USPORTS', conference: 'RSEQ',
+    state: 'QC', country: 'Canada', priority: '', confidence: 'High',
+    note: "RSEQ men's champions in 2026 and fourth at nationals. Carpenter was RSEQ coach of the year for both programmes. A deep mid-distance group rather than a distance specialist one.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:49.37", "3:51.72", "3:54.91", "3:57.12", "4:00.84", "4:02.16", "4:02.86"],
+        basis: 'roster', context: "2026 U SPORTS and 2026 RSEQ, seven swims", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '1500-free-SCM', times: ["15:32.72", "15:44.54", "15:47.24", "15:53.37", "16:03.00", "16:10.32"],
+        basis: 'roster', context: "2026 U SPORTS and 2026 RSEQ, five men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '400-im-SCM', times: ["4:22.43", "4:23.71", "4:25.22", "4:29.21", "4:32.10", "4:39.40"],
+        basis: 'roster', context: "2026 U SPORTS and 2026 RSEQ, five men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'montreal',
+    coach: "Chrystèle Roy L'Ecuyer", coachTitle: "Entraîneuse-chef",
+    email: "chrystele.roy-lecuyer@umontreal.ca",
+    staffUrl: "https://carabins.umontreal.ca/natation/entraineurs/chrystele-roy-lecuyer-entraineuse-chef/",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Araya Therrien", assistantEmail: "",
+    contactNote: "Title published in French and recorded as published. A Carabins page headed 'Entraîneur-chef recherché' still ranks in search, ie, head coach wanted. It is dated February 2023, was for 2023-24, and the address on it is an HR contact. It is not a current vacancy.",
+    name: 'Université de Montréal', division: 'USPORTS', conference: 'RSEQ',
+    state: 'QC', country: 'Canada', priority: '', confidence: 'High',
+    note: "The best distance freestyle programme in Quebec. Montréal won all three of these events at the 2026 RSEQ championships, and Édouard Duffy was RSEQ men's rookie of the year.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:46.97", "3:48.09", "3:51.42", "4:10.55"],
+        basis: 'roster', context: "2026 U SPORTS A and B finals, four men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '1500-free-SCM', times: ["15:09.55", "15:25.43", "16:40.72"],
+        basis: 'roster', context: "2026 U SPORTS and 2026 RSEQ", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '400-im-SCM', times: ["4:10.95", "4:28.71", "4:31.36", "4:32.23"],
+        basis: 'roster', context: "2026 U SPORTS final and 2026 RSEQ final, four men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'ottawa',
+    coach: "Vince Sljuka", coachTitle: "Head Coach",
+    email: "vincenzo.sljuka@uottawa.ca",
+    staffUrl: "https://teams.geegees.ca/sports/swim/coaches/sljuka_vince",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Made full-time head coach in May 2026 after a year as interim. Dave Heinbuch, the previous head coach, retired after 2024-25 and still comes up first in many searches, do not write to him. The athletics site moved, ie, geegees.ca is a splash page and teams.geegees.ca is live. Ottawa is in Ontario but competes in RSEQ.",
+    name: 'University of Ottawa', division: 'USPORTS', conference: 'RSEQ',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'High',
+    note: "Second in RSEQ and sixth at nationals, a strong all-round programme, but distance freestyle is its weak spot. NO Ottawa man made the 400 free, 1500 or 400 IM at 2026 nationals. A distance recruit would fill a real hole, and it is two hours from home.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["4:05.69", "4:07.13", "4:10.18", "4:12.87"],
+        basis: 'roster', context: "2026 RSEQ prelims and B final, two men", sourceUrl: "https://live.swimrankings.net/49295/" },
+      { event: '1500-free-SCM', times: ["16:21.90", "16:24.48"],
+        basis: 'roster', context: "2026 RSEQ, two men", sourceUrl: "https://live.swimrankings.net/49295/" },
+      { event: '400-im-SCM', times: ["4:34.03", "4:36.42"],
+        basis: 'roster', context: "2026 RSEQ finals, two men", sourceUrl: "https://live.swimrankings.net/49295/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'laval',
+    coach: "Samuel Matte", coachTitle: "Entraîneur-chef",
+    email: "sammatte01@gmail.com",
+    staffUrl: "https://www.rougeetornatation.com/fr/",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "THIS IS A PERSONAL GMAIL, NOT A UNIVERSITY ADDRESS. The official Rouge et Or coaching page publishes no address at all. This one is behind the 'Contactez notre entraîneur chef' button on the club's own site, which is where the varsity programme actually runs from. It is genuinely published, but write accordingly. Matte took over in February 2025.",
+    name: 'Université Laval', division: 'USPORTS', conference: 'RSEQ',
+    state: 'QC', country: 'Canada', priority: '', confidence: 'Medium',
+    note: "Fourth in RSEQ. A genuine distance presence, ie, two men scored in the 1500 at nationals, and strong 400 IM depth for the size of the team.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:51.50", "3:54.72", "3:56.22", "4:03.49", "4:27.51"],
+        basis: 'roster', context: "2026 U SPORTS and 2026 RSEQ, three men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '1500-free-SCM', times: ["15:26.24", "15:34.18", "15:43.11", "15:53.44"],
+        basis: 'roster', context: "2026 U SPORTS and 2026 RSEQ, two men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '400-im-SCM', times: ["4:22.75", "4:26.75", "4:28.19", "4:28.62", "4:28.99", "4:32.74", "4:35.29"],
+        basis: 'roster', context: "2026 U SPORTS and 2026 RSEQ, five men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'sherbrooke',
+    coach: "David Bruandet", coachTitle: "Entraîneur-chef",
+    email: "vertetor@USherbrooke.ca",
+    staffUrl: "https://www.usherbrooke.ca/vertetor/equipes/natation/entraineurs",
+    verified: false, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "NO PERSONAL ADDRESS IS PUBLISHED. This is the department mailbox, with that capitalisation exactly as printed, so address him by name. Two Sherbrooke swimming URLs exist and only the vertetor one renders staff.",
+    name: 'Université de Sherbrooke', division: 'USPORTS', conference: 'RSEQ',
+    state: 'QC', country: 'Canada', priority: '', confidence: 'Medium',
+    note: "Hosted the 2026 RSEQ championships, fifth in the conference. Small but real distance group. Three Sherbrooke swimmers qualified for the 2025 World Cup, so the coaching reaches a high level despite the team size. No Sherbrooke man swam the 400 IM at either championship.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:54.60", "3:57.81", "4:00.31", "4:01.35", "4:02.55", "4:08.20"],
+        basis: 'roster', context: "2026 U SPORTS and 2026 RSEQ, four men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '1500-free-SCM', times: ["15:53.75", "15:55.57"],
+        basis: 'roster', context: "2026 RSEQ and 2026 U SPORTS, one man", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'uqtr',
+    coach: "Charles Labrie", coachTitle: "Entraîneur-chef",
+    email: "patriotes@uqtr.ca",
+    staffUrl: "https://oraprdnt.uqtr.uquebec.ca/portail/gscw031?owa_no_site=133&owa_no_fiche=78",
+    verified: false, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "NO PERSONAL ADDRESS IS PUBLISHED, this is the shared programme mailbox, so address him by name. Careful with the URL, ie, the UQTR site numbers its pages and fiche=92 is GOLF, not swimming. Labrie has coached the Patriotes about fourteen years.",
+    name: 'Université du Québec à Trois-Rivières', division: 'USPORTS', conference: 'RSEQ',
+    state: 'QC', country: 'Canada', priority: '', confidence: 'Medium',
+    note: "By far the smallest men's programme in the country. UQTR entered TWO men at the 2026 RSEQ championships and scored 4 points at nationals, last of 21. Effectively a women's programme with a token men's entry, so there is almost no training group.",
+    benchmarks: [],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'dalhousie',
+    coach: "Lance Cansdale", coachTitle: "Head Coach",
+    email: "lance.cansdale@dal.ca",
+    staffUrl: "https://daltigers.ca/sports/swim/coaches/Lance_Candsale",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Dalhousie misspelled his surname in the page URL, ie, Candsale. The displayed name and the address are both Cansdale. Parts of his bio are years out of date and the recruit form shows a placeholder address rather than a real one.",
+    name: 'Dalhousie University', division: 'USPORTS', conference: 'AUS',
+    state: 'NS', country: 'Canada', priority: '', confidence: 'High',
+    note: "The AUS programme that matters. Fifth straight AUS banner in 2026 and the only AUS men's team in the national top ten. Genuinely distance led, ie, Morgan Sparkes won the AUS 1500 and 400 IM and swam the only men's 800 free at the national meet.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:55.47", "3:57.80", "4:04.95", "4:08.60"],
+        basis: 'roster', context: "2026 U SPORTS final and prelims, four men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '1500-free-SCM', times: ["15:33.18", "16:14.87"],
+        basis: 'roster', context: "2026 U SPORTS, two men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '800-free-SCM', times: ["8:15.74"],
+        basis: 'champion', context: "2026 U SPORTS time trial, the only men's 800 swum at the national meet", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" },
+      { event: '400-im-SCM', times: ["4:25.68", "4:30.21"],
+        basis: 'roster', context: "2026 U SPORTS final and prelims, two men", sourceUrl: "https://results.swimming.ca/2026_USPORTS/" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'unb',
+    coach: "Marta Belsh", coachTitle: "Head Coach, Men's Swimming",
+    email: "marta.belsh@unb.ca",
+    staffUrl: "https://goredsgo.ca/sports/mswim/coaches/Marta_Belsh",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Page is current, the bio names her eighth season in 2026-27. She coaches both programmes. A RECRUIT ME link sits in the swim navigation.",
+    name: 'University of New Brunswick', division: 'USPORTS', conference: 'AUS',
+    state: 'NB', country: 'Canada', priority: '', confidence: 'High',
+    note: "Second AUS programme, but a sprint and stroke one rather than a distance one. NO UNB man swam the 400 free, the 1500 or the 400 IM at 2026 nationals, and the AUS published no times at all, so there is nothing to compare against here yet.",
+    benchmarks: [],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'mountallison',
+    coach: "Brenna Maddelena", coachTitle: "Head Coach, Mounties Swimming",
+    email: "bmaddalena@mta.ca",
+    staffUrl: "https://mountiepride.ca/sports/swim/coaches/Brenna_Rothfuss",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "THREE SPELLINGS, ONE PERSON. The site displays Maddelena with an e, the page URL and title use a former surname Rothfuss, and the published address uses Maddalena with an a. The address is exactly as printed and is the one to use. Deriving it from the displayed name gets it wrong. The athletics domain is mountiepride.ca.",
+    name: 'Mount Allison University', division: 'USPORTS', conference: 'AUS',
+    state: 'NB', country: 'Canada', priority: '', confidence: 'Medium',
+    note: "Small AUS programme that scored no men's points at 2026 nationals. Its only men's podium in three days of AUS recaps was a bronze in the 400 IM, and no time was published. The AUS published no results file, so there is nothing to compare against.",
+    benchmarks: [],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'memorial',
+    coach: "Duffy Earle", coachTitle: "Co-Head Coach",
+    email: "duffy.earle@gmail.com",
+    staffUrl: "https://www.goseahawks.ca/sports/mswim/coaches/index",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Chris Roberts", assistantEmail: "",
+    contactNote: "TWO THINGS. There are two co-head coaches, Duffy Earle and Chris Roberts, and only Earle has a published address. It is A PERSONAL GMAIL, not a mun.ca address, and it appears that way on both the coaches page and the staff directory, so it is the published contact rather than a mistake. Separately the men's swimming section is badly stale, ie, its newest roster is 2023-24 and its news feed stops in December 2023.",
+    name: 'Memorial University of Newfoundland', division: 'USPORTS', conference: 'AUS',
+    state: 'NL', country: 'Canada', priority: '', confidence: 'Medium',
+    note: "Hosted the 2026 AUS championships and scored no men's points at nationals. The AUS published no results file, so there is nothing to compare against. Their 400 free school record on the national sheet is 3:57.01.",
+    benchmarks: [],
+    benchmarksCheckedOn: '2026-09-18',  }
 ];
 function seedSchools() {
   return SCHOOLS.map(function (s) {
