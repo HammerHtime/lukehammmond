@@ -89,6 +89,29 @@ ok('points descend', ranked.every(function (r, i) { return i === 0 || ranked[i -
 ok('the 400 IM is not his strongest, whatever it feels like',
   ranked.slice(0, 3).every(function (r) { return r.stroke === 'free'; }));
 
+// One row per event, not per course. Without this the 800 free took two of the
+// top four slots, long course and short course, telling a coach nothing he did
+// not know and pushing the 400 IM off the page entirely.
+const perEvent = S.rankedByPoints(results, 5, true);
+check('five events, not five course-and-event pairs', perEvent.length, 5);
+ok('no event appears twice', perEvent.every(function (r, i) {
+  return perEvent.findIndex(function (o) { return o.distance === r.distance && o.stroke === r.stroke; }) === i;
+}));
+check('and the 400 IM makes the list', perEvent[4].event, '400-im-SCM');
+// It is his FIFTH event by points, not a co-lead. Range, not identity.
+ok('the four ahead of it are all freestyle',
+  perEvent.slice(0, 4).every(function (r) { return r.stroke === 'free'; }));
+
+// The 400 IM curve, which is why it earns a place despite ranking fifth.
+const imLong = S.progression(results, 400, 'im', 'LCM');
+check('four seasons of the 400 IM long course', imLong.seasons.length, 4);
+check('from here', imLong.seasons[0].time, '6:43.41');
+check('to here', imLong.current.time, '4:52.37');
+check('which is the largest drop of any event he swims', S.formatGap(imLong.totalDrop), '-1:51.04');
+check('faster every season', imLong.everySeason, true);
+const imShort = S.progression(results, 400, 'im', 'SCM');
+check('and the short course tells the same story', imShort.everySeason, true);
+
 // The curve. The thing a results database cannot show.
 const curve = S.progression(results, 400, 'free', 'LCM');
 check('four seasons of the 400 free', curve.seasons.length, 4);

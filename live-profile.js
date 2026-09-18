@@ -267,7 +267,12 @@
     var host = el('progression');
     if (!host) return;
 
-    var top = S.rankedByPoints(results, 4);
+    // Five, one row per event rather than per course. That brings the 400 IM
+    // in, which matters: coaches named RANGE of events alongside rate of
+    // improvement, and a distance freestyler who can also swim a 400 IM is a
+    // different proposition from one who cannot. It is his fifth event by
+    // points, not a co-lead, and the page says so rather than overselling it.
+    var top = S.rankedByPoints(results, 5, true);
     var curves = top.map(function (best) {
       return S.progression(results, best.distance, best.stroke, best.course);
     }).filter(Boolean).filter(function (c) { return c.seasons.length > 1; });
@@ -277,10 +282,12 @@
       '<p class="section-label">Rate of Improvement</p>' +
       '<h2 class="section-title" style="margin-bottom:0.75rem;">Season by Season</h2>' +
       '<p style="color:var(--muted);font-size:0.875rem;max-width:700px;line-height:1.7;' +
-      'margin-bottom:2rem;">His four strongest events, chosen by World Aquatics points rather ' +
+      'margin-bottom:2rem;">His five strongest events, chosen by World Aquatics points rather ' +
       'than by preference, with the season best for each year and what came off it. Points are ' +
-      'the same scale in every event and both courses, ie, they compare a 400 freestyle against ' +
-      'a 400 individual medley honestly.</p>' +
+      'the same scale in every event and both courses, so they compare a 400 freestyle against ' +
+      'a 400 individual medley honestly. The distance freestyle is the identity. The ' +
+      '<span style="color:var(--white);">400 individual medley is the range</span>, and range ' +
+      'is what lets a coach use a swimmer in more than one place.</p>' +
       '<div style="display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));">' +
       curves.map(function (c) {
         return '<div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.07);' +

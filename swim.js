@@ -335,12 +335,18 @@ function progression(results, distance, stroke, course) {
 // His events ranked by points rather than by how they feel. Points are the
 // same scale in every event and both courses, so this settles the question of
 // what to lead with instead of arguing about it.
-function rankedByPoints(results, limit) {
+//
+// perEvent collapses the two courses to the stronger one. Without it the 800
+// free took two of the top four slots, long course and short course, which
+// says nothing a coach does not already know and pushed his range off the
+// list entirely. One row per event is what a coach reads.
+function rankedByPoints(results, limit, perEvent) {
   const best = {};
   (results || []).forEach(function (r) {
     if (!r.points) return;
-    const held = best[r.event];
-    if (!held || r.points > held.points) best[r.event] = r;
+    const key = perEvent ? r.distance + '-' + r.stroke : r.event;
+    const held = best[key];
+    if (!held || r.points > held.points) best[key] = r;
   });
   return Object.keys(best).map(function (id) { return best[id]; })
     .sort(function (a, b) { return b.points - a.points; })
