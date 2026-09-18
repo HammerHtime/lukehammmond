@@ -477,7 +477,7 @@
 
     var swim = checked.result;
     var beforeBest = S.personalBests(results)[swim.event] || null;
-    var beforeBoard = B.scoreBoard(S, C.yardBests(S, results), schools);
+    var beforeBoard = B.scoreBoard(S, C.boardBests(S, results), schools);
 
     // Same event, same date, same time is the same swim entered twice.
     if (results.some(function (r) { return r.id === swim.id; })) {
@@ -511,7 +511,7 @@
       lines.push('Not a best. His ' + esc(swim.name) + ' ' + esc(swim.course) + ' stands at ' + esc(beforeBest.time) + '.');
     }
 
-    var afterBoard = B.scoreBoard(S, C.yardBests(S, results), schools);
+    var afterBoard = B.scoreBoard(S, C.boardBests(S, results), schools);
     var was = {};
     beforeBoard.forEach(function (r) { was[r.school.id] = r.computedFit; });
     var moved = afterBoard.filter(function (r) {
@@ -919,7 +919,11 @@
   }
 
   function renderBoard() {
-    var rows = B.scoreBoard(S, C.yardBests(S, results), schools);
+    // boardBests, not yardBests. American programmes race yards, which he has
+    // never swum, so those run on converted times. Canadian programmes race
+    // short course metres, which he races every winter, so those run on times
+    // he actually swam.
+    var rows = B.scoreBoard(S, C.boardBests(S, results), schools);
 
     var legend =
       '<div class="legend">' +
@@ -947,8 +951,13 @@
       // Nothing gathered means no reading, whatever was recorded. Saying "he'd
       // chase" over an empty record would be a verdict drawn from silence.
       var assessed = r.evidenceCount > 0;
-      var tier = B.tierFor(r.recordedPriority, assessed) || { label: 'Unset', tone: 'none' };
       var suggested = assessed ? B.tierFor(r.suggestedPriority, true) : null;
+      // Schools you have never judged fall back to what the engine reads off
+      // the times, marked as the engine's call. Thirty-one cards reading
+      // "Unset" would tell you nothing, and the engine has a real answer.
+      var recorded = B.tierFor(r.recordedPriority, assessed);
+      var tier = recorded || suggested || { label: 'Not scored', tone: 'none' };
+      var fromEngine = !recorded && Boolean(suggested);
 
       return '<div class="school">' +
         '<div class="school-head">' + badge(r.school) +
@@ -970,6 +979,7 @@
           (r.school.verified ? '<span class="tag fit-good">contact on file</span>' : '') +
           (r.disagrees && suggested
             ? '<span class="tag fit-warn">engine reads it \u201c' + esc(suggested.label) + '\u201d</span>' : '') +
+          (fromEngine ? '<span class="tag">engine\u2019s call, you have not set one</span>' : '') +
         '</div>' +
 
         (r.school.note ? '<p class="school-note">' + esc(r.school.note) + '</p>' : '') +
@@ -1054,14 +1064,14 @@
 
   // ---------- what a drop unlocks ----------
   function renderWhatIfEvents() {
-    var yards = C.yardBests(S, results);
+    var yards = C.boardBests(S, results);
     el('wiEvent').innerHTML = Object.keys(yards).map(function (id) {
       return '<option value="' + esc(id) + '">' + esc(yards[id].name) + ', now ' + esc(yards[id].time) + '</option>';
     }).join('');
   }
 
   el('wiGo').addEventListener('click', function () {
-    var out = B.whatIfFaster(S, C.yardBests(S, results), schools, el('wiEvent').value, el('wiTime').value);
+    var out = B.whatIfFaster(S, C.boardBests(S, results), schools, el('wiEvent').value, el('wiTime').value);
     if (!out) { say('wiMsg', 'bad', 'That time is not readable. Try 4:32.00.'); return; }
     if (!out.moved.length) {
       say('wiMsg', 'info', esc(out.time) + ' does not move any school across a priority line. ' +

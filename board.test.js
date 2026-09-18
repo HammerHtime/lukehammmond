@@ -134,7 +134,10 @@ ok('and the 400 IM', S.progression(results, 400, 'im', 'LCM').everySeason);
 // Eight of the ten supplied pairs reproduce exactly and two land a hundredth
 // out, because the factors are held to four decimals. One hundredth is the
 // stated tolerance. Tightening it by tuning a factor would be fitting noise.
-const yards = C.yardBests(S, results);
+// boardBests, not yardBests. American programmes race yards, which he has never
+// swum, so those comparisons run on converted times. Canadian programmes race
+// short course metres, which he races every winter, so those run on real swims.
+const yards = C.boardBests(S, results);
 // The supplied pairs are the source of the FACTORS, not a snapshot of his
 // times. He has since gone faster, so his converted times have moved and
 // should have. What must still hold is that each factor reproduces the pair it
@@ -162,13 +165,22 @@ check('an event with no mapping gets no conversion', C.toYards(S, bests['200-bre
 
 // ---------- the board ----------
 const schools = Sc.seedSchools();
-check('the board is seeded', schools.length, 17);
+check('the board is seeded', schools.length, 27);
+// Ten Ontario schools went on 18 September 2026. They are the only ones he can
+// write to today, because U SPORTS puts no calendar on contact.
+check('ten of them are Canadian',
+  schools.filter(function (s) { return s.division === 'USPORTS'; }).length, 10);
 // ---------- the coach contacts ----------
 // Every address was read off the school's own athletics site on 18 September
 // 2026. The test does not check that an address still works, because it cannot.
 // It checks that the record is shaped honestly, ie, nothing is marked verified
 // without both an address and the page it was read from.
-check('every school has a contact', schools.filter(Sc.isSendable).length, 17);
+// Carleton is the one school with no coach address at all. What is recorded is
+// the club manager's address, deliberately, and the card says to ask to be put
+// through rather than pretending it is the coach.
+check('every school but one has a contact', schools.filter(Sc.isSendable).length, 26);
+check('and that one is Carleton',
+  schools.filter(function (s) { return !Sc.isSendable(s); })[0].id, 'carleton');
 schools.forEach(function (s) {
   ok(s.name + ' records where the address came from', Boolean(s.staffUrl));
   ok(s.name + ' records when it was checked', Boolean(s.verifiedOn));
@@ -244,22 +256,32 @@ check('no evidence outranks the recorded call', B.tierFor('P3', false).label, 'N
 check('even a P1 with nothing behind it', B.tierFor('P1', false).label, 'Not scored');
 check('and it is toned as nothing', B.tierFor('P1', false).tone, 'none');
 
-// The grouping the board actually shows, which is the recorded call except
-// where there is no evidence at all.
+// The grouping the board actually shows. The recorded call wins where there is
+// one, the engine's reading fills in where there is not, and nothing scored
+// beats both, because a tier drawn over an empty record is a verdict from
+// silence.
 function tierOf(id) {
   const r = row(id);
-  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label;
+  const assessed = r.evidenceCount > 0;
+  const shown = B.tierFor(r.recordedPriority, assessed) ||
+    (assessed ? B.tierFor(r.suggestedPriority, true) : null) || { label: 'Not scored' };
+  return shown.label;
 }
-check('the six he could race for', rows.filter(function (r) {
-  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'You\u2019d race'; }).length, 6);
-check('the six he would push into', rows.filter(function (r) {
-  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'You\u2019d push'; }).length, 6);
-check('the three he would chase', rows.filter(function (r) {
-  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'You\u2019d chase'; }).length, 3);
-check('and the two with nothing on them', rows.filter(function (r) {
-  return B.tierFor(r.recordedPriority, r.evidenceCount > 0).label === 'Not scored'; }).length, 2);
+function countTier(label) {
+  return rows.filter(function (r) { return tierOf(r.school.id) === label; }).length;
+}
+check('every school lands in exactly one tier',
+  countTier('You\u2019d race') + countTier('You\u2019d push') +
+  countTier('You\u2019d chase') + countTier('Not scored'), rows.length);
+check('nothing scored is still exactly three', countTier('Not scored'), 3);
 check('Loyola is one of them', tierOf('loyolamd'), 'Not scored');
+check('Queen\u2019s is another, having entered nobody', tierOf('queens'), 'Not scored');
 check('Canisius is not', tierOf('canisius'), 'You\u2019d race');
+
+// A school you have never judged shows the engine's call rather than a blank.
+check('Guelph has no recorded call', row('guelph').recordedPriority, null);
+ok('but the engine has one', Boolean(row('guelph').suggestedPriority));
+ok('so the board still says something', tierOf('guelph') !== 'Not scored');
 
 // The disagreement is unchanged. The recorded call still stands and still
 // sorts the board, and the engine only ever says so on the side.
@@ -374,12 +396,20 @@ ok('which is a closer bar than the MAAC 500',
 
 // Silence rather than a guess. Three conferences on this board have no results
 // on file, and inventing a winning time for them would be inventing evidence.
-check('Gannon gets no conference line',
-  B.conferenceContext(S, row('gannon').school, row('gannon').comparisons[0]), null);
-check('nor does the Atlantic 10',
-  B.conferenceContext(S, row('stbonaventure').school, row('stbonaventure').comparisons[0]), null);
-check('nor the Patriot League',
-  B.conferenceContext(S, row('bucknell').school, row('bucknell').comparisons[0]), null);
+// The three conferences that used to be silent now have their 2026 results on
+// file, so every conference on the board answers.
+check('the PSAC now answers', B.conferenceContext(S, row('gannon').school,
+  row('gannon').comparisons[0]).winner, '4:23.91');
+check('so does the Atlantic 10', B.conferenceContext(S, row('stbonaventure').school,
+  row('stbonaventure').comparisons[0]).winner, '4:19.28');
+check('and the Patriot League', B.conferenceContext(S, row('bucknell').school,
+  row('bucknell').comparisons[0]).winner, '4:16.73');
+// The OUA races metres, not yards, and there is no men's 800 free.
+check('the OUA answers in metres', B.conferenceContext(S, row('laurier').school,
+  row('laurier').comparisons.filter(function (c) { return c.event === '400-im-SCM'; })[0]).winner, '4:21.47');
+check('every conference on the board is now on file',
+  rows.filter(function (r) { return r.comparisons.length &&
+    !B.conferenceContext(S, r.school, r.comparisons[0]); }).length, 0);
 check('a school with no conference is silent too',
   B.conferenceContext(S, { name: 'X' }, canisiusMile), null);
 check('and no comparison is silent',
@@ -1166,8 +1196,11 @@ check('initials skip the joining words', Sc.initialsFor({ name: 'Rensselaer Poly
   ok(id + ' cites its source', r.comparisons.every(function (c) { return Boolean(c.sourceUrl); }));
   check(id + ' is now high confidence', r.confidence, 'High');
 });
-check('only two schools remain unassessed',
-  rows.filter(function (r) { return r.evidenceCount === 0; }).length, 2);
+// Loyola and Hamilton have no times gathered. Queen's entered no men in any of
+// the three events at the 2026 OUA championships, which is not the same thing,
+// but it reads the same on the board and should.
+check('three schools remain unassessed',
+  rows.filter(function (r) { return r.evidenceCount === 0; }).length, 3);
 
 // Manhattan's whole distance group is slower than him, so he is ahead outright
 // rather than merely inside the range.

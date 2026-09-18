@@ -317,6 +317,210 @@ const SCHOOLS = [
     state: 'NY', country: 'USA', priority: 'P3', confidence: 'Low', benchmarks: [],
     note: 'Same thinking as Bucknell. Swimmer times still to be gathered.'
   }
+,
+
+  // ---------- Ontario, ie, U SPORTS. ----------
+  //
+  // These are the only schools on the board he can write to today. U SPORTS
+  // Policy 40.10.7.4.2 puts no calendar, age or grade gate on contact, so the
+  // NCAA's 15 June wall does not apply to any of them.
+  //
+  // They are also the only comparisons on this board made against times he has
+  // actually swum. The OUA races SHORT COURSE METRES and so does he every
+  // winter, so there is no conversion and no estimate on these rungs.
+  //
+  // One thing to know before reading the ladders: there is no men's 800 free in
+  // the OUA. The 800 is a women's event. The 1500 stands in its place
+  // throughout, which is what he swims anyway.
+  // Contacts and times read 18 September 2026 from each school's own staff page
+  // and from the 2026 OUA Championship results hosted by Toronto.
+  {
+    id: 'utoronto',
+    coach: "Byron MacDonald", coachTitle: "Swimming - Head Coach",
+    email: "byron.macdonald@utoronto.ca",
+    staffUrl: "https://varsityblues.ca/sports/swimming/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Linda Kiefer", assistantEmail: "linda.kiefer@utoronto.ca",
+    contactNote: "Four further assistants are named with no published address. The coaches page had not rolled over to 2026-27 when it was read. Search results are dominated by his CBC Olympic commentary rather than by a former coach.",
+    name: 'University of Toronto', division: 'USPORTS', conference: 'OUA',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'High',
+    note: "Won the 2026 OUA men's banner with 975 points, a 22nd straight provincial title. The strongest distance programme in the conference by a distance, and they entered no men in the 400 IM.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:49.88", "3:58.28", "3:58.60", "4:04.63"],
+        basis: 'roster', context: "2026 OUA Championships, four men", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F020.htm" },
+      { event: '1500-free-SCM', times: ["15:26.45", "15:47.91", "16:25.70"],
+        basis: 'roster', context: "2026 OUA Championships, three men, 1st, 3rd and 10th", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F040.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'western',
+    coach: "Paul Midgley", coachTitle: "Head Coach, Swimming",
+    email: "paul.midgley@uwo.ca",
+    staffUrl: "https://westernmustangs.ca/sports/swimming/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Head coach since 2002, eight-time OUA Coach of the Year. Andrew Midgley appears as a Western swimming coach on an archived page and is a different person who is not on the current staff.",
+    name: 'Western University', division: 'USPORTS', conference: 'OUA',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'High',
+    note: "Second at the 2026 OUA championships with 627 points. The best distance recruiting story in the conference, ie, rookie Riley Carswell took 1500 silver and was named OUA Male Rookie of the Year.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:51.43", "3:51.87", "3:58.75", "4:11.14"],
+        basis: 'roster', context: "2026 OUA Championships, four men, 2nd and 3rd", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F020.htm" },
+      { event: '1500-free-SCM', times: ["15:44.90", "16:52.93"],
+        basis: 'roster', context: "2026 OUA Championships, two men, Carswell 2nd", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F040.htm" },
+      { event: '400-im-SCM', times: ["4:22.70", "4:30.49", "4:32.77", "4:36.83"],
+        basis: 'roster', context: "2026 OUA Championships, four men, Uy 2nd", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F012.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'mcmaster',
+    coach: "Grey Fairley", coachTitle: "Swimming Head Coach",
+    email: "fairleyg@mcmaster.ca",
+    staffUrl: "https://marauders.ca/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "The address does not follow the usual pattern, ie, fairleyg not gfairley. Aggregators list a ghacswimming.ca address from his club role, do not use it. No assistant published.",
+    name: 'McMaster University', division: 'USPORTS', conference: 'OUA',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'High',
+    note: "Third at the 2026 OUA championships with 488 points, the best of the group behind Toronto and Western. Four men in the 1500 and four in the 400 free, ie, more distance depth than anyone outside the top two.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["3:58.63", "4:02.41", "4:05.59", "4:07.22"],
+        basis: 'roster', context: "2026 OUA Championships, four men", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F020.htm" },
+      { event: '1500-free-SCM', times: ["16:02.71", "16:13.05", "16:39.33", "16:39.50"],
+        basis: 'roster', context: "2026 OUA Championships, four men, all scoring", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F040.htm" },
+      { event: '400-im-SCM', times: ["4:27.84", "4:27.98"],
+        basis: 'roster', context: "2026 OUA Championships, two men", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F012.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'waterloo',
+    coach: "Jacqueline Beckford-Henriques", coachTitle: "Head Coach, Swimming",
+    email: "jbeckfor@uwaterloo.ca",
+    staffUrl: "https://athletics.uwaterloo.ca/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "The address is truncated, ie, jbeckfor not jbeckfordhenriques. Head coach since 2017, formerly head coach of Jamaica's national team across three Olympics. Often written up as Jacky Beckford-Henriques, same person.",
+    name: 'University of Waterloo', division: 'USPORTS', conference: 'OUA',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'High',
+    note: "Fourth at the 2026 OUA championships with 406 points. Four men in the 1500, ie, the strongest distance depth outside the top three.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["4:06.75", "4:17.42"],
+        basis: 'roster', context: "2026 OUA Championships, two men", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F020.htm" },
+      { event: '1500-free-SCM', times: ["15:56.27", "16:28.05", "16:34.32", "17:44.33"],
+        basis: 'roster', context: "2026 OUA Championships, four men, Boden 4th", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F040.htm" },
+      { event: '400-im-SCM', times: ["4:30.40", "4:43.32", "4:45.89"],
+        basis: 'roster', context: "2026 OUA Championships, three men", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F012.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'laurier',
+    coach: "Cathy Pardy", coachTitle: "Head Coach, Swimming",
+    email: "swim@laurierathletics.com",
+    staffUrl: "https://laurierathletics.com/sports/swimming/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Ron Forrest", assistantEmail: "",
+    contactNote: "SHARED programme mailbox, not a personal address, so address her by name. She has no published personal address, and the wlu.ca pattern other Laurier staff use does not apply to her. Named 2026 OUA Men's Coach of the Year.",
+    name: 'Wilfrid Laurier University', division: 'USPORTS', conference: 'OUA',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'High',
+    note: "Fifth at the 2026 OUA championships with 376 points and rising. The best 400 IM programme in the conference, ie, George Radic won it and Owen Jibb took bronze, and four men in the 1500. For a distance freestyler who also swims the 400 IM this is the closest event fit on the whole board.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["4:01.77", "4:03.56", "4:11.70", "4:17.68"],
+        basis: 'roster', context: "2026 OUA Championships, four men", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F020.htm" },
+      { event: '1500-free-SCM', times: ["15:56.96", "16:32.72", "16:38.08", "16:46.92"],
+        basis: 'roster', context: "2026 OUA Championships, four men, Jibb 5th", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F040.htm" },
+      { event: '400-im-SCM', times: ["4:21.47", "4:23.17", "4:39.56"],
+        basis: 'roster', context: "2026 OUA Championships, three men, Radic won it and Jibb was 3rd", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F012.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'brock',
+    coach: "David Ling", coachTitle: "Head Coach, Men's & Women's Swimming",
+    email: "dling@brocku.ca",
+    staffUrl: "https://gobadgers.ca/sports/mens-swimming/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Gokhan Bozyigit", assistantEmail: "",
+    contactNote: "Peter Bradstreet coached Brock for decades, retired in July 2022 and still ranks high in search including Brock's own retirement story. Ling was announced 27 June 2022. He is also written as Dave Ling, address him as David.",
+    name: 'Brock University', division: 'USPORTS', conference: 'OUA',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'High',
+    note: "Sixth at the 2026 OUA championships with 296 points. The men's strength is breaststroke. Jared Banta is the distance and IM anchor and the only Brock man scoring across all three of these events.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["4:01.81", "4:11.59"],
+        basis: 'roster', context: "2026 OUA Championships, two men", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F020.htm" },
+      { event: '1500-free-SCM', times: ["16:02.20", "17:08.11"],
+        basis: 'roster', context: "2026 OUA Championships, two men, Banta 6th", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F040.htm" },
+      { event: '400-im-SCM', times: ["4:34.92", "4:35.69", "4:39.65", "4:42.01"],
+        basis: 'roster', context: "2026 OUA Championships, four men, all scoring", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F012.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'york',
+    coach: "Brett D'Souza", coachTitle: "Head Coach",
+    email: "brettd@yorku.ca",
+    staffUrl: "https://reconline.yorkulions.ca/Program/GetProgramDetails?courseId=ca311ceb-9286-4cbc-a401-2c5ff72c40d3&semesterId=7de1c7dd-b9fb-4975-8160-99c99480cfe2",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "York swimming is NOT on the varsity athletics site and does not appear in York's staff directory at all. It runs as a sport club through York Recreation, and the registration portal above is the only place the coach's address is published. Anyone searching yorkulions.ca will conclude there is no programme. There is one.",
+    name: 'York University', division: 'USPORTS', conference: 'OUA',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'High',
+    note: "Seventh of ten with 260 points, but Eric Ginzburg was named 2026 OUA Men's Swimmer of the Year with four individual medals. A sprint-led programme with a very small distance group.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["4:01.76", "4:31.82"],
+        basis: 'roster', context: "2026 OUA Championships, two men", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F020.htm" },
+      { event: '1500-free-SCM', times: ["16:04.31"],
+        basis: 'roster', context: "2026 OUA Championships, one man, 8th", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F040.htm" },
+      { event: '400-im-SCM', times: ["4:25.83", "5:06.25"],
+        basis: 'roster', context: "2026 OUA Championships, two men, Rasmussen 4th", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F012.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'guelph',
+    coach: "Chantique Carey-Payne", coachTitle: "Head Coach - Swimming",
+    email: "cpayne@uoguelph.ca",
+    staffUrl: "https://gryphons.ca/sports/swimming/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "The address does not follow the name, ie, cpayne not ccareypayne. Head coach since June 2017, a Guelph alumna and the first Black woman in Canada named head coach of a university swim programme.",
+    name: 'University of Guelph', division: 'USPORTS', conference: 'OUA',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'High',
+    note: "Eighth of ten on the men's side with 147 points. No Guelph man reached a 400 free or 1500 final in 2026, so a distance freestyler would be the fastest in the programme on day one by a wide margin.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["4:14.86", "4:15.69", "4:16.58"],
+        basis: 'roster', context: "2026 OUA Championships, three men, prelims, none advanced", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F020.htm" },
+      { event: '1500-free-SCM', times: ["16:56.63", "17:37.27"],
+        basis: 'roster', context: "2026 OUA Championships, two men, 19th and 22nd", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F040.htm" },
+      { event: '400-im-SCM', times: ["4:32.05", "4:47.47"],
+        basis: 'roster', context: "2026 OUA Championships, two men, Steele 6th", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F012.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'carleton',
+    coach: "", coachTitle: "",
+    email: "Lynn.Marshall@carleton.ca",
+    staffUrl: "https://goravens.ca/clubteams/swimming",
+    verified: false, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "NEEDS A HUMAN CHECK BEFORE SENDING. This address is the club contact and manager, Lynn Marshall, NOT the head coach, and it is the only address Carleton publishes. Swimming is a club sport, so there is no swimming coach anywhere in Carleton's athletics directory. The team-run site names Nico Belisle as head coach but it could not be opened, so that name is unconfirmed and is deliberately not recorded here. Use this address to ask to be put through to the coach.",
+    name: 'Carleton University', division: 'USPORTS', conference: 'OUA',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'Medium',
+    note: "Ninth of ten with 123 points. A small club programme in the OUA since 1985. Two men in the 400 free and none in the 1500 or 400 IM.",
+    benchmarks: [
+      { event: '400-free-SCM', times: ["4:24.29", "4:31.69"],
+        basis: 'roster', context: "2026 OUA Championships, two men, prelims only", sourceUrl: "https://sidearmstats.com/Toronto/swimming/260219F020.htm" }
+    ],
+    benchmarksCheckedOn: '2026-09-18',  },
+  {
+    id: 'queens',
+    coach: "Ken Anderson", coachTitle: "Head Coach, Swimming",
+    email: "qswim@queensu.ca",
+    staffUrl: "https://gogaelsgo.com/staff-directory/ken-anderson/158",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "SHARED programme mailbox, not a personal address, so address him by name. Listed under Varsity Club Coaches, ie, swimming is a varsity club at Queen's rather than a fully funded sport, which changes what he can offer. Do not confuse the mailbox with qsynchro@queensu.ca, which is artistic swimming.",
+    name: "Queen's University", division: 'USPORTS', conference: 'OUA',
+    state: 'ON', country: 'Canada', priority: '', confidence: 'High',
+    note: "Tenth and last with 80 points, and effectively a sprint-only group. Queen's entered NO men in the 400 free, the 1500 free or the 400 IM at the 2026 OUA championships, so there is no distance training group here at all.",
+    benchmarks: [],
+    benchmarksCheckedOn: '2026-09-18',  }
 ];
 function seedSchools() {
   return SCHOOLS.map(function (s) {

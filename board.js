@@ -251,6 +251,28 @@ const CONFERENCES = {
     source: 'https://swimmeetresults.tech/MAAC-2026/', recorded: '2026-09-18',
     winners: { '500-free-SCY': '4:26.17', '1650-free-SCY': '15:39.33', '400-im-SCY': '3:51.32' }
   },
+  // The OUA races SHORT COURSE METRES and there is no men's 800 free, ie, the
+  // 800 is a women's event. The 1500 stands in its place.
+  'OUA': {
+    name: 'OUA', meet: '2026 OUA Championships',
+    source: 'https://sidearmstats.com/Toronto/swimming/evtindex.htm', recorded: '2026-09-18',
+    winners: { '400-free-SCM': '3:49.88', '1500-free-SCM': '15:26.45', '400-im-SCM': '4:21.47' }
+  },
+  'Patriot League': {
+    name: 'Patriot League', meet: '2026 Patriot League Championships',
+    source: 'https://sidearmstats.com/navy/cswim/index.htm', recorded: '2026-09-18',
+    winners: { '500-free-SCY': '4:16.73', '1650-free-SCY': '14:54.68', '400-im-SCY': '3:47.66' }
+  },
+  'Atlantic 10': {
+    name: 'Atlantic 10', meet: '2026 Atlantic 10 Championships',
+    source: 'https://swimmeetresults.tech/Atlantic-10-2026/evtindex.htm', recorded: '2026-09-18',
+    winners: { '500-free-SCY': '4:19.28', '1650-free-SCY': '15:09.61', '400-im-SCY': '3:47.60' }
+  },
+  'Pennsylvania State Athletic': {
+    name: 'PSAC', meet: '2026 PSAC Championships',
+    source: 'https://calvulcans.com/documents/2026/2/21/swim26psac_full.pdf', recorded: '2026-09-18',
+    winners: { '500-free-SCY': '4:23.91', '1650-free-SCY': '15:19.54', '400-im-SCY': '3:53.46' }
+  },
   'Liberty League': {
     name: 'Liberty League', meet: '2026 Liberty League Championships',
     source: 'https://athletics.ithaca.edu/sports/2026/1/29/2026-liberty-league-swimming-diving-championships-portal.aspx',

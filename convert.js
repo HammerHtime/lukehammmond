@@ -92,12 +92,45 @@ function yardBests(swim, results) {
   return out;
 }
 
+// What the board should actually compare against.
+//
+// American programmes race short course yards, which he has never swum, so
+// those comparisons run on converted times and say so on every rung. Canadian
+// programmes race short course metres, which he races every winter, so those
+// comparisons run on times he actually swam. No conversion, no estimate, no
+// caveat.
+//
+// Merging them is the whole trick: the engine looks an event up by id, so a
+// '400-free-SCM' benchmark finds his real 400 free and a '500-free-SCY'
+// benchmark finds the converted one, with no special case anywhere downstream.
+function boardBests(swim, results) {
+  const out = {};
+  const yards = yardBests(swim, results);
+  Object.keys(yards).forEach(function (id) { out[id] = yards[id]; });
+
+  // His own metres swims, untouched. estimated stays false, which is what
+  // makes the ladder drop the "converted" label on a Canadian card.
+  const bests = swim.personalBests(results);
+  Object.keys(bests).forEach(function (id) {
+    if (id.indexOf('-SCM') === -1) return;
+    const best = bests[id];
+    out[id] = {
+      event: id, distance: best.distance, stroke: best.stroke, course: 'SCM',
+      name: best.name, time: best.time, hundredths: best.hundredths,
+      estimated: false, from: null, factor: null,
+      source: 'Swum, not converted.'
+    };
+  });
+  return out;
+}
+
 const api = {
   SOURCE: SOURCE,
   MAPPINGS: MAPPINGS,
   mappingFor: mappingFor,
   toYards: toYards,
-  yardBests: yardBests
+  yardBests: yardBests,
+  boardBests: boardBests
 };
 
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
