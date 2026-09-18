@@ -138,6 +138,8 @@ function compareOne(swim, mine, benchmark) {
     event: benchmark.event,
     mine: mine.time,
     mineHundredths: mine.hundredths,
+    mineEstimated: Boolean(mine.estimated),
+    mineFrom: mine.from || null,
     theirs: benchmark.time,
     theirsHundredths: theirs,
     basis: benchmark.basis,
@@ -171,6 +173,8 @@ function compareGroup(swim, mine, group) {
     event: group.event,
     mine: mine.time,
     mineHundredths: mine.hundredths,
+    mineEstimated: Boolean(mine.estimated),
+    mineFrom: mine.from || null,
     theirs: swim.formatTime(fastest) + ' to ' + swim.formatTime(slowest),
     theirsHundredths: slowest,
     basis: 'roster',
@@ -285,9 +289,15 @@ function conferenceContext(swim, school, comparison) {
     gapText: swim.formatGap(gap),
     // Winning it is not the point at fifteen. Knowing the distance to the top
     // of the conference he would be swimming in is.
-    sentence: gap <= 0
-      ? 'Quicker than the time that won the conference'
-      : swim.formatGap(gap).replace('+', '') + ' off the time that won the conference'
+    //
+    // Reworded 18 September 2026. It read "Won in 4:26.17", which has no
+    // subject and so says nothing, ie, who won, what they won, and what it has
+    // to do with Luke were all left to the reader. A line on a board has to
+    // stand on its own.
+    sentence: 'It took ' + winner + ' to win this event at the ' + conf.meet.replace(/^2026 /, '') +
+      ' in 2026. ' + (gap <= 0
+        ? 'He is already quicker than that.'
+        : 'He is ' + swim.formatGap(gap).replace('+', '') + ' off that.')
   };
 }
 
@@ -300,6 +310,21 @@ function conferenceContext(swim, school, comparison) {
 // Returns null when there is only one benchmark, because you cannot rank
 // somebody against a single swimmer and pretending otherwise would invent a
 // squad that was never measured.
+// "4:37.20 is his 400 free long course, 4:10.86, converted."
+//
+// He has never swum a yard in his life, so every time of his on this board is
+// an estimate standing next to real yard swims. Andrew asked for that to be
+// said plainly on the public page and it is just as true here, where the whole
+// point is a like for like comparison.
+function convertedNote(comparison) {
+  if (!comparison || !comparison.mineEstimated) return '';
+  const from = comparison.mineFrom;
+  if (!from || !from.event || !from.time) return 'Converted, not a time he has swum.';
+  const parts = String(from.event).split('-');
+  const said = parts[0] + ' ' + (parts[1] === 'im' ? 'IM' : parts[1]) + ' ' + parts[2];
+  return 'Converted from his ' + said + ', ' + from.time + '. Not a time he has swum.';
+}
+
 function placeIn(swim, comparison) {
   if (!comparison || !comparison.theirTimes || comparison.theirTimes.length < 2) return null;
 
@@ -485,6 +510,7 @@ const api = {
   compareGroup: compareGroup,
   scalePositions: scalePositions,
   placeIn: placeIn,
+  convertedNote: convertedNote,
   TIERS: TIERS,
   NOT_SCORED: NOT_SCORED,
   tierFor: tierFor,

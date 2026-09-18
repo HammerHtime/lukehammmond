@@ -864,10 +864,16 @@
     var confLine = conf
       ? '<div style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line-soft)">' +
         '<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;' +
-        'color:var(--ink-faint);font-weight:650;margin-bottom:3px">' + esc(conf.conference) + '</div>' +
+        'color:var(--ink-faint);font-weight:650;margin-bottom:3px">' +
+        esc(conf.conference) + ' championship</div>' +
         '<div style="font-size:12.5px;color:var(--ink-soft);line-height:1.5">' +
-        'Won in <strong style="color:var(--ink)">' + esc(conf.winner) + '</strong>. ' +
-        esc(conf.sentence) + '.</div></div>'
+        esc(conf.sentence) + '</div></div>'
+      : '';
+    // His times are conversions and theirs are real yard swims. Saying so once
+    // per event is the difference between a comparison and a claim.
+    var conv = B.convertedNote(c);
+    var convLine = conv
+      ? '<p class="cmp-basis" style="margin-top:6px;opacity:.8">' + esc(conv) + '</p>'
       : '';
     var good = c.ahead || c.inside;
     var tone = good ? 'good' : 'warn';
@@ -882,7 +888,7 @@
         (c.ahead ? 'He is quicker.' : 'He is ' + esc(c.gapText.replace('+', '')) + ' behind that.') +
         ' Only one time on file here, so there is no squad to rank him in yet.' +
         (c.sourceUrl ? ' <a href="' + esc(c.sourceUrl) + '" target="_blank" rel="noopener">source</a>' : '') +
-        '</p>' + confLine + '</div>';
+        '</p>' + convLine + confLine + '</div>';
     }
 
     // The ladder. Their squad in order with him slotted into it, which answers
@@ -895,7 +901,8 @@
         '<span style="font-variant-numeric:tabular-nums;font-size:13.5px;' +
         (row.mine ? 'color:var(--' + tone + ')' : '') + '">' + esc(row.time) + '</span>' +
         (row.mine ? '<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;' +
-          'color:var(--' + tone + ')">Luke</span>' : '') +
+          'color:var(--' + tone + ')">Luke' + (c.mineEstimated ? ', converted' : '') +
+          '</span>' : '') +
         '</div>';
     }).join('');
 
@@ -908,7 +915,7 @@
         esc(place.median) + '. ' + esc(c.basisLabel) +
         (c.context ? ', ' + esc(c.context) : '') +
         (c.sourceUrl ? ' <a href="' + esc(c.sourceUrl) + '" target="_blank" rel="noopener">source</a>' : '') +
-      '</p>' + confLine + '</div>';
+      '</p>' + convLine + confLine + '</div>';
   }
 
   function renderBoard() {
@@ -931,7 +938,8 @@
       '<span><i class="legend-swatch" style="background:var(--good)"></i> in the front half, contributing</span>' +
       '<span><i class="legend-swatch" style="background:var(--warn)"></i> in the back half, developing</span>' +
       '<span>Their middle swimmer is the line between the two</span>' +
-      '<span>Under each, the time that won that conference, where the meet results are on file</span>' +
+      '<span>His rung is a converted time, theirs are real yard swims</span>' +
+      '<span>Under each, what it took to win that event at the conference championship</span>' +
       '</div></div>';
 
     var cards = rows.map(function (r) {

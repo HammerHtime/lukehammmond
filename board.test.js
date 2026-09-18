@@ -307,6 +307,38 @@ check('a single benchmark yields no ladder', B.placeIn(S, row('niagara').compari
 check('nor does nothing at all', B.placeIn(S, { theirTimes: [] }), null);
 check('ordinals read as words', B.ordinal(4), 'fourth');
 
+// ---------- his rung is a conversion, theirs are real swims ----------
+// He has never swum a yard. Every time of his on this board is an estimate
+// standing next to real yard swims, and a ladder that does not say so is
+// quietly comparing two different kinds of number.
+const fairfield500 = row('fairfield').comparisons.filter(function (c) {
+  return c.event === '500-free-SCY'; })[0];
+ok('his time is marked as an estimate', fairfield500.mineEstimated);
+check('and it carries the swim it came from', fairfield500.mineFrom.event, '400-free-LCM');
+check('with that swim\u2019s actual time', fairfield500.mineFrom.time, '4:10.86');
+check('said in a line a person can check', B.convertedNote(fairfield500),
+  'Converted from his 400 free LCM, 4:10.86. Not a time he has swum.');
+check('the mile comes from the 1500', B.convertedNote(row('fairfield').comparisons.filter(
+  function (c) { return c.event === '1650-free-SCY'; })[0]),
+  'Converted from his 1500 free LCM, 16:59.80. Not a time he has swum.');
+// The 400 IM is not the "400 im", here either.
+ok('an initialism survives the note', /400 IM LCM/.test(B.convertedNote(
+  row('fairfield').comparisons.filter(function (c) { return c.event === '400-im-SCY'; })[0])));
+// A group comparison carries it too, not only a single benchmark.
+ok('a whole squad comparison says it as well',
+  /^Converted from his /.test(B.convertedNote(row('stbonaventure').comparisons[0])));
+// Nothing to say about a time that was not converted.
+check('a real swim gets no note', B.convertedNote({ mineEstimated: false }), '');
+check('nor does nothing at all', B.convertedNote(null), '');
+// And it never guesses at a source it does not have.
+check('an estimate with no source still admits it is one',
+  B.convertedNote({ mineEstimated: true }), 'Converted, not a time he has swum.');
+
+// The page has to actually print it, ie, on the rung and once under the event.
+const adminSrc = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
+ok('the rung says converted', /Luke\' \+ \(c\.mineEstimated \? \', converted\'/.test(adminSrc));
+ok('and the note is rendered', adminSrc.indexOf('B.convertedNote(c)') !== -1);
+
 // ---------- the conference beside the squad ----------
 // Making a squad and scoring at the championship are two different bars. The
 // ladder answers the first. This answers the second, and only where the
@@ -319,8 +351,15 @@ check('and the mile was won in 15:39.33', canisiusConf.winner, '15:39.33');
 check('the meet is named', canisiusConf.meet, '2026 MAAC Championships');
 ok('and the results page is on file', /^https:\/\//.test(canisiusConf.source));
 ok('he is behind that time', canisiusConf.gap > 0);
-ok('and it reads as a distance, not a verdict',
-  /off the time that won the conference/.test(canisiusConf.sentence));
+// It read "Won in 15:39.33", which has no subject, ie, who won, what they won
+// and what it has to do with Luke were all left to the reader. Andrew could not
+// read it, which is the only test that matters.
+check('the line stands on its own', canisiusConf.sentence,
+  'It took 15:39.33 to win this event at the MAAC Championships in 2026. He is 44.78 off that.');
+ok('it names what it took', canisiusConf.sentence.indexOf('It took 15:39.33 to win') === 0);
+ok('and where', /at the MAAC Championships in 2026/.test(canisiusConf.sentence));
+ok('and where he sits against it', /He is 44\.78 off that\./.test(canisiusConf.sentence));
+ok('the meet year is not said twice', !/2026 MAAC Championships in 2026/.test(canisiusConf.sentence));
 
 // Ithaca sits in a different conference, so the same event gives a different
 // bar. That is the whole reason the column exists.
