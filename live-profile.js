@@ -38,7 +38,7 @@
     heroStats(bests);
     timeCards(results, bests);
     rankingLines(bests);
-    compTable(results);
+    compTable(results, bests);
     coachPanel(yards);
   }
 
