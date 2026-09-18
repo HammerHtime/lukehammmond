@@ -8,6 +8,14 @@
 // Times transcribed from SwimCloud swimmer 3306753 on 18 September 2026.
 // Flags are SwimCloud's own letters, carried through, not interpreted.
 
+// Wrapped in a function on purpose. The browser runs every script tag in ONE
+// shared scope, so two files that both declare `const api` at the top level
+// throw "Identifier 'api' has already been declared" and every script after
+// the first one dies silently. Node gives each file its own scope, so the
+// whole test suite passed while the live site was broken. browser.test.js now
+// loads these the way a browser does, which is the only way to see it.
+(function () {
+
 const SWIMMER = {
   name: 'Luke Hammond',
   shortName: 'Luke',
@@ -173,3 +181,5 @@ const api = {
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof window !== 'undefined') window.SwimmerData = api;
+
+})();

@@ -407,7 +407,17 @@
     var ids = Object.keys(bests).sort(function (a, b) {
       return bests[a].distance - bests[b].distance || a.localeCompare(b);
     });
-    el('rankRows').innerHTML = ids.map(function (id) {
+    // He has swum 35 events. Listing all of them means scrolling past 31
+    // blanks to change 4 numbers. So: anything already ranked comes first,
+    // then his headline events, and the rest sit behind a toggle.
+    var featured = {};
+    (SWIMMER.primary || []).forEach(function (p) {
+      featured[S.eventId(p.distance, p.stroke, p.course)] = true;
+    });
+    var top = ids.filter(function (id) { return rankings[id] || featured[id]; });
+    var rest = ids.filter(function (id) { return top.indexOf(id) === -1; });
+
+    function line(id) {
       var held = rankings[id];
       return '<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">' +
         '<div style="flex:1;min-width:0"><strong style="font-size:14px">' + esc(bests[id].name) +
@@ -416,7 +426,15 @@
         '<input data-rank="' + esc(id) + '" inputmode="numeric" placeholder="\u2014" ' +
         'value="' + (held ? esc(held.rank) : '') + '" style="width:84px;text-align:center">' +
         '</div>';
-    }).join('');
+    }
+
+    el('rankRows').innerHTML =
+      top.map(line).join('') +
+      (rest.length
+        ? '<details style="margin-top:6px"><summary>Add a ranking to one of his other ' +
+          rest.length + ' events</summary><div style="margin-top:10px">' +
+          rest.map(line).join('') + '</div></details>'
+        : '');
   }
 
   el('saveRanks').addEventListener('click', function () {

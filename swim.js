@@ -7,6 +7,14 @@
 // SCY is short course yards, ie, the 25 yard pool the NCAA races in.
 // SCM is short course metres, ie, the 25 metre pool.
 // LCM is long course metres, ie, the 50 metre Olympic pool.
+// Wrapped in a function on purpose. The browser runs every script tag in ONE
+// shared scope, so two files that both declare `const api` at the top level
+// throw "Identifier 'api' has already been declared" and every script after
+// the first one dies silently. Node gives each file its own scope, so the
+// whole test suite passed while the live site was broken. browser.test.js now
+// loads these the way a browser does, which is the only way to see it.
+(function () {
+
 const COURSES = ['SCY', 'SCM', 'LCM'];
 
 const COURSE_LABEL = {
@@ -296,3 +304,5 @@ const api = {
 
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof window !== 'undefined') window.Swim = api;
+
+})();

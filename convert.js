@@ -15,6 +15,14 @@
 // This is an estimate and the board labels it as one. Replace this table with
 // the official NCAA factors the moment they can be read from source.
 
+// Wrapped in a function on purpose. The browser runs every script tag in ONE
+// shared scope, so two files that both declare `const api` at the top level
+// throw "Identifier 'api' has already been declared" and every script after
+// the first one dies silently. Node gives each file its own scope, so the
+// whole test suite passed while the live site was broken. browser.test.js now
+// loads these the way a browser does, which is the only way to see it.
+(function () {
+
 const SOURCE = 'Derived from converted times supplied by Andrew, 18 September 2026';
 
 // Distance freestyle does not map event to event. 400 metres becomes the
@@ -100,3 +108,5 @@ if (typeof window !== 'undefined') window.Convert = api;
 // held to four decimals. Anything comparing against the supplied numbers
 // should allow one hundredth. Do not chase the last hundredth by tuning a
 // factor to fit one event, ie, that is fitting noise.
+
+})();

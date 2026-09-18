@@ -12,6 +12,14 @@
 // function sitting behind the admin key.
 
 
+// Wrapped in a function on purpose. The browser runs every script tag in ONE
+// shared scope, so two files that both declare `const api` at the top level
+// throw "Identifier 'api' has already been declared" and every script after
+// the first one dies silently. Node gives each file its own scope, so the
+// whole test suite passed while the live site was broken. browser.test.js now
+// loads these the way a browser does, which is the only way to see it.
+(function () {
+
 const AID = {
   D1: 'Possible. Athletic aid is permitted, which is not the same as being offered any.',
   D2: 'Partial. Division II runs a partial scholarship model.',
@@ -262,3 +270,5 @@ const api = {
 
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof window !== 'undefined') window.Schools = api;
+
+})();

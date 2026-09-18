@@ -18,6 +18,14 @@
 // at any time with only in-person contact restricted. Until the NCAA Division
 // II recruiting guide is read directly, the app uses the later, safer date and
 // marks it unconfirmed, ie, it never promises a reply that may not come.
+// Wrapped in a function on purpose. The browser runs every script tag in ONE
+// shared scope, so two files that both declare `const api` at the top level
+// throw "Identifier 'api' has already been declared" and every script after
+// the first one dies silently. Node gives each file its own scope, so the
+// whole test suite passed while the live site was broken. browser.test.js now
+// loads these the way a browser does, which is the only way to see it.
+(function () {
+
 const CONTACT_RULES = {
   D1: {
     division: 'NCAA Division I',
@@ -206,3 +214,5 @@ const api = {
 
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof window !== 'undefined') window.Recruiting = api;
+
+})();

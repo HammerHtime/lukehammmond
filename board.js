@@ -24,6 +24,14 @@
 //    depth. Every benchmark carries its basis, and the engine never compares
 //    a roster time and a champion's time as though they were the same thing.
 
+// Wrapped in a function on purpose. The browser runs every script tag in ONE
+// shared scope, so two files that both declare `const api` at the top level
+// throw "Identifier 'api' has already been declared" and every script after
+// the first one dies silently. Node gives each file its own scope, so the
+// whole test suite passed while the live site was broken. browser.test.js now
+// loads these the way a browser does, which is the only way to see it.
+(function () {
+
 const PRIORITIES = ['P1', 'P2', 'P3'];
 
 const PRIORITY_MEANING = {
@@ -274,3 +282,5 @@ const api = {
 
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof window !== 'undefined') window.Board = api;
+
+})();
