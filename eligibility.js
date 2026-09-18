@@ -142,6 +142,9 @@ function milestones(classOf) {
     { date: (grade10) + '-10-01', by: 'now', title: 'Map every course against the NCAA Ontario sheet',
       detail: 'Applied, College, Open and Workplace level courses earn nothing. Kinesiology PSK4U and Exercise Science PSE4U are named as not approved, and they are exactly what a swimmer picks.',
       why: 'Luke\u2019s stated interest is exercise science and kinesiology. Those two courses are worth zero NCAA credit.' },
+    { date: (grade10) + '-10-01', by: 'now', title: 'Confirm the age rule with the Eligibility Center',
+      detail: 'The five year clock starts at the earlier of first enrolment, or the academic year after a 19th birthday that falls BEFORE 1 September. A mid-September birthday is 13 days the favourable side of that line, so the trigger does not fire the way it does for a summer birthday.',
+      why: 'That reading is arguable for a birth date after 1 September. Get it in writing before betting a year of eligibility on it.' },
     { date: (grade10) + '-11-01', by: 'this term', title: 'Confirm Grade 9 marks are on the transcript',
       detail: 'NCAA warns that many Canadian transcripts omit ninth year marks. Grade 9 core courses count toward the 16.',
       why: 'If they are missing, the Grade 9 school has to send them, and that takes chasing.' },
@@ -195,7 +198,10 @@ function overdue(today, classOf) {
 // the reading is genuinely arguable. This function does not pretend otherwise.
 function ageClock(birthMonth, birthDay, classOf) {
   const m = Number(birthMonth), d = Number(birthDay), g = Number(classOf);
-  if (!Number.isFinite(m) || !Number.isFinite(d) || !Number.isFinite(g)) return null;
+  // Number(null) is 0 and Number('') is 0, both finite. Checking only for
+  // finite let a missing birth date through and it answered confidently, which
+  // is worse than declining to answer. Range-check instead.
+  if (!(m >= 1 && m <= 12) || !(d >= 1 && d <= 31) || !Number.isFinite(g)) return null;
 
   // Before 1 September, ie, month 1 to 8, or 9 with a day before the 1st,
   // which cannot happen, so month 1 to 8 is the whole of it.
