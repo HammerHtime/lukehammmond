@@ -117,6 +117,67 @@ function checkCourse(code) {
 }
 
 // ---------------------------------------------------------------------------
+// Which Eligibility Center account
+// ---------------------------------------------------------------------------
+// Source: NCAA Eligibility Center, Choose Your Account, read 18 September 2026.
+//
+// There is a trap on that page for a Canadian, and it is easy to walk into.
+// The free Profile Page account lists "a DOMESTIC Division III prospective
+// student-athlete". An international student-athlete going to a Division III
+// school is sent to the paid Athletics Certification account instead. So an
+// American teammate at Ithaca needs nothing and Luke needs a paid account for
+// the same school. Five of the seventeen on the board are Division III.
+const ACCOUNTS = {
+  profile: {
+    name: 'Profile Page Account', paid: false,
+    who: 'Still exploring, not yet in high school, unsure of division, or not being recruited yet.',
+    note: 'Free. It reserves the NCAA ID and transitions to a certification account later without losing anything, from the dashboard.'
+  },
+  full: {
+    name: 'Academic and Athletics Certification Account', paid: true,
+    who: 'Competing at, being recruited by, visiting, or walking on at a Division I or II school.',
+    note: 'Both halves, ie, the academic certification and the athletics one. Needed before an official visit and before signing.'
+  },
+  athletics: {
+    name: 'Athletics Certification Account', paid: true,
+    who: 'An international student-athlete enrolling at a Division III school, or a transfer who only needs the athletics half.',
+    note: 'The one a Canadian going Division III needs. A domestic student in the same position needs only the free profile page.'
+  }
+};
+
+// Walking on does not avoid any of this. The Eligibility Center says walk-on
+// and preferred walk-on recruits must register and meet initial-eligibility
+// standards, same as a scholarship athlete.
+const WALK_ON_STILL_REGISTERS = true;
+
+// Which account, given the divisions actually in play and whether recruiting
+// has started. Deliberately returns the free one while it is still honest to,
+// because paying early buys nothing.
+function accountFor(divisions, options) {
+  const opts = options || {};
+  const list = (divisions || []).map(function (d) { return String(d).toUpperCase(); });
+  const hasD1D2 = list.indexOf('D1') !== -1 || list.indexOf('D2') !== -1;
+  const hasD3 = list.indexOf('D3') !== -1;
+  const active = Boolean(opts.beingRecruited || opts.visiting || opts.signing);
+
+  if (hasD1D2 && active) {
+    return { pick: ACCOUNTS.full, key: 'full',
+      why: 'Division I or II is in play and recruiting has started. This account covers both halves.' };
+  }
+  if (!hasD1D2 && hasD3 && active) {
+    return { pick: opts.international === false ? ACCOUNTS.profile : ACCOUNTS.athletics,
+      key: opts.international === false ? 'profile' : 'athletics',
+      why: opts.international === false
+        ? 'Division III only, and a domestic student needs no certification account.'
+        : 'Division III only, but an international student-athlete still needs an athletics certification account. A domestic teammate would not.' };
+  }
+  return { pick: ACCOUNTS.profile, key: 'profile',
+    why: 'Nothing is being sent yet, so the free account is enough. It reserves the NCAA ID and ' +
+      'transitions later without losing anything.' +
+      (hasD1D2 ? ' Division I and II are on the board, so a full certification account comes before the first official visit.' : '') };
+}
+
+// ---------------------------------------------------------------------------
 // The sixteen core courses
 // ---------------------------------------------------------------------------
 // Sixteen is not a total to reach, it is a shape to fill. A student can have
@@ -417,6 +478,9 @@ const api = {
   NOT_APPROVED: NOT_APPROVED,
   HALF_CREDIT: HALF_CREDIT,
   DESTREAMED: DESTREAMED,
+  ACCOUNTS: ACCOUNTS,
+  WALK_ON_STILL_REGISTERS: WALK_ON_STILL_REGISTERS,
+  accountFor: accountFor,
   CORE: CORE,
   AREAS: AREAS,
   areaOf: areaOf,

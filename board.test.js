@@ -992,6 +992,40 @@ check('removing everything empties cleanly',
 check('a url is built from the id', Ph.urlFor({ id: 'abc123' }), '/api/photo/abc123');
 check('no photo means no url', Ph.urlFor(null), '');
 
+// ---------- which Eligibility Center account ----------
+// Source: NCAA Eligibility Center, Choose Your Account, read 18 September 2026.
+// The trap on that page is the word "domestic". The free profile page covers a
+// DOMESTIC Division III prospect. An international one going to the same school
+// is sent to a paid athletics certification account instead, and five of the
+// seventeen schools on this board are Division III.
+const nowAcct = El.accountFor(['D1', 'D2', 'D3'], {});
+check('nothing sent yet means the free account', nowAcct.key, 'profile');
+check('and it costs nothing', nowAcct.pick.paid, false);
+ok('while warning what comes before a visit', /before the first official visit/.test(nowAcct.why));
+
+const liveAcct = El.accountFor(['D1', 'D2', 'D3'], { beingRecruited: true });
+check('once recruiting starts it is the full one', liveAcct.key, 'full');
+check('which is paid', liveAcct.pick.paid, true);
+// A visit or a signature triggers it just as much as being recruited does.
+check('an official visit triggers it too', El.accountFor(['D1'], { visiting: true }).key, 'full');
+check('and signing', El.accountFor(['D1'], { signing: true }).key, 'full');
+
+// The asymmetry, which is the whole reason this is in code.
+const d3Intl = El.accountFor(['D3'], { beingRecruited: true });
+check('a Canadian going Division III still pays', d3Intl.key, 'athletics');
+ok('and is told why', /A domestic teammate would not/.test(d3Intl.why));
+check('an American in the same position does not',
+  El.accountFor(['D3'], { beingRecruited: true, international: false }).key, 'profile');
+
+// Walking on does not avoid any of it.
+check('a walk-on registers like anybody else', El.WALK_ON_STILL_REGISTERS, true);
+ok('the full account names walk-ons', /walking on/.test(El.ACCOUNTS.full.who));
+// The free one has to say it transitions, because that is the reason to open it
+// now rather than later.
+ok('the free account transitions later', /transitions to a certification account/.test(El.ACCOUNTS.profile.note));
+check('no divisions at all still answers', El.accountFor([], {}).key, 'profile');
+check('and so does nothing at all', El.accountFor(null, null).key, 'profile');
+
 // ---------- the sixteen core courses ----------
 // Sixteen is a shape to fill, not a total to reach. A student can hold twenty
 // approved credits and still fail because the English is short.
