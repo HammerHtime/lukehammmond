@@ -10,11 +10,25 @@
   duplicates and never lets a blank overwrite a verified contact.
 - 120 checks, green.
 
+- The public page. Andrew's own hand-built design is kept exactly as it was,
+  ie, the ripple hero, the flip cards, the gallery, the reveal animations.
+  live-profile.js replaces only the parts that went stale. The page used to
+  show 2:00.73 for the 200 free months after Luke swam 1:59.75. It now reads
+  from the same results the back end writes.
+- A short course yards panel on the public page, because an American coach
+  reads yards and will not do the arithmetic himself.
+- admin.html, the back end. Add a swim in about four taps on a phone, and it
+  tells you what changed, ie, personal best, what moved on the board, and
+  where the swim sits against the Junior Trials cut.
+- Coach visit logging from the ?c= link in each email. A count against a
+  school id and a date. No IP address, no user agent, nothing about the reader.
+- All seventeen coach contacts, read off each school's own athletics site on
+  18 September 2026, each carrying the page it came from.
+
 ## Not built yet
-- index.html, the public profile a coach reads.
-- admin.html, the back end for entering a time and working the board.
 - Sending. netlify/functions/send.js is not written. See the blocker below.
-- Coach visit tracking from the ?c= link in each email.
+  The admin screen drafts the email and opens it in your own mail app, which
+  is the path that works today and gets better replies anyway.
 
 ## Blockers and open questions
 
@@ -43,6 +57,12 @@ carry a benchmarksCheckedOn date and go stale visibly rather than silently.
 Saint Peter's, Manhattan, Clarkson, RPI, Fairfield, Iona, Loyola Maryland and
 Hamilton read "Not assessed". Gathering their distance times is the highest
 value research left, because six of them are already recorded P1 or P2.
+
+### Coaching staff go stale fast
+Five of the seventeen changed head coach in the last eighteen months, and
+search engines still return the old name for four of them. Ithaca, Marist,
+Bucknell, American and St. Bonaventure all carry a warning in contactNote.
+Re-check verifiedOn before a send rather than trusting it forever.
 
 ### Numbers that need confirming
 - The Canadian Junior Trials cuts were carried over from the existing profile

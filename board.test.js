@@ -95,7 +95,33 @@ check('an event with no mapping gets no conversion', C.toYards(S, bests['200-bre
 // ---------- the board ----------
 const schools = Sc.seedSchools();
 check('the board is seeded', schools.length, 17);
-check('nothing is sendable before a contact is verified', schools.filter(Sc.isSendable).length, 0);
+// ---------- the coach contacts ----------
+// Every address was read off the school's own athletics site on 18 September
+// 2026. The test does not check that an address still works, because it cannot.
+// It checks that the record is shaped honestly, ie, nothing is marked verified
+// without both an address and the page it was read from.
+check('every school has a contact', schools.filter(Sc.isSendable).length, 17);
+schools.forEach(function (s) {
+  ok(s.name + ' records where the address came from', Boolean(s.staffUrl));
+  ok(s.name + ' records when it was checked', Boolean(s.verifiedOn));
+  ok(s.name + ' is not verified without an address', !s.verified || Sc.isEmail(s.email));
+});
+
+// Three addresses look wrong and are not. A future tidy-up must not "fix" them.
+check('Manhattan keeps the j prefix', schools.filter(function (s) { return s.id === 'manhattan'; })[0].email, 'jhansbury01@manhattan.edu');
+check('American keeps the single t', schools.filter(function (s) { return s.id === 'american'; })[0].email, 'gbartlet@american.edu');
+check('RPI keeps the shared mailbox', schools.filter(function (s) { return s.id === 'rpi'; })[0].email, 'swimdive@rpi.edu');
+ok('and RPI says it is shared', schools.filter(function (s) { return s.id === 'rpi'; })[0].contactNote.indexOf('SHARED') !== -1);
+
+// Loyola is the only programme with a named recruiting coordinator.
+check('Loyola records the recruiting coordinator', schools.filter(function (s) { return s.id === 'loyolamd'; })[0].assistantEmail, 'jvenit@loyola.edu');
+
+// A school whose head coach changed recently carries the warning, because a
+// stale name is the most likely way an email goes to the wrong person.
+['ithaca', 'marist', 'bucknell', 'american', 'stbonaventure'].forEach(function (id) {
+  var s = schools.filter(function (x) { return x.id === id; })[0];
+  ok(id + ' warns about the former coach', /former|out of date|stale|left in|newly hired|replacing/i.test(s.contactNote));
+});
 
 const rows = B.scoreBoard(S, yards, schools);
 function row(id) { return rows.filter(function (r) { return r.school.id === id; })[0]; }
@@ -168,6 +194,16 @@ ok('the email carries the 400 free', draft.body.indexOf('4:10.86') !== -1);
 ok('the email carries the profile link', draft.body.indexOf('https://example.org?c=canisius') !== -1);
 ok('the email explains the reply date', draft.body.indexOf('15 June 2027') !== -1);
 check('the email has no warnings when the school is complete', draft.warnings.length, 0);
+
+// The email for a real school, end to end.
+const realDraft = R.draftEmail({
+  swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
+  profileUrl: 'https://example.org',
+  school: schools.filter(function (s) { return s.id === 'gannon'; })[0]
+});
+check('it is addressed to the verified address', realDraft.to, 'medo001@gannon.edu');
+ok('it greets Coach Medo', realDraft.body.indexOf('Dear Coach Medo') === 0);
+check('and raises no warnings', realDraft.warnings.length, 0);
 
 const noContact = R.draftEmail({
   swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',

@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luke — Swimmer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #050d1a;
+    --navy-mid: #0a1628;
+    --navy-light: #0f2040;
+    --aqua: oklch(75% 0.18 205);
+    --aqua-dim: oklch(55% 0.14 205);
+    --gold: oklch(75% 0.18 85);
+    --white: oklch(97% 0.005 240);
+    --muted: oklch(65% 0.02 240);
+    --card-bg: oklch(14% 0.03 240);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 4rem;
+    background: linear-gradient(to bottom, rgba(5,13,26,0.95), transparent);
+    backdrop-filter: blur(4px);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
+    color: var(--aqua);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--white); }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+  #ripple-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+  }
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      var(--navy) 0%,
+      rgba(5,13,26,0.6) 50%,
+      rgba(5,13,26,0.2) 100%
+    );
+  }
+  .hero-content {
+    position: relative;
+    padding: 0 4rem 5rem;
+    max-width: 900px;
+  }
+  .hero-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--aqua);
+    margin-bottom: 1rem;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.3s forwards;
+  }
+  .hero-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(5rem, 14vw, 11rem);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    color: var(--white);
+    text-wrap: balance;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.5s forwards;
+  }
+  .hero-name span { color: var(--aqua); }
+  .hero-tagline {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: var(--muted);
+    max-width: 480px;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.7s forwards;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.9s forwards;
+  }
+  .hero-stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    color: var(--gold);
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(232,184,75,0.4);
+  }
+  .hero-stat-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 0.4rem;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 0;
+    margin-top: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.9s forwards;
+  }
+  .hero-stat {
+    padding: 1.2rem 2rem 1.2rem 0;
+    margin-right: 2rem;
+    border-right: 1px solid rgba(232,184,75,0.25);
+    position: relative;
+  }
+  .hero-stat:last-child { border-right: none; }
+  .hero-scroll {
+    position: absolute;
+    bottom: 2.5rem;
+    right: 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeIn 1s 1.5s forwards;
+  }
+  .scroll-line {
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(to bottom, var(--aqua-dim), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+
+  /* ── SECTION COMMON ── */
+  section {
+    padding: 7rem 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--aqua);
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1;
+    letter-spacing: 0.03em;
+    margin-bottom: 3rem;
+  }
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, var(--aqua-dim), transparent);
+    opacity: 0.3;
+  }
+
+  /* ── ABOUT ── */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+  }
+  .about-photo-wrap {
+    position: relative;
+  }
+  .about-photo {
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: var(--card-bg);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+  }
+  .about-photo::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 8px,
+      rgba(255,255,255,0.015) 8px,
+      rgba(255,255,255,0.015) 9px
+    );
+  }
+  .photo-placeholder-text {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    opacity: 0.5;
+    text-align: center;
+    padding: 1rem;
+  }
+  .about-photo-accent {
+    position: absolute;
+    bottom: -1.5rem;
+    right: -1.5rem;
+    width: 60%;
+    height: 60%;
+    border: 2px solid var(--aqua);
+    border-radius: 4px;
+    opacity: 0.2;
+    z-index: -1;
+  }
+  .about-text p {
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: var(--muted);
+    margin-bottom: 1.2rem;
+    line-height: 1.8;
+  }
+  .about-text p strong {
+    color: var(--white);
+    font-weight: 500;
+  }
+  .about-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 2rem;
+  }
+  .badge {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 2px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--aqua);
+    font-weight: 500;
+  }
+
+  /* ── TIMES ── */
+  .times-section {
+    background: var(--navy-mid);
+    max-width: none;
+    padding: 7rem 0;
+  }
+  .times-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 4rem;
+  }
+  .times-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+  }
+  .time-card {
+    background: var(--navy-mid);
+    padding: 0;
+    position: relative;
+    cursor: pointer;
+    min-height: 220px;
+    perspective: 1000px;
+  }
+  .time-card-inner {
+    position: relative;
+    width: 100%; height: 100%;
+    min-height: 220px;
+    transform-style: preserve-3d;
+    transition: transform 0.55s ease;
+    padding: 0;
+  }
+  .time-card.flipped .time-card-inner { transform: rotateY(180deg); }
+  .time-card-front, .time-card-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    padding: 2rem;
+    background: var(--navy-mid);
+  }
+  .time-card-back {
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .time-card:hover .time-card-front,
+  .time-card:hover .time-card-back { background: var(--navy-light); }
+  .time-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 2px;
+    background: var(--aqua);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    z-index: 2;
+  }
+  .time-card:hover::after { transform: scaleX(1); }
+  .flip-hint {
+    position: absolute;
+    top: 0.6rem; right: 0.6rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    opacity: 0.5;
+  }
+  .back-gap {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .back-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .back-standard {
+    font-size: 0.75rem;
+    color: var(--aqua);
+    margin-top: 0.25rem;
+  }
+  .back-flip-hint {
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    opacity: 0.5;
+    margin-top: auto;
+    padding-top: 1rem;
+  }
+  .time-event {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+  .time-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    color: var(--white);
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+  }
+  .time-value.gold { color: var(--gold); }
+  .time-course {
+    font-size: 0.65rem;
+    color: var(--aqua-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+  .time-pb-badge {
+    display: inline-block;
+    background: rgba(0,210,240,0.15);
+    border: 1px solid rgba(0,210,240,0.4);
+    color: rgba(0,210,240,1);
+    font-size: 0.65rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    line-height: 1.8;
+  }
+
+  /* ── COMPETITIONS ── */
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .comp-table thead tr {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .comp-table th {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    padding: 0 1.5rem 1rem 0;
+    text-align: left;
+  }
+  .comp-table tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+  }
+  .comp-table tbody tr:hover {
+    background: var(--navy-light);
+  }
+  .comp-table td {
+    padding: 1.1rem 1.5rem 1.1rem 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .comp-table td.meet-name {
+    color: var(--white);
+    font-weight: 500;
+  }
+  .place-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem; height: 2rem;
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .place-1 { background: var(--gold); color: var(--navy); }
+  .place-2 { background: oklch(80% 0.01 240); color: var(--navy); }
+  .place-3 { background: oklch(68% 0.08 50); color: var(--navy); }
+  .place-other { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--muted); }
+
+  /* ── GALLERY ── */
+  .gallery-section {
+    background: var(--navy-mid);
+    max-width: none;
+    padding: 7rem 0;
+  }
+  .gallery-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 4rem;
+  }
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 6px;
+  }
+  .gallery-item {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  .gallery-item:hover { transform: scale(1.01); z-index: 2; }
+  .gallery-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 8px,
+      rgba(255,255,255,0.015) 8px,
+      rgba(255,255,255,0.015) 9px
+    );
+  }
+  .gallery-item:first-child { grid-row: 1 / 3; aspect-ratio: unset; min-height: 400px; }
+  .gallery-item:not(:first-child) { aspect-ratio: 4/3; }
+  .gallery-placeholder {
+    font-family: monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    opacity: 0.4;
+    text-align: center;
+    padding: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+  .gallery-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(5,13,26,0.6);
+    opacity: 0;
+    transition: opacity 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+  .gallery-item:hover .gallery-overlay { opacity: 1; }
+  .gallery-overlay-icon {
+    color: var(--aqua);
+    font-size: 2rem;
+  }
+
+  /* ── HERO BADGE ── */
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--gold);
+    color: var(--navy);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.55rem 1.1rem;
+    border-radius: 2px;
+    margin-bottom: 1.2rem;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.45s forwards;
+  }
+  .hero-badge-star {
+    font-size: 0.85rem;
+    color: var(--navy);
+  }
+
+  /* ── PROGRESS BAR ── */
+  .time-progress {
+    margin-top: 0.85rem;
+  }
+  .time-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+  .time-progress-label span:last-child { color: var(--aqua); }
+  .time-progress-track {
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .time-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--aqua-dim), var(--aqua));
+    transition: width 1.2s ease;
+    width: 0%;
+  }
+  .time-progress-fill.gold-fill {
+    background: linear-gradient(to right, oklch(65% 0.14 85), var(--gold));
+  }
+
+  /* ── GOALS ── */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .goal-card {
+    background: var(--navy-mid);
+    padding: 2.5rem 2rem;
+    transition: background 0.2s;
+  }
+  .goal-card:hover { background: var(--navy-light); }
+  .goal-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    color: var(--aqua);
+    opacity: 0.2;
+    line-height: 1;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+  }
+  .goal-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
+  .goal-desc {
+    font-size: 0.875rem;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.7;
+  }
+
+  /* ── UPLOAD ── */
+  .uploadable {
+    cursor: pointer;
+  }
+  .uploadable img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .upload-hint {
+    position: absolute;
+    bottom: 0.6rem; right: 0.6rem;
+    background: var(--aqua);
+    color: var(--navy);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    z-index: 3;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .uploadable:hover .upload-hint { opacity: 1; }
+  .upload-remove {
+    position: absolute;
+    top: 0.5rem; right: 0.5rem;
+    background: rgba(5,13,26,0.8);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--white);
+    border-radius: 50%;
+    width: 1.6rem; height: 1.6rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    z-index: 4;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .uploadable.has-photo .upload-remove { display: flex; }
+  .uploadable.has-photo .gallery-placeholder,
+  .uploadable.has-photo .photo-placeholder-text { display: none; }
+  .uploadable.has-photo::before { display: none; }
+
+  /* lightbox */
+  #lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5,13,26,0.95);
+    z-index: 9998;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+  }
+
+  /* ── MILESTONES ── */
+  .milestones-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .milestone-row {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 3rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    align-items: start;
+  }
+  .milestone-year {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: var(--aqua);
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+  .milestone-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 0.3rem;
+  }
+  .milestone-desc {
+    font-size: 0.875rem;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 3rem 4rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
+    color: var(--aqua);
+  }
+  .footer-text {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.4; transform: scaleY(1); }
+    50%       { opacity: 1;   transform: scaleY(1.1); }
+  }
+
+  /* ── HAMBURGER ── */
+  .nav-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0.3rem;
+    z-index: 200;
+  }
+  .nav-hamburger span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--white);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+  .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+  .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5,13,26,0.98);
+    z-index: 150;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+  }
+  .nav-overlay.open { display: flex; }
+  .nav-overlay a {
+    color: var(--white);
+    text-decoration: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: 0.1em;
+    transition: color 0.2s;
+  }
+  .nav-overlay a:hover { color: var(--aqua); }
+  @media (max-width: 768px) {
+    .nav-hamburger { display: flex; }
+    .nav-links { display: none; }
+  }
+
+  /* ── GRID HELPERS ── */
+  .perf-charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  .recruit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 2rem; }
+    .nav-links { gap: 1.2rem; }
+    .nav-links a { font-size: 0.7rem; }
+    section { padding: 5rem 2rem; }
+    .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+    .about-photo { aspect-ratio: 4/3; }
+    .about-photo-accent { display: none; }
+    .goals-grid { grid-template-columns: 1fr 1fr; }
+    .times-inner, .gallery-inner { padding: 0 2rem; }
+    .times-section, .gallery-section { padding: 5rem 0; }
+    .hero-content { padding: 0 2rem 4rem; }
+    .hero-scroll { right: 2rem; }
+    .footer { padding: 2rem; }
+    .perf-charts-grid { grid-template-columns: 1fr; }
+    .recruit-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    #recruit > div { padding: 0 2rem !important; }
+    #performance > div { padding: 0 2rem !important; }
+  }
+
+  @media (max-width: 640px) {
+    nav { padding: 0.9rem 1.2rem; }
+    .nav-links { gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end; max-width: 70%; }
+    .nav-links a { font-size: 0.6rem; }
+    section { padding: 4rem 1.5rem; }
+    .hero-content { padding: 0 1.5rem 3.5rem; }
+    .hero-name { font-size: clamp(3.5rem, 18vw, 6rem); }
+    .hero-stats { gap: 1.5rem; flex-wrap: wrap; }
+    .hero-stat-val { font-size: 2rem; }
+    .about-grid { grid-template-columns: 1fr; }
+    .times-grid { grid-template-columns: 1fr 1fr; }
+    .times-inner, .gallery-inner { padding: 0 1.5rem; }
+    .gallery-grid {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: unset;
+    }
+    .gallery-item:first-child { grid-row: unset; grid-column: 1 / -1; min-height: 220px; }
+    .goals-grid { grid-template-columns: 1fr; }
+    .milestones-list .milestone-row { grid-template-columns: 60px 1fr; gap: 1rem; }
+    .milestone-year { font-size: 1.3rem; }
+    .comp-table th:nth-child(1),
+    .comp-table td:nth-child(1) { display: none; }
+    .section-title { font-size: clamp(2rem, 8vw, 3rem); }
+    .hero-badge { font-size: 0.62rem; padding: 0.45rem 0.85rem; }
+    footer { flex-direction: column; gap: 0.75rem; text-align: center; padding: 2rem 1.5rem; }
+    #recruit > div { padding: 0 1.5rem !important; }
+    #performance > div { padding: 0 1.5rem !important; }
+    #recruit { padding: 4rem 0 !important; }
+    #performance { padding: 4rem 0 !important; }
+  }
+
+  @media (max-width: 480px) {
+    .times-grid { grid-template-columns: 1fr; }
+    .nav-links li:nth-child(n+6) { display: none; }
+    .hero-scroll { display: none; }
+    .perf-charts-grid { grid-template-columns: 1fr; }
+  }
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ── TWEAKS PANEL ── */
+  #tweaks-panel {
+    display: none;
+    position: fixed;
+    bottom: 1.5rem; right: 1.5rem;
+    background: oklch(12% 0.03 240);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    z-index: 9999;
+    min-width: 240px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    font-size: 0.8rem;
+    color: var(--white);
+  }
+  #tweaks-panel h4 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    color: var(--aqua);
+    margin-bottom: 1rem;
+  }
+  .tweak-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+  }
+  .tweak-label { color: var(--muted); font-size: 0.75rem; }
+  .tweak-row input[type="color"] {
+    width: 32px; height: 24px;
+    border: none; border-radius: 3px;
+    cursor: pointer; background: none;
+    padding: 0;
+  }
+  .tweak-row select {
+    background: oklch(18% 0.03 240);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--white);
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+  .tweak-row input[type="range"] { width: 100px; accent-color: var(--aqua); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">Luke Hammond</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#times">Times</a></li>
+    <li><a href="#performance">Progress</a></li>
+    <li><a href="#competitions">Meets</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#goals">Goals</a></li>
+    <li><a href="#milestones">Milestones</a></li>
+    <li><a href="#recruit" style="color:var(--aqua);">Recruit</a></li>
+  </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MOBILE NAV OVERLAY -->
+<div class="nav-overlay" id="nav-overlay">
+  <a href="#about" onclick="closeNav()">About</a>
+  <a href="#times" onclick="closeNav()">Times</a>
+  <a href="#performance" onclick="closeNav()">Progress</a>
+  <a href="#competitions" onclick="closeNav()">Meets</a>
+  <a href="#gallery" onclick="closeNav()">Gallery</a>
+  <a href="#goals" onclick="closeNav()">Goals</a>
+  <a href="#milestones" onclick="closeNav()">Milestones</a>
+  <a href="#recruit" onclick="closeNav()" style="color:var(--aqua);">Recruit</a>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <canvas id="ripple-canvas"></canvas>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Lakeshore Swim Club · Competitive Swimmer · Age 14</p>
+    <div class="hero-badge">
+      <span class="hero-badge-star">★</span> Ranked Top 5 in Canada · 4 Distance Events
+    </div>
+    <h1 class="hero-name">Luke<br><span>Hammond</span></h1>
+    <p class="hero-tagline">Every meter counts. Every second matters.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-val">#2</div>
+        <div class="hero-stat-label">Canada — 400m Free</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val">#3</div>
+        <div class="hero-stat-label">Canada — 800m Free</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val">#4</div>
+        <div class="hero-stat-label">Canada — 200m Free</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    Scroll
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="reveal">
+    <p class="section-label">The Swimmer</p>
+    <h2 class="section-title">About Luke</h2>
+  </div>
+  <div class="about-grid reveal">
+    <div class="about-photo-wrap">
+      <div class="about-photo uploadable has-photo" data-slot="about-photo">
+        <img class="slot-photo" src="uploads/IMG_2202.jpeg" alt="Luke with gold medal">
+        <div class="photo-placeholder-text">[ action photo of Luke — click to upload ]</div>
+        <span class="upload-hint">Change photo</span>
+        <button class="upload-remove" title="Remove photo">✕</button>
+      </div>
+      <div class="about-photo-accent"></div>
+    </div>
+    <div class="about-text">
+      <p>Luke Hammond is a 14-year-old competitive swimmer from Lakeshore Swim Club in Etobicoke, Ontario who started racing in the spring of 2022. An all-round swimmer, Luke excels across freestyle, backstroke, and IM — currently ranked top 5 in Canada in the 200m, 400m, and 800m freestyle, and top 15 in the 200m backstroke and 400m IM for his age group.</p>
+      <p>He trains 6 days a week and spends over 15 hours in the pool every single week. Early mornings, late nights — he puts in the work under the guidance of his head coach, Tristan Vowles.</p>
+      <p>This past year he was named to the Swim Canada National ID Development Program and the Swim Ontario Aerobic Development Program — pretty cool recognition that he's heading in the right direction.</p>
+      <div class="about-badges">
+        <span class="badge">200m Freestyle</span>
+        <span class="badge">400m Freestyle</span>
+        <span class="badge">800m Freestyle</span>
+        <span class="badge">200m Backstroke</span>
+        <span class="badge">400m IM</span>
+        <span class="badge">Short Course</span>
+        <span class="badge">Long Course</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TIMES -->
+<div class="times-section" id="times">
+  <div class="times-inner">
+    <div class="reveal">
+      <p class="section-label">Personal Bests</p>
+      <h2 class="section-title">Best Times</h2>
+      <p style="color:var(--muted); font-size:0.875rem; max-width:700px; line-height:1.7; margin-bottom:2rem;"><span style="color:var(--aqua);">Short course (SCM) TAG Rankings, Jan 2026: #3 Canada — 400m & 800m · #5 — 1500m · #6 — 200m Free.</span></p>
+    </div>
+    <div class="times-grid reveal">
+      <div class="time-card" onclick="flipCard(this)">
+        <span class="flip-hint">tap to flip ↩</span>
+        <div class="time-card-inner">
+          <div class="time-card-front">
+            <div class="time-event">200m Freestyle</div>
+            <div class="time-value gold">2:00.73<span class="time-pb-badge">#4 🇨🇦</span></div>
+            <div class="time-course">Long Course · Mar 2026</div>
+            <div class="time-progress">
+              <div class="time-progress-label"><span>🏁 Jr Trials cut: 1:56.47</span><span>96%</span></div>
+              <div class="time-progress-track"><div class="time-progress-fill gold-fill" data-pct="96"></div></div>
+            </div>
+          </div>
+          <div class="time-card-back">
+            <div class="back-label">Time needed to reach Jr Trials</div>
+            <div class="back-gap">− 4.26s</div>
+            <div class="back-standard">Standard: 1:56.47 · Current: 2:00.73</div>
+            <div class="back-flip-hint">tap to flip back ↩</div>
+          </div>
+        </div>
+      </div>
+      <div class="time-card" onclick="flipCard(this)">
+        <span class="flip-hint">tap to flip ↩</span>
+        <div class="time-card-inner">
+          <div class="time-card-front">
+            <div class="time-event">400m Freestyle</div>
+            <div class="time-value gold">4:11.47<span class="time-pb-badge">#2 🇨🇦</span></div>
+            <div class="time-course">Long Course · Mar 2026</div>
+            <div class="time-progress">
+              <div class="time-progress-label"><span>🏁 Jr Trials cut: 4:08.73</span><span>99%</span></div>
+              <div class="time-progress-track"><div class="time-progress-fill gold-fill" data-pct="99"></div></div>
+            
+            <button onclick="openSplits(event,'400m Freestyle')" style="margin-top:0.75rem;background:none;border:1px solid rgba(0,210,240,0.3);color:rgba(0,210,240,0.8);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;padding:0.35rem 0.75rem;border-radius:2px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(0,210,240,0.8)';this.style.color='rgba(0,210,240,1)'" onmouseout="this.style.borderColor='rgba(0,210,240,0.3)';this.style.color='rgba(0,210,240,0.8)'">View Splits ↗</button>
+          </div>
+          </div>
+          <div class="time-card-back">
+            <div class="back-label">Time needed to reach Jr Trials</div>
+            <div class="back-gap">− 2.74s</div>
+            <div class="back-standard">Standard: 4:08.73 · Current: 4:11.47</div>
+            <div class="back-flip-hint">tap to flip back ↩</div>
+          </div>
+        </div>
+      </div>
+      <div class="time-card" onclick="flipCard(this)">
+        <span class="flip-hint">tap to flip ↩</span>
+        <div class="time-card-inner">
+          <div class="time-card-front">
+            <div class="time-event">800m Freestyle</div>
+            <div class="time-value gold">8:43.49<span class="time-pb-badge">#3 🇨🇦</span></div>
+            <div class="time-course">Long Course · Mar 2026</div>
+            <div class="time-progress">
+              <div class="time-progress-label"><span>🏁 Jr Trials cut: 8:39.36</span><span>99%</span></div>
+              <div class="time-progress-track"><div class="time-progress-fill gold-fill" data-pct="99"></div></div>
+            
+            <button onclick="openSplits(event,'800m Freestyle')" style="margin-top:0.75rem;background:none;border:1px solid rgba(0,210,240,0.3);color:rgba(0,210,240,0.8);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;padding:0.35rem 0.75rem;border-radius:2px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(0,210,240,0.8)';this.style.color='rgba(0,210,240,1)'" onmouseout="this.style.borderColor='rgba(0,210,240,0.3)';this.style.color='rgba(0,210,240,0.8)'">View Splits ↗</button>
+          </div>
+          </div>
+          <div class="time-card-back">
+            <div class="back-label">Time needed to reach Jr Trials</div>
+            <div class="back-gap">− 4.13s</div>
+            <div class="back-standard">Standard: 8:39.36 · Current: 8:43.49</div>
+            <div class="back-flip-hint">tap to flip back ↩</div>
+          </div>
+        </div>
+      </div>
+      <div class="time-card" onclick="flipCard(this)">
+        <span class="flip-hint">tap to flip ↩</span>
+        <div class="time-card-inner">
+          <div class="time-card-front">
+            <div class="time-event">1500m Freestyle</div>
+            <div class="time-value gold">16:59.80<span class="time-pb-badge">#5 🇨🇦</span></div>
+            <div class="time-course">Long Course · Mar 2026</div>
+            <div class="time-progress">
+              <div class="time-progress-label"><span>🏁 Jr Trials cut: 16:31.79</span><span>97%</span></div>
+              <div class="time-progress-track"><div class="time-progress-fill gold-fill" data-pct="97"></div></div>
+            
+            <button onclick="openSplits(event,'1500m Freestyle')" style="margin-top:0.75rem;background:none;border:1px solid rgba(0,210,240,0.3);color:rgba(0,210,240,0.8);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;padding:0.35rem 0.75rem;border-radius:2px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(0,210,240,0.8)';this.style.color='rgba(0,210,240,1)'" onmouseout="this.style.borderColor='rgba(0,210,240,0.3)';this.style.color='rgba(0,210,240,0.8)'">View Splits ↗</button>
+          </div>
+          </div>
+          <div class="time-card-back">
+            <div class="back-label">Time needed to reach Jr Trials</div>
+            <div class="back-gap">− 28.01s</div>
+            <div class="back-standard">Standard: 16:31.79 · Current: 16:59.80</div>
+            <div class="back-flip-hint">tap to flip back ↩</div>
+          </div>
+        </div>
+      </div>
+      <div class="time-card" onclick="flipCard(this)">
+        <span class="flip-hint">tap to flip ↩</span>
+        <div class="time-card-inner">
+          <div class="time-card-front">
+            <div class="time-event">200m Backstroke</div>
+            <div class="time-value">2:17.27<span class="time-pb-badge">#11 🇨🇦</span></div>
+            <div class="time-course">Long Course · Jul 2025</div>
+            <div class="time-progress">
+              <div class="time-progress-label"><span>🏁 Jr Trials cut: 2:11.31</span><span>96%</span></div>
+              <div class="time-progress-track"><div class="time-progress-fill " data-pct="96"></div></div>
+            </div>
+          </div>
+          <div class="time-card-back">
+            <div class="back-label">Time needed to reach Jr Trials</div>
+            <div class="back-gap">− 5.96s</div>
+            <div class="back-standard">Standard: 2:11.31 · Current: 2:17.27</div>
+            <div class="back-flip-hint">tap to flip back ↩</div>
+          </div>
+        </div>
+      </div>
+      <div class="time-card" onclick="flipCard(this)">
+        <span class="flip-hint">tap to flip ↩</span>
+        <div class="time-card-inner">
+          <div class="time-card-front">
+            <div class="time-event">400m IM</div>
+            <div class="time-value">4:56.36<span class="time-pb-badge">#11 🇨🇦</span></div>
+            <div class="time-course">Long Course · Mar 2026</div>
+            <div class="time-progress">
+              <div class="time-progress-label"><span>🏁 Jr Trials cut: 4:44.47</span><span>96%</span></div>
+              <div class="time-progress-track"><div class="time-progress-fill " data-pct="96"></div></div>
+            </div>
+          </div>
+          <div class="time-card-back">
+            <div class="back-label">Time needed to reach Jr Trials</div>
+            <div class="back-gap">− 11.89s</div>
+            <div class="back-standard">Standard: 4:44.47 · Current: 4:56.36</div>
+            <div class="back-flip-hint">tap to flip back ↩</div>
+          </div>
+        </div>
+      </div>
+      <div class="time-card" onclick="flipCard(this)">
+        <span class="flip-hint">tap to flip ↩</span>
+        <div class="time-card-inner">
+          <div class="time-card-front">
+            <div class="time-event">100m Freestyle</div>
+            <div class="time-value">57.42</div>
+            <div class="time-course">Long Course · Jan 2026</div>
+            <div class="time-progress">
+              <div class="time-progress-label"><span>🏁 Jr Trials cut: 53.09</span><span>92%</span></div>
+              <div class="time-progress-track"><div class="time-progress-fill " data-pct="92"></div></div>
+            </div>
+          </div>
+          <div class="time-card-back">
+            <div class="back-label">Time needed to reach Jr Trials</div>
+            <div class="back-gap">− 4.33s</div>
+            <div class="back-standard">Standard: 53.09 · Current: 57.42</div>
+            <div class="back-flip-hint">tap to flip back ↩</div>
+          </div>
+        </div>
+      </div>
+      <div class="time-card" onclick="flipCard(this)">
+        <span class="flip-hint">tap to flip ↩</span>
+        <div class="time-card-inner">
+          <div class="time-card-front">
+            <div class="time-event">200m IM</div>
+            <div class="time-value">2:24.61</div>
+            <div class="time-course">Long Course · Jun 2025</div>
+            <div class="time-progress">
+              <div class="time-progress-label"><span>🏁 Jr Trials cut: 2:12.20</span><span>91%</span></div>
+              <div class="time-progress-track"><div class="time-progress-fill " data-pct="91"></div></div>
+            </div>
+          </div>
+          <div class="time-card-back">
+            <div class="back-label">Time needed to reach Jr Trials</div>
+            <div class="back-gap">− 12.41s</div>
+            <div class="back-standard">Standard: 2:12.20 · Current: 2:24.61</div>
+            <div class="back-flip-hint">tap to flip back ↩</div>
+          </div>
+        </div>
+      </div>
+    </div>
+        <p style="font-size:0.7rem; color:var(--muted); margin-top:1.2rem; letter-spacing:0.05em;">
+      ★ LCM Rankings: 14-year-old males, Long Course, Canada 2026 season &nbsp;·&nbsp; 🏁 Jr Trials standards are estimates — verify at swimming.ca &nbsp;·&nbsp; Full results: <a href="https://www.swimcloud.com/swimmer/3306753/" target="_blank" style="color:var(--aqua); text-decoration:none;">swimcloud.com/swimmer/3306753</a>
+    </p>
+  </div>
+</div>
+
+<!-- PERFORMANCE -->
+<div style="background:var(--navy); padding:7rem 0;" id="performance">
+  <div style="max-width:1200px; margin:0 auto; padding:0 4rem;">
+    <div class="reveal">
+      <p class="section-label">Development Trajectory</p>
+      <h2 class="section-title">Performance Over Time</h2>
+      <p style="color:var(--muted); font-size:0.875rem; max-width:600px; line-height:1.7; margin-bottom:3rem;">Time progression in Luke's two signature events since 2023. The dashed line marks the Swim Canada Junior Trials qualifying standard.</p>
+    </div>
+    <div class="reveal perf-charts-grid">
+      <div style="background:var(--card-bg); border:1px solid rgba(255,255,255,0.07); border-radius:4px; padding:1.5rem;">
+        <div style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--aqua); margin-bottom:0.5rem; font-weight:500;">400m Freestyle</div>
+        <div style="font-size:0.75rem; color:var(--muted); margin-bottom:1.5rem;">4:54.65 → 4:11.47 &nbsp;·&nbsp; <span style="color:var(--gold);">− 43.18s improvement</span></div>
+        <canvas id="chart400" height="220"></canvas>
+      </div>
+      <div style="background:var(--card-bg); border:1px solid rgba(255,255,255,0.07); border-radius:4px; padding:1.5rem;">
+        <div style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--aqua); margin-bottom:0.5rem; font-weight:500;">800m Freestyle</div>
+        <div style="font-size:0.75rem; color:var(--muted); margin-bottom:1.5rem;">12:10.93 → 8:43.49 &nbsp;·&nbsp; <span style="color:var(--gold);">− 3:27.44 improvement</span></div>
+        <canvas id="chart800" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- COMPETITIONS -->
+<section id="competitions">
+  <div class="reveal">
+    <p class="section-label">Meet History</p>
+    <h2 class="section-title">Competition Results</h2>
+    <p style="color:var(--muted); font-size:0.875rem; max-width:600px; line-height:1.7; margin-bottom:2rem;">Selected highlights. Full meet history and splits available at <a href="https://www.swimcloud.com/swimmer/3306753/" target="_blank" style="color:var(--aqua); text-decoration:none;">SwimCloud</a>.</p>
+  </div>
+  <table class="comp-table reveal">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Meet</th>
+        <th>Event</th>
+        <th>Time</th>
+        <th>Place</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Mar 2026</td>
+        <td class="meet-name">OAG Championships — Unionville</td>
+        <td>200m Freestyle</td>
+        <td>2:00.73</td>
+        <td><span class="place-badge place-other">#4 CAN</span></td>
+      </tr>
+      <tr>
+        <td>Mar 2026</td>
+        <td class="meet-name">OAG Championships — Unionville</td>
+        <td>400m Freestyle</td>
+        <td>4:11.47</td>
+        <td><span class="place-badge place-2">#2 CAN</span></td>
+      </tr>
+      <tr>
+        <td>Mar 2026</td>
+        <td class="meet-name">OAG Championships — Unionville</td>
+        <td>800m Freestyle</td>
+        <td>8:43.49</td>
+        <td><span class="place-badge place-3">#3 CAN</span></td>
+      </tr>
+      <tr>
+        <td>Mar 2026</td>
+        <td class="meet-name">OAG Championships — Unionville</td>
+        <td>1500m Freestyle</td>
+        <td>16:59.80</td>
+        <td><span class="place-badge place-other">#5 CAN</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="divider"></div>
+
+<!-- GALLERY -->
+<div class="gallery-section" id="gallery">
+  <div class="gallery-inner">
+    <div class="reveal">
+      <p class="section-label">Photos</p>
+      <h2 class="section-title">Gallery</h2>
+    </div>
+    <div class="gallery-grid reveal">
+      <div class="gallery-item uploadable has-photo" data-slot="gallery-0" style="grid-row: 1 / 3; min-height: 480px;">
+        <img class="slot-photo" src="uploads/DSC_6192.jpg" alt="Luke racing freestyle">
+        <div class="gallery-placeholder">[ hero race photo — click to upload ]</div>
+        <div class="gallery-overlay"><span class="gallery-overlay-icon">＋</span></div>
+        <span class="upload-hint">Change photo</span>
+        <button class="upload-remove" title="Remove photo">✕</button>
+      </div>
+      <div class="gallery-item uploadable has-photo" data-slot="gallery-1">
+        <img class="slot-photo" src="uploads/IMG_2200.jpeg" alt="Podium at Markham Pan Am Centre">
+        <div class="gallery-placeholder">[ podium / medal — click to upload ]</div>
+        <div class="gallery-overlay"><span class="gallery-overlay-icon">＋</span></div>
+        <span class="upload-hint">Change photo</span>
+        <button class="upload-remove" title="Remove photo">✕</button>
+      </div>
+      <div class="gallery-item uploadable has-photo" data-slot="gallery-2">
+        <img class="slot-photo" src="uploads/DSC_5777.jpg" alt="Backstroke race">
+        <div class="gallery-placeholder">[ race action — click to upload ]</div>
+        <div class="gallery-overlay"><span class="gallery-overlay-icon">＋</span></div>
+        <span class="upload-hint">Change photo</span>
+        <button class="upload-remove" title="Remove photo">✕</button>
+      </div>
+      <div class="gallery-item uploadable has-photo" data-slot="gallery-3">
+        <img class="slot-photo" src="uploads/IMG_3574.jpeg" alt="Luke with teammate">
+        <div class="gallery-placeholder">[ teammates — click to upload ]</div>
+        <div class="gallery-overlay"><span class="gallery-overlay-icon">＋</span></div>
+        <span class="upload-hint">Change photo</span>
+        <button class="upload-remove" title="Remove photo">✕</button>
+      </div>
+      <div class="gallery-item uploadable has-photo" data-slot="gallery-4" style="grid-column: 1 / 2;">
+        <img class="slot-photo" src="uploads/IMG_5369.JPG" alt="Award ceremony">
+        <div class="gallery-placeholder">[ award — click to upload ]</div>
+        <div class="gallery-overlay"><span class="gallery-overlay-icon">＋</span></div>
+        <span class="upload-hint">Change photo</span>
+        <button class="upload-remove" title="Remove photo">✕</button>
+      </div>
+      <div class="gallery-item uploadable has-photo" data-slot="gallery-6">
+        <img class="slot-photo" src="uploads/IMG_4789.JPG" alt="Young Luke at a meet">
+        <div class="gallery-placeholder">[ early days — click to upload ]</div>
+        <div class="gallery-overlay"><span class="gallery-overlay-icon">＋</span></div>
+        <span class="upload-hint">Change photo</span>
+        <button class="upload-remove" title="Remove photo">✕</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GOALS -->
+<section id="goals">
+  <div class="reveal">
+    <p class="section-label">Looking Ahead</p>
+    <h2 class="section-title">Goals</h2>
+  </div>
+  <div class="goals-grid reveal">
+    <div class="goal-card">
+      <div class="goal-number">01</div>
+      <div class="goal-title">Qualify for Junior Trials</div>
+      <div class="goal-desc">Luke is chasing the Swim Canada Junior Trials qualifying standards in the 400m and 800m freestyle — his most immediate target on the road to the national stage.</div>
+    </div>
+    <div class="goal-card">
+      <div class="goal-number">02</div>
+      <div class="goal-title">Become a Nationally Carded Swimmer</div>
+      <div class="goal-desc">Earning a national carding from Swim Canada is a major short-term goal — recognition that he's among the best in the country and support to keep climbing.</div>
+    </div>
+    <div class="goal-card">
+      <div class="goal-number">03</div>
+      <div class="goal-title">Represent Canada Internationally</div>
+      <div class="goal-desc">Luke's big dream is to wear the maple leaf on the world stage — competing internationally and representing Canada at the highest level of the sport.</div>
+    </div>
+    <div class="goal-card">
+      <div class="goal-number">04</div>
+      <div class="goal-title">NCAA Student-Athlete</div>
+      <div class="goal-desc">Luke is working toward earning a scholarship to swim at a US university — combining elite competition with a world-class education as a Division I student-athlete.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MILESTONES -->
+<section id="milestones">
+  <div class="reveal">
+    <p class="section-label">Journey</p>
+    <h2 class="section-title">Milestones</h2>
+  </div>
+  <div class="milestones-list reveal">
+    <div class="milestone-row">
+      <div class="milestone-year">2026</div>
+      <div>
+        <div class="milestone-title">Named to Swim Ontario Aerobic Development Program</div>
+        <div class="milestone-desc">Selected for Swim Ontario's elite ADP — recognizing top junior distance talent in the province.</div>
+      </div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone-year">2026</div>
+      <div>
+        <div class="milestone-title">Qualified for Ontario Youth Juniors (OYJs)</div>
+        <div class="milestone-desc">Hit the qualifying standards for OYJs — one of Ontario's premier age-group championships.</div>
+      </div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone-year">2026</div>
+      <div>
+        <div class="milestone-title">CSCA TAG Rankings — #3 Canada (400m & 800m Free, SCM)</div>
+        <div class="milestone-desc">Featured in the relaunched Canadian Top Age Group rankings — #3 nationally in the 400m and 800m freestyle, short course.</div>
+      </div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone-year">2025</div>
+      <div>
+        <div class="milestone-title">Named to Swim Canada National ID Development Program</div>
+        <div class="milestone-desc">Selected to Swim Canada's National Identification & Development program — recognition on the national stage.</div>
+      </div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone-year">2025</div>
+      <div>
+        <div class="milestone-title">CityNews Toronto Athlete of the Week</div>
+        <div class="milestone-desc">Named CityNews Toronto Athlete of the Week in October 2025 in recognition of his outstanding performance in the pool.</div>
+      </div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone-year">2024</div>
+      <div>
+        <div class="milestone-title">First Sub-60 100m Freestyle</div>
+        <div class="milestone-desc">Broke the minute barrier — a major milestone for any competitive swimmer.</div>
+      </div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone-year">2022</div>
+      <div>
+        <div class="milestone-title">Began Competitive Swimming</div>
+        <div class="milestone-desc">Started competitive swimming in the spring of 2022 — 6 days a week, over 15 hours in the pool.</div>
+      </div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone-year">2018</div>
+      <div>
+        <div class="milestone-title">First Swim Lesson</div>
+        <div class="milestone-desc">It all started here. And he never wanted to get out.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<div id="recruit" style="background:var(--navy-mid); padding:7rem 0;">
+  <div style="max-width:1200px; margin:0 auto; padding:0 4rem;">
+    <div class="recruit-grid reveal">
+      <div>
+        <p class="section-label">Get In Touch</p>
+        <h2 class="section-title" style="margin-bottom:1.5rem;">The Path to 2029</h2>
+        <p style="color:var(--muted); font-size:1rem; line-height:1.8; margin-bottom:1rem;">I'm a distance freestyle specialist, and right now, I'm ranked in the top 5 in Canada across three of my main events. I actually love the grind of the 800m and 1500m—I'm the kind of swimmer who stays focused on the technical details and splits when the sets get long.</p>
+        <p style="color:var(--muted); font-size:1rem; line-height:1.8; margin-bottom:1rem;">Beyond the times, the team environment is a huge part of why I show up every day. I get along with everyone and love the energy of a fast lane where we're all pushing each other to be better. I'm highly coachable, I take feedback seriously, and I'm always looking for ways to improve.</p>
+        <p style="color:var(--muted); font-size:1rem; line-height:1.8; margin-bottom:2rem;">My goal is to bring that work ethic and team-first attitude to a NCAA Division I program. I'm excited to keep climbing the rankings and would welcome the chance to talk with coaches and scouts about how I can contribute to their team.</p>
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+          <a href="https://www.swimcloud.com/swimmer/3306753/" target="_blank" style="display:inline-flex; align-items:center; gap:0.75rem; color:var(--aqua); text-decoration:none; font-size:0.875rem; letter-spacing:0.05em; font-weight:500;">
+            <span style="width:32px; height:1px; background:var(--aqua); display:inline-block;"></span>
+            SwimCloud Profile
+          </a>
+          <a href="https://swimming.ca" target="_blank" style="display:inline-flex; align-items:center; gap:0.75rem; color:var(--aqua); text-decoration:none; font-size:0.875rem; letter-spacing:0.05em; font-weight:500;">
+            <span style="width:32px; height:1px; background:var(--aqua); display:inline-block;"></span>
+            Swim Canada Rankings
+          </a>
+        </div>
+      </div>
+      <div style="background:var(--card-bg); border:1px solid rgba(255,255,255,0.07); border-radius:4px; padding:2.5rem;">
+        <p style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--aqua); margin-bottom:1.5rem; font-weight:500;">Contact Information</p>
+        <div style="display:flex; flex-direction:column; gap:1.25rem;">
+          <div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Email</div>
+            <a id="contact-email" href="#" style="color:var(--aqua); text-decoration:none; font-size:1rem;">Click to reveal email</a>
+          </div>
+          <div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Club</div>
+            <div style="color:var(--white); font-size:1rem;">Lakeshore Swim Club — Etobicoke, ON</div>
+          </div>
+          <div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Head Coach</div>
+            <div style="color:var(--white); font-size:1rem;">Tristan Vowles</div>
+          </div>
+          <div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Year of Birth</div>
+            <div style="color:var(--white); font-size:1rem;">2011</div>
+          </div>
+          <div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">GPA</div>
+            <div style="color:var(--gold); font-size:1rem; font-weight:600;">3.5 / 4.0</div>
+          </div>
+          <div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Academic Interests</div>
+            <div style="color:var(--white); font-size:0.95rem;">History · Exercise Science & Kinesiology</div>
+          </div>
+          <div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Eligibility Year</div>
+            <div style="color:var(--white); font-size:1rem;">2029</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SPLITS MODAL -->
+<div id="splits-modal" style="display:none; position:fixed; inset:0; background:rgba(5,13,26,0.95); z-index:9999; align-items:center; justify-content:center; padding:2rem;">
+  <div style="background:var(--navy-mid); border:1px solid rgba(255,255,255,0.1); border-radius:6px; width:100%; max-width:780px; padding:2.5rem; position:relative; max-height:90vh; overflow-y:auto;">
+    <button onclick="closeSplits()" style="position:absolute; top:1rem; right:1rem; background:none; border:1px solid rgba(255,255,255,0.15); color:var(--muted); width:2rem; height:2rem; border-radius:50%; cursor:pointer; font-size:1rem; line-height:1;">✕</button>
+    <p id="splits-label" style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--aqua); margin-bottom:0.25rem; font-weight:500;"></p>
+    <h3 id="splits-title" style="font-family:'Bebas Neue',sans-serif; font-size:2.2rem; color:var(--white); letter-spacing:0.04em; margin-bottom:0.5rem;"></h3>
+    <div id="splits-stats" style="display:flex; gap:2rem; margin-bottom:2rem; flex-wrap:wrap;"></div>
+    <canvas id="splits-chart" height="120"></canvas>
+    <p style="font-size:0.65rem; color:var(--muted); margin-top:1rem; letter-spacing:0.05em;">50m split times — lower = faster. Aqua bars = faster than average. Final 50m kick highlighted in gold.</p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Luke Hammond</div>
+  <div class="footer-text">Lakeshore Swim Club · Updated April 2026</div>
+</footer>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <img id="lightbox-img" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
+</div>
+
+<!-- HIDDEN FILE INPUT -->
+<input type="file" id="photo-input" accept="image/*" style="display:none">
+
+<script>
+// ── Photo upload system ──
+const photoInput = document.getElementById('photo-input');
+let activeSlot = null;
+
+function loadSavedPhotos() {
+  document.querySelectorAll('.uploadable[data-slot]').forEach(el => {
+    const slot = el.dataset.slot;
+    const saved = localStorage.getItem('luke-photo-' + slot);
+    if (saved) setPhoto(el, saved);
+  });
+}
+
+function setPhoto(el, dataUrl) {
+  // Remove old image if any
+  const old = el.querySelector('img.slot-photo');
+  if (old) old.remove();
+
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.className = 'slot-photo';
+  el.prepend(img);
+  el.classList.add('has-photo');
+  localStorage.setItem('luke-photo-' + el.dataset.slot, dataUrl);
+}
+
+function removePhoto(el) {
+  const img = el.querySelector('img.slot-photo');
+  if (img) img.remove();
+  el.classList.remove('has-photo');
+  localStorage.removeItem('luke-photo-' + el.dataset.slot);
+}
+
+// Click uploadable → open file picker
+document.querySelectorAll('.uploadable').forEach(el => {
+  el.addEventListener('click', function(e) {
+    if (e.target.classList.contains('upload-remove')) return;
+    // If has photo, open lightbox
+    if (el.classList.contains('has-photo')) {
+      const img = el.querySelector('img.slot-photo');
+      if (img) openLightbox(img.src);
+      return;
+    }
+    activeSlot = el;
+    photoInput.click();
+  });
+
+  // Remove button
+  const removeBtn = el.querySelector('.upload-remove');
+  if (removeBtn) {
+    removeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      removePhoto(el);
+    });
+  }
+});
+
+photoInput.addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file || !activeSlot) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    setPhoto(activeSlot, e.target.result);
+    activeSlot = null;
+  };
+  reader.readAsDataURL(file);
+  this.value = '';
+});
+
+// Lightbox
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightbox-img');
+function openLightbox(src) {
+  lightboxImg.src = src;
+  lightbox.classList.add('open');
+}
+lightbox.addEventListener('click', () => lightbox.classList.remove('open'));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') lightbox.classList.remove('open');
+});
+
+loadSavedPhotos();
+</script>
+<div id="tweaks-panel">
+  <h4>Tweaks</h4>
+  <div class="tweak-row">
+    <span class="tweak-label">Accent color</span>
+    <input type="color" id="tweak-accent" value="#00d4ff">
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Gold color</span>
+    <input type="color" id="tweak-gold" value="#e8b84b">
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Hero tagline</span>
+    <select id="tweak-tagline">
+      <option>Racing the clock, chasing the wall.</option>
+      <option>Fast in the water. Fearless on the blocks.</option>
+      <option>Every meter counts. Every second matters.</option>
+      <option>Built for the pool.</option>
+    </select>
+  </div>
+  <div class="tweak-row">
+    <span class="tweak-label">Dark intensity</span>
+    <input type="range" id="tweak-dark" min="0" max="30" value="10">
+  </div>
+</div>
+
+<script>
+// ── Mobile nav ──
+const hamburger = document.getElementById('hamburger');
+const navOverlay = document.getElementById('nav-overlay');
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  navOverlay.classList.toggle('open');
+  document.body.style.overflow = navOverlay.classList.contains('open') ? 'hidden' : '';
+});
+function closeNav() {
+  hamburger.classList.remove('open');
+  navOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Ripple canvas ──
+const canvas = document.getElementById('ripple-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, time = 0;
+
+function resizeCanvas() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function drawWater() {
+  ctx.clearRect(0, 0, W, H);
+  const gradient = ctx.createLinearGradient(0, 0, 0, H);
+  gradient.addColorStop(0, '#0a2040');
+  gradient.addColorStop(0.5, '#062035');
+  gradient.addColorStop(1, '#050d1a');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, W, H);
+
+  // Lane lines
+  const laneCount = 8;
+  for (let i = 0; i <= laneCount; i++) {
+    const x = (W / laneCount) * i;
+    ctx.strokeStyle = 'rgba(0, 180, 220, 0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+
+  // Ripple waves
+  for (let row = 0; row < 6; row++) {
+    const y = (H / 6) * row + H * 0.15;
+    const amp = 6 + row * 2;
+    const freq = 0.006 - row * 0.0005;
+    const speed = 0.4 + row * 0.1;
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(0, 200, 255, ${0.04 - row * 0.005})`;
+    ctx.lineWidth = 1.5;
+    for (let x = 0; x <= W; x += 2) {
+      const yOff = Math.sin(x * freq + time * speed) * amp
+                 + Math.sin(x * freq * 1.7 - time * speed * 0.6) * (amp * 0.4);
+      if (x === 0) ctx.moveTo(x, y + yOff);
+      else ctx.lineTo(x, y + yOff);
+    }
+    ctx.stroke();
+  }
+
+  // Light caustics
+  for (let i = 0; i < 18; i++) {
+    const cx = (Math.sin(time * 0.2 + i * 1.1) * 0.5 + 0.5) * W;
+    const cy = (Math.sin(time * 0.15 + i * 0.9) * 0.5 + 0.5) * H * 0.7;
+    const r = 60 + Math.sin(time * 0.3 + i) * 30;
+    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    grd.addColorStop(0, 'rgba(0, 200, 255, 0.04)');
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  time += 0.015;
+  requestAnimationFrame(drawWater);
+}
+drawWater();
+
+// ── Scroll reveal ──
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), 100);
+    }
+  });
+}, { threshold: 0.1 });
+revealEls.forEach(el => observer.observe(el));
+
+// ── Tweaks ──
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentColor": "#00d4ff",
+  "goldColor": "#e8b84b",
+  "taglineIndex": 2,
+  "darkBoost": 9
+}/*EDITMODE-END*/;
+let tweaks = { ...TWEAK_DEFAULTS };
+
+function applyTweaks() {
+  const root = document.documentElement;
+  // accent
+  const a = tweaks.accentColor;
+  root.style.setProperty('--aqua', a);
+  // gold
+  root.style.setProperty('--gold', tweaks.goldColor);
+  // dark boost
+  const b = tweaks.darkBoost / 100;
+  root.style.setProperty('--navy', `oklch(${5 - b}% 0.03 240)`);
+
+  document.getElementById('tweak-accent').value = tweaks.accentColor;
+  document.getElementById('tweak-gold').value = tweaks.goldColor;
+  document.getElementById('tweak-dark').value = tweaks.darkBoost;
+  document.getElementById('tweak-tagline').selectedIndex = tweaks.taglineIndex;
+}
+
+document.getElementById('tweak-accent').addEventListener('input', e => {
+  tweaks.accentColor = e.target.value;
+  applyTweaks();
+  postTweaks();
+});
+document.getElementById('tweak-gold').addEventListener('input', e => {
+  tweaks.goldColor = e.target.value;
+  applyTweaks();
+  postTweaks();
+});
+document.getElementById('tweak-tagline').addEventListener('change', e => {
+  tweaks.taglineIndex = e.target.selectedIndex;
+  document.querySelector('.hero-tagline').textContent = e.target.value;
+  postTweaks();
+});
+document.getElementById('tweak-dark').addEventListener('input', e => {
+  tweaks.darkBoost = +e.target.value;
+  applyTweaks();
+  postTweaks();
+});
+
+function postTweaks() {
+  window.parent.postMessage({ type: '__edit_mode_set_keys', edits: tweaks }, '*');
+}
+
+window.addEventListener('message', e => {
+  if (e.data?.type === '__activate_edit_mode') document.getElementById('tweaks-panel').style.display = 'block';
+  if (e.data?.type === '__deactivate_edit_mode') document.getElementById('tweaks-panel').style.display = 'none';
+});
+window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+
+// ── Split Analysis ──
+const splitsData = {
+  '400m Freestyle': {
+    pb: '4:11.47',
+    splits: [28.91,31.25,31.86,31.95,32.13,32.17,32.30,30.90],
+    labels: ['50','100','150','200','250','300','350','400']
+  },
+  '800m Freestyle': {
+    pb: '8:43.49',
+    splits: [29.42,32.22,32.85,33.18,33.23,33.58,33.54,34.01,33.50,33.45,33.40,33.23,33.35,33.21,31.72,29.60],
+    labels: ['50','100','150','200','250','300','350','400','450','500','550','600','650','700','750','800']
+  },
+  '1500m Freestyle': {
+    pb: '16:59.80',
+    splits: [30.55,33.38,33.98,34.01,34.33,33.95,33.90,34.32,34.20,34.26,34.30,34.05,34.48,34.31,34.46,34.53,33.90,34.36,34.49,34.08,34.45,34.23,34.54,34.51,34.87,34.86,34.58,34.35,32.95,30.62],
+    labels: ['50','100','150','200','250','300','350','400','450','500','550','600','650','700','750','800','850','900','950','1000','1050','1100','1150','1200','1250','1300','1350','1400','1450','1500']
+  }
+};
+
+let splitsChartInstance = null;
+
+function openSplits(e, eventName) {
+  e.stopPropagation();
+  const d = splitsData[eventName];
+  if (!d) return;
+
+  const avg = d.splits.reduce((a,b)=>a+b,0) / d.splits.length;
+  const half = Math.floor(d.splits.length / 2);
+  const firstHalfAvg = d.splits.slice(0,half).reduce((a,b)=>a+b,0)/half;
+  const secondHalfAvg = d.splits.slice(half).reduce((a,b)=>a+b,0)/(d.splits.length-half);
+  const fastest = Math.min(...d.splits);
+  const slowest = Math.max(...d.splits);
+
+  document.getElementById('splits-label').textContent = 'Split Analysis · Personal Best';
+  document.getElementById('splits-title').textContent = eventName + ' — ' + d.pb;
+
+  document.getElementById('splits-stats').innerHTML = [
+    {label:'Avg 50m', val: avg.toFixed(2)+'s'},
+    {label:'First Half Avg', val: firstHalfAvg.toFixed(2)+'s'},
+    {label:'Second Half Avg', val: secondHalfAvg.toFixed(2)+'s'},
+    {label:'Fastest 50m', val: fastest.toFixed(2)+'s'},
+    {label:'Slowest 50m', val: slowest.toFixed(2)+'s'},
+    {label:'Closing Kick', val: d.splits[d.splits.length-1].toFixed(2)+'s'},
+  ].map(s=>`<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:3px;padding:0.6rem 1rem;">
+    <div style="font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;">${s.label}</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold);letter-spacing:0.04em;">${s.val}</div>
+  </div>`).join('');
+
+  const colors = d.splits.map((v,i) => {
+    if (i === d.splits.length-1) return 'rgba(232,184,75,0.9)'; // gold for last
+    if (i === 0) return 'rgba(232,184,75,0.6)'; // gold for start
+    return v < avg ? 'rgba(0,210,240,0.85)' : 'rgba(0,210,240,0.35)';
+  });
+
+  if (splitsChartInstance) splitsChartInstance.destroy();
+  const ctx = document.getElementById('splits-chart').getContext('2d');
+  splitsChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: d.labels.map(l => l+'m'),
+      datasets: [{
+        data: d.splits,
+        backgroundColor: colors,
+        borderRadius: 2,
+        borderSkipped: false
+      },{
+        type: 'line',
+        data: d.splits.map(()=>avg),
+        borderColor: 'rgba(255,255,255,0.2)',
+        borderWidth: 1,
+        borderDash: [4,4],
+        pointRadius: 0,
+        label: 'Avg pace'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(5,13,26,0.95)',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleColor: 'rgba(0,210,240,0.9)',
+          bodyColor: 'rgba(255,255,255,0.7)',
+          callbacks: { label: ctx => ' ' + ctx.parsed.y.toFixed(2) + 's' }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 9 }, maxTicksLimit: 15 } },
+        y: { reverse: false, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 10 }, callback: v => v.toFixed(1)+'s' } }
+      }
+    }
+  });
+
+  const modal = document.getElementById('splits-modal');
+  modal.style.display = 'flex';
+  document.addEventListener('keydown', closeSplitsOnEsc);
+}
+
+function closeSplits() {
+  document.getElementById('splits-modal').style.display = 'none';
+  document.removeEventListener('keydown', closeSplitsOnEsc);
+}
+function closeSplitsOnEsc(e) { if (e.key === 'Escape') closeSplits(); }
+document.getElementById('splits-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeSplits();
+});
+
+// ── Performance Charts ──
+(function() {
+  function toSec(t) {
+    const p = t.split(':');
+    return parseFloat(p[0]) * 60 + parseFloat(p[1]);
+  }
+  function fmtTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = (s - m * 60).toFixed(2).padStart(5, '0');
+    return m + ':' + sec;
+  }
+  function parseDate(d) {
+    return new Date(d);
+  }
+
+  const data400 = [
+    {d:'2024-04-26',t:'4:54.65'},{d:'2024-05-09',t:'4:57.48'},{d:'2024-06-02',t:'4:56.82'},
+    {d:'2024-06-15',t:'4:57.67'},{d:'2025-01-16',t:'4:40.09'},{d:'2025-01-17',t:'4:37.35'},
+    {d:'2025-02-28',t:'4:31.78'},{d:'2025-02-28',t:'4:30.08'},{d:'2025-04-24',t:'4:38.61'},
+    {d:'2025-05-16',t:'4:26.30'},{d:'2025-06-08',t:'4:25.08'},{d:'2025-07-12',t:'4:22.18'},
+    {d:'2025-07-12',t:'4:18.07'},{d:'2025-07-24',t:'4:27.41'},{d:'2025-07-25',t:'4:21.89'},
+    {d:'2026-01-22',t:'4:28.38'},{d:'2026-01-23',t:'4:17.97'},{d:'2026-03-08',t:'4:17.71'},
+    {d:'2026-03-08',t:'4:11.47'}
+  ].map(x => ({x: x.d, y: toSec(x.t)}));
+
+  const data800 = [
+    {d:'2023-01-26',t:'12:10.93'},{d:'2023-04-27',t:'11:23.70'},{d:'2023-06-01',t:'11:19.01'},
+    {d:'2023-06-18',t:'10:57.43'},{d:'2024-01-18',t:'10:51.57'},{d:'2024-04-25',t:'10:37.36'},
+    {d:'2024-05-09',t:'10:00.94'},{d:'2024-05-30',t:'10:03.81'},{d:'2025-01-16',t:'9:27.67'},
+    {d:'2025-02-27',t:'9:16.75'},{d:'2025-04-24',t:'9:21.74'},{d:'2025-05-15',t:'9:39.88'},
+    {d:'2025-06-05',t:'9:16.45'},{d:'2025-07-09',t:'9:00.62'},{d:'2025-07-24',t:'8:55.00'},
+    {d:'2026-01-22',t:'9:01.30'},{d:'2026-03-05',t:'8:43.49'}
+  ].map(x => ({x: x.d, y: toSec(x.t)}));
+
+  // PB line — best time up to each point
+  function pbLine(data) {
+    let best = Infinity;
+    return data.map(p => {
+      if (p.y < best) best = p.y;
+      return {x: p.x, y: best};
+    });
+  }
+
+  const aqua = 'rgba(0,210,240,0.85)';
+  const aquaDim = 'rgba(0,210,240,0.25)';
+  const gold = 'rgba(232,184,75,0.9)';
+  const trialLine = 'rgba(232,184,75,0.5)';
+  const gridColor = 'rgba(255,255,255,0.05)';
+  const textColor = 'rgba(255,255,255,0.35)';
+
+  function makeChart(id, allData, pbData, stdSec, stdLabel) {
+    const ctx = document.getElementById(id).getContext('2d');
+    // y-axis range: min = std - 5s, max = max of data + 5s
+    const yMin = Math.min(stdSec - 5, Math.min(...allData.map(p=>p.y)) - 5);
+    const yMax = Math.max(...allData.map(p=>p.y)) + 5;
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [
+          {
+            label: 'All Swims',
+            data: allData,
+            borderColor: 'transparent',
+            backgroundColor: aquaDim,
+            pointBackgroundColor: aqua,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            showLine: false,
+            order: 3
+          },
+          {
+            label: 'PB Progression',
+            data: pbData,
+            borderColor: aqua,
+            borderWidth: 2,
+            backgroundColor: 'transparent',
+            pointRadius: 0,
+            tension: 0.3,
+            order: 2
+          },
+          {
+            label: 'Jr Trials Standard (' + stdLabel + ')',
+            data: [
+              {x: allData[0].x, y: stdSec},
+              {x: allData[allData.length-1].x, y: stdSec}
+            ],
+            borderColor: trialLine,
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            backgroundColor: 'transparent',
+            pointRadius: 0,
+            order: 1
+          }
+        ]
+      },
+      options: {
+        animation: { duration: 1200, easing: 'easeInOutQuart' },
+        responsive: true,
+        interaction: { intersect: false, mode: 'index' },
+        plugins: {
+          legend: {
+            labels: {
+              color: textColor,
+              font: { size: 10, family: 'DM Sans' },
+              boxWidth: 12,
+              padding: 12
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(5,13,26,0.95)',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            titleColor: aqua,
+            bodyColor: 'rgba(255,255,255,0.7)',
+            callbacks: {
+              label: ctx => {
+                if (ctx.dataset.label === 'All Swims' || ctx.dataset.label === 'PB Progression')
+                  return ' ' + ctx.dataset.label + ': ' + fmtTime(ctx.parsed.y);
+                return ' ' + ctx.dataset.label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'time',
+            time: { unit: 'month', displayFormats: { month: 'MMM yy' } },
+            grid: { color: gridColor },
+            ticks: { color: textColor, font: { size: 10 }, maxTicksLimit: 8 }
+          },
+          y: {
+            reverse: true,
+            min: yMin,
+            max: yMax,
+            grid: { color: gridColor },
+            ticks: {
+              color: textColor,
+              font: { size: 10 },
+              callback: v => fmtTime(v)
+            }
+          }
+        }
+      }
+    });
+  }
+
+  makeChart('chart400', data400, pbLine(data400), toSec('4:08.73'), '4:08.73');
+  makeChart('chart800', data800, pbLine(data800), toSec('8:39.36'), '8:39.36');
+})();
+
+// ── Card flip with auto-reset ──
+const flipTimers = new WeakMap();
+function flipCard(card) {
+  const isFlipped = card.classList.contains('flipped');
+  if (isFlipped) {
+    card.classList.remove('flipped');
+    clearTimeout(flipTimers.get(card));
+  } else {
+    card.classList.add('flipped');
+    const t = setTimeout(() => card.classList.remove('flipped'), 4000);
+    flipTimers.set(card, t);
+  }
+}
+
+// ── Animate progress bars on scroll ──
+const progressFills = document.querySelectorAll('.time-progress-fill');
+const progressObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const pct = entry.target.dataset.pct;
+      entry.target.style.width = pct + '%';
+      progressObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.3 });
+progressFills.forEach(el => progressObserver.observe(el));
+
+// ── Email obfuscation ──
+(function() {
+  const u = ['hammondluke11', 'icloud.com'].join('@');
+  const b = ['andrewhammond75', 'mac.com'].join('@');
+  const el = document.getElementById('contact-email');
+  if (el) {
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      el.textContent = u;
+      el.href = 'mailto:' + u + '?cc=' + b;
+      setTimeout(() => { window.location.href = el.href; }, 50);
+      setTimeout(() => {
+        el.textContent = 'Click to reveal email';
+        el.href = '#';
+      }, 4000);
+    });
+  }
+})();
+
+applyTweaks();
+</script>
+</body>
+</html>

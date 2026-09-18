@@ -10,6 +10,18 @@
 //    on a recorded date, or it is empty. There is no third state. An invented
 //    address bounces, or worse, reaches a stranger.
 //
+//    The seventeen addresses below were read off each school's own athletics
+//    site on 18 September 2026, and every one carries the page it came from in
+//    staffUrl. None was built from a naming pattern. Three are odd enough to be
+//    worth NOT "correcting": Manhattan's begins with j while the coach is
+//    displayed as Brian, American's ends in a single t, and RPI publishes only
+//    a shared programme mailbox rather than any personal address.
+//
+//    Coaching staff turn over constantly. Five of these seventeen changed head
+//    coach in the last eighteen months, and search engines still return the old
+//    name for four of them. So re-check verifiedOn before a send rather than
+//    trusting it forever.
+//
 // Anything with verified:false has NOT had its contact confirmed. The back end
 // will not send to it. Fill it with the importer, from the school's own site.
 
@@ -24,7 +36,13 @@ const AID = {
 const SCHOOLS = [
   // ---------- P1. His times already overlap these programmes. ----------
   {
-    id: 'gannon', name: 'Gannon University', division: 'D2', conference: 'Pennsylvania State Athletic',
+    id: 'gannon',
+    coach: "Milan Medo", coachTitle: "Head Swimming Coach",
+    email: "medo001@gannon.edu",
+    staffUrl: "https://gannonsports.com/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Assistant: Bill Bradley, bradley069@gannon.edu. An older page naming Jacqueline Michalski as head coach is out of date.", name: 'Gannon University', division: 'D2', conference: 'Pennsylvania State Athletic',
     state: 'PA', country: 'USA', priority: 'P1', confidence: 'High',
     note: 'His 500 and mile equivalents are already slightly faster than the conference results found.',
     benchmarks: [
@@ -33,7 +51,13 @@ const SCHOOLS = [
     ]
   },
   {
-    id: 'canisius', name: 'Canisius University', division: 'D1', conference: 'MAAC',
+    id: 'canisius',
+    coach: "Scott Vanderzell", coachTitle: "Head Coach",
+    email: "vanderzs@canisius.edu",
+    staffUrl: "https://gogriffs.com/sports/swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Assistant: Samantha Palma, palmas@canisius.edu. Combined men's and women's staff.", name: 'Canisius University', division: 'D1', conference: 'MAAC',
     state: 'NY', country: 'USA', priority: 'P1', confidence: 'High',
     note: 'Buffalo, ie, an easy drive from Toronto. His mile equivalent is well inside their MAAC result.',
     benchmarks: [
@@ -41,7 +65,13 @@ const SCHOOLS = [
     ]
   },
   {
-    id: 'stbonaventure', name: 'St. Bonaventure University', division: 'D1', conference: 'Atlantic 10',
+    id: 'stbonaventure',
+    coach: "Alec Kandt", coachTitle: "Head Men's and Women's Swimming and Diving Coach",
+    email: "akandt@sbu.edu",
+    staffUrl: "https://gobonnies.com/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Assistant: Colby Clark, coclark@sbu.edu. Kandt is new. Older items naming Mike Smiechowski are out of date.", name: 'St. Bonaventure University', division: 'D1', conference: 'Atlantic 10',
     state: 'NY', country: 'USA', priority: 'P1', confidence: 'High',
     note: 'The most interesting comparison on the board. His 500 sits inside the times their swimmers were actually producing.',
     benchmarks: [
@@ -50,19 +80,37 @@ const SCHOOLS = [
     ]
   },
   {
-    id: 'saintpeters', name: "Saint Peter's University", division: 'D1', conference: 'MAAC',
+    id: 'saintpeters',
+    coach: "McAllistar Milne", coachTitle: "Head Coach",
+    email: "mmilne@saintpeters.edu",
+    staffUrl: "https://saintpeterspeacocks.com/staff-directory/mcallistar-milne/2295",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "First year as head coach, 2026-27. The sport coaches page is stale and does not list him. No assistant emails published.", name: "Saint Peter's University", division: 'D1', conference: 'MAAC',
     state: 'NJ', country: 'USA', priority: 'P1', confidence: 'Medium',
     note: 'Distance times look relevant to roster depth, but the current roster has not been gone through swimmer by swimmer.',
     benchmarks: []
   },
   {
-    id: 'manhattan', name: 'Manhattan University', division: 'D1', conference: 'MAAC',
+    id: 'manhattan',
+    coach: "Brian Hansbury", coachTitle: "Head Coach, Swimming & Diving",
+    email: "jhansbury01@manhattan.edu",
+    staffUrl: "https://gojaspers.com/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "The address really does begin with j while the coach is displayed as Brian. Read twice on the page. Do not correct it to bhansbury.", name: 'Manhattan University', division: 'D1', conference: 'MAAC',
     state: 'NY', country: 'USA', priority: 'P1', confidence: 'Medium',
     note: 'Potential roster fit already. Wants better individual swimmer data before the call is firm.',
     benchmarks: []
   },
   {
-    id: 'clarkson', name: 'Clarkson University', division: 'D3', conference: 'Liberty League',
+    id: 'clarkson',
+    coach: "Marc Danin", coachTitle: "Head Coach - Swimming & Diving",
+    email: "mdanin@clarkson.edu",
+    staffUrl: "https://clarksonathletics.com/sports/swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Assistant: Finn Halstead, halstefw@clarkson.edu.", name: 'Clarkson University', division: 'D3', conference: 'Liberty League',
     state: 'NY', country: 'USA', priority: 'P1', confidence: 'Medium',
     note: 'Geographically sensible and a potentially good swimming fit, particularly if the academics match.',
     benchmarks: []
@@ -70,7 +118,13 @@ const SCHOOLS = [
 
   // ---------- P2. Realistic if he keeps progressing. ----------
   {
-    id: 'niagara', name: 'Niagara University', division: 'D1', conference: 'MAAC',
+    id: 'niagara',
+    coach: "Matt Bosse", coachTitle: "Head Coach",
+    email: "mbosse@niagara.edu",
+    staffUrl: "https://purpleeagles.com/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "One-coach staff, no assistant listed. Second season, hired 2025.", name: 'Niagara University', division: 'D1', conference: 'MAAC',
     state: 'NY', country: 'USA', priority: 'P2', confidence: 'High',
     workingTarget: { '500-free-SCY': '4:32.00' },
     note: 'Very close to Toronto, so worth watching closely even while he is still improving. A 500 toward 4:32 makes the profile much more compelling here.',
@@ -79,7 +133,13 @@ const SCHOOLS = [
     ]
   },
   {
-    id: 'american', name: 'American University', division: 'D1', conference: 'Patriot League',
+    id: 'american',
+    coach: "Garland Bartlett", coachTitle: "Head Coach",
+    email: "gbartlet@american.edu",
+    staffUrl: "https://aueagles.com/sports/swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Emmett Adams", assistantEmail: "emmett@american.edu",
+    contactNote: "The address is gbartlet with a single t at the end, exactly as displayed. Matt McKenney left in April 2026, do not contact him here.", name: 'American University', division: 'D1', conference: 'Patriot League',
     state: 'DC', country: 'USA', priority: 'P2', confidence: 'High',
     note: 'An actual distance swimmer to compare against, and the 500 is only about four and a half seconds away.',
     benchmarks: [
@@ -89,7 +149,13 @@ const SCHOOLS = [
     ]
   },
   {
-    id: 'rit', name: 'Rochester Institute of Technology', division: 'D3', conference: 'Liberty League',
+    id: 'rit',
+    coach: "Phil Baretela", coachTitle: "Head Coach",
+    email: "pjbatl@rit.edu",
+    staffUrl: "https://ritathletics.com/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Daniel Dubois", assistantEmail: "dsdatl@rit.edu",
+    contactNote: "RIT uses an initials-plus-atl convention. Only addresses actually seen are recorded.", name: 'Rochester Institute of Technology', division: 'D3', conference: 'Liberty League',
     state: 'NY', country: 'USA', priority: 'P2', confidence: 'High',
     workingTarget: { '1650-free-SCY': '16:00.00' },
     note: 'The benchmark is the conference winner, so being behind it is normal. A Grade 11 drop toward 16:00 changes the picture considerably.',
@@ -98,7 +164,13 @@ const SCHOOLS = [
     ]
   },
   {
-    id: 'ithaca', name: 'Ithaca College', division: 'D3', conference: 'Liberty League',
+    id: 'ithaca',
+    coach: "Mike Blakely-Armitage", coachTitle: "Head Swimming and Diving Coach",
+    email: "marmitage@ithaca.edu",
+    staffUrl: "https://athletics.ithaca.edu/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Kevin Markwardt is the FORMER head coach and search engines still return him. Ithaca runs a recruit questionnaire form. Assistant Kyle Brown publishes no address but is likely the day to day recruiting contact, so ask for him by name.", name: 'Ithaca College', division: 'D3', conference: 'Liberty League',
     state: 'NY', country: 'USA', priority: 'P2', confidence: 'High',
     note: 'Meaningful gaps, but not ridiculous gaps for a Grade 10 swimmer. Both benchmarks are conference champions.',
     benchmarks: [
@@ -107,13 +179,25 @@ const SCHOOLS = [
     ]
   },
   {
-    id: 'rpi', name: 'Rensselaer Polytechnic Institute', division: 'D3', conference: 'Liberty League',
+    id: 'rpi',
+    coach: "Shannon O'Brien", coachTitle: "Head Coach",
+    email: "swimdive@rpi.edu",
+    staffUrl: "https://rpiathletics.com/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "SHARED programme mailbox, not a personal address. RPI publishes no individual coach emails at all. Address the email to Coach O'Brien by name.", name: 'Rensselaer Polytechnic Institute', division: 'D3', conference: 'Liberty League',
     state: 'NY', country: 'USA', priority: 'P2', confidence: 'Low',
     note: 'Could become very interesting depending on what he eventually wants academically. No swimmer times gathered yet.',
     benchmarks: []
   },
   {
-    id: 'marist', name: 'Marist College', division: 'D1', conference: 'MAAC',
+    id: 'marist',
+    coach: "Billy Gordon", coachTitle: "Head Coach",
+    email: "Billy.Gordon@marist.edu",
+    staffUrl: "https://goredfoxes.com/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "", assistantEmail: "",
+    contactNote: "Newly hired August 2026. Anthony Randall is the former head coach. The school now brands itself Marist University.", name: 'Marist College', division: 'D1', conference: 'MAAC',
     state: 'NY', country: 'USA', priority: 'P2', confidence: 'High',
     workingTarget: { '500-free-SCY': '4:32.00', '1650-free-SCY': '16:00.00' },
     note: 'Deliberately on the P2 and P3 boundary. The 500 gap is not enormous. The mile gap is much larger.',
@@ -125,7 +209,13 @@ const SCHOOLS = [
 
   // ---------- P3. Reach. Where the next level is. ----------
   {
-    id: 'bucknell', name: 'Bucknell University', division: 'D1', conference: 'Patriot League',
+    id: 'bucknell',
+    coach: "Josh Huger", coachTitle: "Head Coach",
+    email: "jh077@bucknell.edu",
+    staffUrl: "https://bucknellbison.com/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Collin Hummel", assistantEmail: "cmh036@bucknell.edu",
+    contactNote: "Hired July 2026 from Cal Berkeley, replacing Dan Schinnerer. Any list showing Schinnerer is stale.", name: 'Bucknell University', division: 'D1', conference: 'Patriot League',
     state: 'PA', country: 'USA', priority: 'P3', confidence: 'High',
     workingTarget: { '500-free-SCY': '4:28.00', '1650-free-SCY': '15:50.00' },
     note: 'Aggressive targets, but now we know what the target looks like rather than saying Bucknell is hard.',
@@ -135,22 +225,46 @@ const SCHOOLS = [
     ]
   },
   {
-    id: 'fairfield', name: 'Fairfield University', division: 'D1', conference: 'MAAC',
+    id: 'fairfield',
+    coach: "Jake Lichter", coachTitle: "Head Men's and Women's Swimming & Diving Coach",
+    email: "jlichter@fairfield.edu",
+    staffUrl: "https://fairfieldstags.com/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Emma Brown", assistantEmail: "ebrown3@fairfield.edu",
+    contactNote: "Emma Brown is Associate Head Coach and the best second contact.", name: 'Fairfield University', division: 'D1', conference: 'MAAC',
     state: 'CT', country: 'USA', priority: 'P3', confidence: 'Low', benchmarks: [],
     note: 'Same thinking as Bucknell. Swimmer times still to be gathered.'
   },
   {
-    id: 'iona', name: 'Iona University', division: 'D1', conference: 'MAAC',
+    id: 'iona',
+    coach: "Nick Cavataro", coachTitle: "Head Coach",
+    email: "ncavataro@iona.edu",
+    staffUrl: "https://ionagaels.com/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Mauro Pacsi", assistantEmail: "mpacsi@iona.edu",
+    contactNote: "icgaels.com now redirects to ionagaels.com. Mauro Pacsi is Associate Head Coach and the best second contact.", name: 'Iona University', division: 'D1', conference: 'MAAC',
     state: 'NY', country: 'USA', priority: 'P3', confidence: 'Low', benchmarks: [],
     note: 'Same thinking as Bucknell. Swimmer times still to be gathered.'
   },
   {
-    id: 'loyolamd', name: 'Loyola University Maryland', division: 'D1', conference: 'Patriot League',
+    id: 'loyolamd',
+    coach: "Brian Loeffler", coachTitle: "Head Coach",
+    email: "bloeffler@loyola.edu",
+    staffUrl: "https://loyolagreyhounds.com/sports/swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Jay Venit", assistantEmail: "jvenit@loyola.edu",
+    contactNote: "Jay Venit is the only person across all seventeen schools who actually carries the title Recruiting Coordinator. Write to him as well as to Loeffler.", name: 'Loyola University Maryland', division: 'D1', conference: 'Patriot League',
     state: 'MD', country: 'USA', priority: 'P3', confidence: 'Low', benchmarks: [],
     note: 'Same thinking as Bucknell. Swimmer times still to be gathered.'
   },
   {
-    id: 'hamilton', name: 'Hamilton College', division: 'D3', conference: 'NESCAC',
+    id: 'hamilton',
+    coach: "John Geissinger", coachTitle: "Head Coach",
+    email: "jgeissin@hamilton.edu",
+    staffUrl: "https://athletics.hamilton.edu/sports/mens-swimming-and-diving/coaches",
+    verified: true, verifiedOn: '2026-09-18',
+    assistant: "Ted Mebust", assistantEmail: "tmebust@hamilton.edu",
+    contactNote: "", name: 'Hamilton College', division: 'D3', conference: 'NESCAC',
     state: 'NY', country: 'USA', priority: 'P3', confidence: 'Low', benchmarks: [],
     note: 'Same thinking as Bucknell. Swimmer times still to be gathered.'
   }
@@ -161,6 +275,7 @@ const SCHOOLS = [
 // and nothing can be sent until someone fills them in from the school's site.
 const CONTACT_FIELDS = {
   coach: '', coachTitle: '', email: '', staffUrl: '', verified: false, verifiedOn: '',
+  assistant: '', assistantEmail: '', contactNote: '',
   // The working columns. This is what turns the board into a record of what
   // was actually done, rather than a snapshot of one afternoon's research.
   status: 'Not contacted', lastContact: '', coachReply: '', questionnaire: '',

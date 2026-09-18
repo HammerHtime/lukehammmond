@@ -1,8 +1,14 @@
 // schools.js
 // The school list. Private end to end. A coach contact list is not something
 // to publish, and nothing on the public page needs it.
+//
+// The seed list lives in the repo. The live list lives in storage. This
+// function is the only way either reaches a browser, which is why
+// /schools.js is blocked in netlify.toml, ie, the admin screen does not load
+// the file directly and neither can anyone else.
 
 import { readJson, writeJson, isAdmin, json, denied, needsSetup } from './lib/store.js';
+import lib from '../../schools.js';
 
 const KEY = 'schools';
 
@@ -11,8 +17,10 @@ export default async (request) => {
   if (!isAdmin(request)) return denied();
 
   if (request.method === 'GET') {
-    const schools = await readJson(KEY, null);
-    return json({ schools: schools, seeded: schools === null });
+    const stored = await readJson(KEY, null);
+    // Nothing saved yet means the board has never been edited, so hand back
+    // the researched seed rather than an empty screen.
+    return json({ schools: stored && stored.length ? stored : lib.seedSchools(), seeded: !stored });
   }
 
   let body;

@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Board</title>
+<style>
+  :root {
+    --ink:#0d1b2a; --ink-soft:#40566b; --ink-faint:#7d8fa1;
+    --line:#dbe3ea; --line-soft:#eef2f6; --bg:#f7f9fb; --card:#fff;
+    --pool:#0a6ebd; --pool-wash:#e8f2fb;
+    --good:#0d7a5f; --good-wash:#e4f4ef;
+    --warn:#8a5a00; --warn-wash:#fdf2de;
+    --bad:#b3261e; --bad-wash:#fdeceb;
+    --radius:13px; --shadow:0 1px 2px rgba(13,27,42,.05),0 6px 20px rgba(13,27,42,.06);
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ink:#eaf1f7; --ink-soft:#a7bacb; --ink-faint:#7189a0;
+    --line:#22374b; --line-soft:#1a2b3c; --bg:#0b1520; --card:#11202e;
+    --pool:#59b0f0; --pool-wash:#14293c;
+    --good:#4cc79f; --good-wash:#122e27;
+    --warn:#e5ac4e; --warn-wash:#2e2414;
+    --bad:#f2837a; --bad-wash:#33191a;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  } }
+  :root[data-theme="dark"] {
+    --ink:#eaf1f7; --ink-soft:#a7bacb; --ink-faint:#7189a0;
+    --line:#22374b; --line-soft:#1a2b3c; --bg:#0b1520; --card:#11202e;
+    --pool:#59b0f0; --pool-wash:#14293c;
+    --good:#4cc79f; --good-wash:#122e27;
+    --warn:#e5ac4e; --warn-wash:#2e2414;
+    --bad:#f2837a; --bad-wash:#33191a;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-feature-settings:"tnum" 1;}
+  .wrap{max-width:960px;margin:0 auto;padding:18px 16px 80px}
+  h1{font-size:19px;margin:0}
+  h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-faint);margin:26px 0 10px;font-weight:650}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .pad{padding:16px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .top .who{font-size:13px;color:var(--ink-faint)}
+
+  label{display:block;font-size:12.5px;font-weight:650;color:var(--ink-faint);
+    text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px}
+  input,select,textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--ink);-webkit-appearance:none;appearance:none}
+  input:focus,select,textarea:focus{outline:2px solid var(--pool);outline-offset:1px}
+  textarea{min-height:110px;resize:vertical;font-size:13.5px;line-height:1.5}
+  .field{margin-bottom:13px}
+  .grid{display:grid;gap:13px;grid-template-columns:1fr}
+  @media(min-width:560px){.grid.two{grid-template-columns:1fr 1fr}.grid.three{grid-template-columns:1fr 1fr 1fr}}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chips button{font:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:9px 14px;
+    border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink-soft);min-width:52px}
+  .chips button[aria-pressed="true"]{background:var(--pool);border-color:var(--pool);color:#fff}
+
+  button.go{font:inherit;font-size:15.5px;font-weight:660;cursor:pointer;width:100%;
+    padding:14px;border:0;border-radius:11px;background:var(--pool);color:#fff}
+  button.go:disabled{opacity:.5;cursor:default}
+  button.minor{font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;padding:8px 13px;
+    border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--ink-soft)}
+
+  .msg{border-radius:10px;padding:12px 14px;font-size:14px;margin:12px 0 0;display:none}
+  .msg.show{display:block}
+  .msg.ok{background:var(--good-wash);color:var(--good)}
+  .msg.bad{background:var(--bad-wash);color:var(--bad)}
+  .msg.info{background:var(--pool-wash);color:var(--pool)}
+
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line-soft);white-space:nowrap;vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.055em;color:var(--ink-faint);font-weight:650}
+  tbody tr:last-child td{border-bottom:0}
+  td.wrap-cell{white-space:normal;font-size:13px;color:var(--ink-soft);min-width:220px}
+
+  .p{display:inline-block;font-size:11.5px;font-weight:720;border-radius:6px;padding:2px 7px}
+  .p.P1{background:var(--good-wash);color:var(--good)}
+  .p.P2{background:var(--pool-wash);color:var(--pool)}
+  .p.P3{background:var(--warn-wash);color:var(--warn)}
+  .p.none{background:var(--line-soft);color:var(--ink-faint)}
+  .differs{color:var(--warn);font-size:12px;font-weight:640}
+  .conf{font-size:12.5px;color:var(--ink-faint)}
+  .gapv{font-variant-numeric:tabular-nums;font-weight:640}
+  .gapv.ahead{color:var(--good)}
+  details summary{cursor:pointer;font-size:13px;color:var(--pool);font-weight:600}
+  details[open] summary{margin-bottom:7px}
+  .ev-line{font-size:12.5px;color:var(--ink-soft);margin:3px 0;white-space:normal}
+  .hint{font-size:12.5px;color:var(--ink-faint);margin:7px 0 0}
+  .gate{max-width:380px;margin:12vh auto}
+  pre.draft{white-space:pre-wrap;word-break:break-word;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+    background:var(--line-soft);padding:13px;border-radius:10px;margin:9px 0 0;max-height:320px;overflow:auto}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="gate" hidden>
+  <div class="gate card"><div class="pad">
+    <h1 style="margin-bottom:6px">The board</h1>
+    <p class="hint" style="margin:0 0 16px">Private. Enter the key.</p>
+    <div class="field"><label for="key">Admin key</label>
+      <input id="key" type="password" autocomplete="current-password"></div>
+    <button class="go" id="unlock">Open</button>
+    <div class="msg bad" id="gateMsg"></div>
+  </div></div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="top">
+    <h1>The board</h1>
+    <div class="who"><a href="/" target="_blank" rel="noopener">View public page</a> &middot;
+      <a href="#" id="lock">Lock</a></div>
+  </div>
+
+  <!-- The thing that happens most often goes first and nothing above it. -->
+  <h2>Add a swim</h2>
+  <div class="card"><div class="pad">
+    <div class="field"><label>Course</label><div class="chips" id="courseChips"></div></div>
+    <div class="field"><label>Stroke</label><div class="chips" id="strokeChips"></div></div>
+    <div class="field"><label>Distance</label><div class="chips" id="distChips"></div></div>
+    <div class="grid two">
+      <div class="field"><label for="time">Time</label>
+        <input id="time" inputmode="decimal" placeholder="4:10.86 or 26.43" autocomplete="off"></div>
+      <div class="field"><label for="date">Date</label><input id="date" type="date"></div>
+    </div>
+    <div class="field"><label for="meet">Meet</label>
+      <input id="meet" list="meets" placeholder="Ontario Swim Championships" autocomplete="off">
+      <datalist id="meets"></datalist></div>
+    <button class="go" id="save">Save the swim</button>
+    <div class="msg" id="saveMsg"></div>
+  </div></div>
+
+  <h2>The board</h2>
+  <div class="card scroll"><table id="boardTable"></table></div>
+  <p class="hint" id="boardNote"></p>
+
+  <h2>What a drop would unlock</h2>
+  <div class="card"><div class="pad">
+    <div class="grid two">
+      <div class="field"><label for="wiEvent">Event, in yards</label><select id="wiEvent"></select></div>
+      <div class="field"><label for="wiTime">Target time</label>
+        <input id="wiTime" inputmode="decimal" placeholder="4:32.00" autocomplete="off"></div>
+    </div>
+    <button class="minor" id="wiGo">Work it out</button>
+    <div class="msg info" id="wiMsg"></div>
+  </div></div>
+
+  <h2>Schools and contacts</h2>
+  <div class="card scroll"><table id="schoolTable"></table></div>
+  <div class="card" style="margin-top:12px"><div class="pad">
+    <label for="paste">Paste rows from a staff directory</label>
+    <p class="hint" style="margin:0 0 8px">One school per line. Tabs or commas.
+      Columns: school, division, coach, email, conference, state, source URL.
+      A blank never overwrites a contact already confirmed.</p>
+    <textarea id="paste" placeholder="Canisius University&#9;D1&#9;Pat Smith&#9;coach@canisius.edu"></textarea>
+    <div style="margin-top:10px"><button class="minor" id="importGo">Import</button></div>
+    <div class="msg" id="importMsg"></div>
+  </div></div>
+
+  <h2>Interest emails</h2>
+  <div class="card"><div class="pad">
+    <p class="hint" id="windowNote" style="margin:0 0 12px"></p>
+    <div class="field"><label for="draftSchool">School</label><select id="draftSchool"></select></div>
+    <button class="minor" id="draftGo">Draft it</button>
+    <div id="draftOut"></div>
+  </div></div>
+</div>
+
+<script src="swim.js"></script>
+<script src="swimmer.js"></script>
+<script src="convert.js"></script>
+<script src="schools.js"></script>
+<script src="standards.js"></script>
+<script src="board.js"></script>
+<script src="recruiting.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = window.Swim, C = window.Convert, St = window.Standards,
+      B = window.Board, R = window.Recruiting;
+  var SWIMMER = window.SwimmerData.SWIMMER, SEED = window.SwimmerData.SEED_RESULTS;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(v) {
+    return String(v === null || v === undefined ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function say(id, kind, message) {
+    var box = el(id);
+    box.className = 'msg show ' + kind;
+    box.innerHTML = message;
+  }
+  function hide(id) { el(id).className = 'msg'; }
+
+  var key = '';
+  var results = [];
+  var schools = [];
+  var today = new Date().toISOString().slice(0, 10);
+
+  function api(path, options) {
+    var opts = options || {};
+    opts.headers = Object.assign({ 'content-type': 'application/json', 'x-admin-key': key }, opts.headers || {});
+    return fetch(path, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (body) {
+        if (!r.ok) throw new Error(body.error || ('Request failed, ' + r.status));
+        return body;
+      });
+    });
+  }
+
+  // ---------- the door ----------
+  function open() {
+    el('gate').hidden = true;
+    el('app').hidden = false;
+    boot();
+  }
+
+  el('unlock').addEventListener('click', function () {
+    key = el('key').value;
+    if (!key) return;
+    // Any authenticated endpoint proves the key. Schools is the natural one,
+    // because the screen needs it anyway.
+    api('/api/schools').then(function () {
+      try { sessionStorage.setItem('k', key); } catch (e) {}
+      open();
+    }).catch(function (err) {
+      say('gateMsg', 'bad', esc(err.message));
+    });
+  });
+  el('key').addEventListener('keydown', function (e) { if (e.key === 'Enter') el('unlock').click(); });
+
+  el('lock').addEventListener('click', function (e) {
+    e.preventDefault();
+    try { sessionStorage.removeItem('k'); } catch (err) {}
+    location.reload();
+  });
+
+  // ---------- loading ----------
+  function boot() {
+    el('date').value = today;
+    Promise.all([
+      fetch('/api/results').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+      api('/api/schools').catch(function () { return { schools: [] }; })
+    ]).then(function (both) {
+      var raw = both[0] && Array.isArray(both[0].results) && both[0].results.length ? both[0].results : SEED;
+      results = clean(raw);
+      schools = both[1].schools || [];
+      buildPickers();
+      renderAll();
+    });
+  }
+
+  function clean(raw) {
+    return raw.map(function (r) { return S.normaliseResult(r); })
+      .filter(function (n) { return n.ok; })
+      .map(function (n) { return n.result; });
+  }
+
+  function renderAll() {
+    renderBoard();
+    renderSchools();
+    renderWhatIfEvents();
+    renderDraftSchools();
+    renderMeets();
+    renderWindow();
+  }
+
+  // ---------- add a swim ----------
+  var pick = { course: 'LCM', stroke: 'free', distance: 400 };
+
+  function chips(id, values, labels, current, onPick) {
+    el(id).innerHTML = values.map(function (v, i) {
+      return '<button type="button" data-v="' + esc(v) + '" aria-pressed="' + (String(v) === String(current)) +
+        '">' + esc(labels ? labels[i] : v) + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(el(id).querySelectorAll('button'), function (b) {
+      b.addEventListener('click', function () { onPick(b.dataset.v); });
+    });
+  }
+
+  function buildPickers() {
+    chips('courseChips', ['LCM', 'SCM', 'SCY'], ['Long course', 'Short course', 'Yards'], pick.course, function (v) {
+      pick.course = v; fixDistance(); buildPickers();
+    });
+    chips('strokeChips', S.STROKES, S.STROKES.map(function (s) { return S.STROKE_SHORT[s]; }), pick.stroke, function (v) {
+      pick.stroke = v; fixDistance(); buildPickers();
+    });
+    var list = (S.DISTANCES[pick.course] || {})[pick.stroke] || [];
+    chips('distChips', list, null, pick.distance, function (v) { pick.distance = Number(v); buildPickers(); });
+  }
+
+  // Changing course or stroke can leave a distance that is not swum, ie, the
+  // 500 free exists in yards and not in metres. Snap to the nearest real one
+  // rather than letting an impossible event sit on screen.
+  function fixDistance() {
+    var list = (S.DISTANCES[pick.course] || {})[pick.stroke] || [];
+    if (list.indexOf(pick.distance) !== -1) return;
+    var nearest = list.slice().sort(function (a, b) {
+      return Math.abs(a - pick.distance) - Math.abs(b - pick.distance);
+    })[0];
+    pick.distance = nearest || list[0] || 0;
+  }
+
+  function renderMeets() {
+    var seen = {};
+    results.forEach(function (r) { if (r.meet) seen[r.meet] = true; });
+    el('meets').innerHTML = Object.keys(seen).sort().map(function (m) {
+      return '<option value="' + esc(m) + '">';
+    }).join('');
+  }
+
+  el('save').addEventListener('click', function () {
+    hide('saveMsg');
+    var candidate = {
+      distance: pick.distance, stroke: pick.stroke, course: pick.course,
+      time: el('time').value, date: el('date').value, meet: el('meet').value
+    };
+    var checked = S.normaliseResult(candidate);
+    if (!checked.ok) { say('saveMsg', 'bad', checked.errors.map(esc).join('<br>')); return; }
+
+    var swim = checked.result;
+    var beforeBest = S.personalBests(results)[swim.event] || null;
+    var beforeBoard = B.scoreBoard(S, C.yardBests(S, results), schools);
+
+    // Same event, same date, same time is the same swim entered twice.
+    if (results.some(function (r) { return r.id === swim.id; })) {
+      say('saveMsg', 'bad', 'That swim is already on record.');
+      return;
+    }
+
+    var next = results.concat([swim]);
+    el('save').disabled = true;
+    api('/api/results', { method: 'PUT', body: JSON.stringify({ results: next }) })
+      .then(function () {
+        results = next;
+        renderAll();
+        el('time').value = '';
+        say('saveMsg', 'ok', verdict(swim, beforeBest, beforeBoard));
+      })
+      .catch(function (err) { say('saveMsg', 'bad', esc(err.message)); })
+      .then(function () { el('save').disabled = false; });
+  });
+
+  // Saved is not the interesting part. What changed is.
+  function verdict(swim, beforeBest, beforeBoard) {
+    var lines = ['Saved. The public page shows it now.'];
+
+    if (!beforeBest) {
+      lines.push('<strong>First time on record for the ' + esc(swim.name) + ' ' + esc(swim.course) + '.</strong>');
+    } else if (swim.hundredths < beforeBest.hundredths) {
+      lines.push('<strong>Personal best.</strong> ' + esc(S.formatGap(swim.hundredths - beforeBest.hundredths)) +
+        ' on ' + esc(beforeBest.time) + '.');
+    } else {
+      lines.push('Not a best. His ' + esc(swim.name) + ' ' + esc(swim.course) + ' stands at ' + esc(beforeBest.time) + '.');
+    }
+
+    var afterBoard = B.scoreBoard(S, C.yardBests(S, results), schools);
+    var was = {};
+    beforeBoard.forEach(function (r) { was[r.school.id] = r.computedFit; });
+    var moved = afterBoard.filter(function (r) {
+      return was[r.school.id] && was[r.school.id] !== r.computedFit;
+    });
+    if (moved.length) {
+      lines.push('Moved on the board: ' + moved.map(function (r) {
+        return esc(r.school.name) + ' is now <strong>' + esc(r.computedFit.toLowerCase()) + '</strong>';
+      }).join(', ') + '.');
+    }
+
+    var cut = St.gapToCut(S.parseTime, swim.hundredths, 'can-jr-trials', swim.event);
+    if (cut) {
+      lines.push(cut.made
+        ? '<strong>Under the Junior Trials cut.</strong>'
+        : esc(S.formatGap(cut.behindBy).replace('+', '')) + ' off the Junior Trials cut of ' + esc(cut.cut) + '.');
+    }
+    return lines.join('<br>');
+  }
+
+  // ---------- the board ----------
+  function renderBoard() {
+    var rows = B.scoreBoard(S, C.yardBests(S, results), schools);
+    var head = '<thead><tr><th>School</th><th>Div</th><th>Priority</th><th>Fit</th>' +
+      '<th>Confidence</th><th>Evidence</th><th>Status</th></tr></thead>';
+
+    var body = rows.map(function (r) {
+      var p = r.recordedPriority || '';
+      var evidence = r.comparisons.length
+        ? '<details><summary>' + r.comparisons.length + ' compared</summary>' +
+          r.comparisons.map(function (c) {
+            return '<div class="ev-line"><strong>' + esc(c.event.replace('-SCY', '').replace(/-/g, ' ')) +
+              '</strong> his ' + esc(c.mine) + ' against ' + esc(c.theirs) +
+              ' <span class="gapv' + (c.ahead ? ' ahead' : '') + '">' +
+              (c.ahead ? 'ahead' : esc(c.gapText)) + '</span><br>' +
+              '<span style="opacity:.75">' + esc(c.basisLabel) +
+              (c.context ? ', ' + esc(c.context) : '') + '</span></div>';
+          }).join('') + '</details>'
+        : '<span class="conf">none gathered</span>';
+
+      return '<tr>' +
+        '<td><strong>' + esc(r.school.name) + '</strong>' +
+          (r.school.note ? '<div class="ev-line" style="max-width:260px">' + esc(r.school.note) + '</div>' : '') + '</td>' +
+        '<td>' + esc(r.school.division) + '</td>' +
+        '<td><span class="p ' + (p || 'none') + '">' + esc(p || 'unset') + '</span>' +
+          (r.disagrees ? '<div class="differs">engine says ' + esc(r.suggestedPriority) + '</div>' : '') + '</td>' +
+        '<td>' + esc(r.computedFit) + '</td>' +
+        '<td class="conf">' + esc(r.confidence) + '</td>' +
+        '<td class="wrap-cell">' + evidence + '</td>' +
+        '<td>' + esc(r.school.status || 'Not contacted') +
+          (r.school.lastContact ? '<div class="conf">' + esc(r.school.lastContact) + '</div>' : '') + '</td>' +
+        '</tr>';
+    }).join('');
+
+    el('boardTable').innerHTML = head + '<tbody>' + body + '</tbody>';
+
+    var unassessed = rows.filter(function (r) { return r.evidenceCount === 0; }).length;
+    var disagreeing = rows.filter(function (r) { return r.disagrees; }).length;
+    el('boardNote').innerHTML =
+      'Priority is relevance, not quality. Confidence is about the evidence, not the odds. ' +
+      (unassessed ? '<strong>' + unassessed + '</strong> schools have no swimmer times gathered, ' +
+        'so they read not assessed rather than being scored on nothing. ' : '') +
+      (disagreeing ? '<strong>' + disagreeing + '</strong> disagree with the recorded priority.' : '');
+  }
+
+  // ---------- what a drop unlocks ----------
+  function renderWhatIfEvents() {
+    var yards = C.yardBests(S, results);
+    el('wiEvent').innerHTML = Object.keys(yards).map(function (id) {
+      return '<option value="' + esc(id) + '">' + esc(yards[id].name) + ', now ' + esc(yards[id].time) + '</option>';
+    }).join('');
+  }
+
+  el('wiGo').addEventListener('click', function () {
+    var out = B.whatIfFaster(S, C.yardBests(S, results), schools, el('wiEvent').value, el('wiTime').value);
+    if (!out) { say('wiMsg', 'bad', 'That time is not readable. Try 4:32.00.'); return; }
+    if (!out.moved.length) {
+      say('wiMsg', 'info', esc(out.time) + ' does not move any school across a priority line. ' +
+        'It would still be a personal best worth having.');
+      return;
+    }
+    say('wiMsg', 'info', '<strong>' + esc(out.time) + '</strong> moves ' + out.moved.length + ':<br>' +
+      out.moved.map(function (m) {
+        return esc(m.school) + ', ' + esc(m.from || 'unscored') + ' to <strong>' + esc(m.to) + '</strong>';
+      }).join('<br>'));
+  });
+
+  // ---------- schools ----------
+  function renderSchools() {
+    var head = '<thead><tr><th>School</th><th>Coach</th><th>Email</th><th>Confirmed</th><th>Source</th></tr></thead>';
+    var body = schools.map(function (s) {
+      return '<tr>' +
+        '<td><strong>' + esc(s.name) + '</strong><div class="conf">' + esc(s.division) +
+          (s.conference ? ', ' + esc(s.conference) : '') + '</div></td>' +
+        '<td>' + esc(s.coach || '—') + '</td>' +
+        '<td>' + (s.email ? esc(s.email) : '<span class="conf">not found</span>') + '</td>' +
+        '<td>' + (s.verified
+          ? '<span class="p P1">yes</span>' + (s.verifiedOn ? '<div class="conf">' + esc(s.verifiedOn) + '</div>' : '')
+          : '<span class="p none">no</span>') + '</td>' +
+        '<td class="wrap-cell">' + (s.staffUrl
+          ? '<a href="' + esc(s.staffUrl) + '" target="_blank" rel="noopener">directory</a>' : '—') + '</td>' +
+        '</tr>';
+    }).join('');
+    el('schoolTable').innerHTML = head + '<tbody>' + body + '</tbody>';
+  }
+
+  el('importGo').addEventListener('click', function () {
+    hide('importMsg');
+    var parsed = window.Schools ? window.Schools.parsePaste(el('paste').value) : null;
+    if (!parsed) { say('importMsg', 'bad', 'The importer is not loaded.'); return; }
+    if (!parsed.schools.length) {
+      say('importMsg', 'bad', 'Nothing readable. ' +
+        parsed.rejected.map(function (r) { return esc(r.reason); }).join(' '));
+      return;
+    }
+    var merged = window.Schools.mergeSchools(schools, parsed.schools);
+    api('/api/schools', { method: 'PUT', body: JSON.stringify({ schools: merged.schools }) })
+      .then(function () {
+        schools = merged.schools;
+        renderAll();
+        el('paste').value = '';
+        say('importMsg', 'ok', merged.added + ' added, ' + merged.updated + ' updated.' +
+          (parsed.rejected.length ? '<br>' + parsed.rejected.length + ' rows refused: ' +
+            parsed.rejected.map(function (r) { return esc(r.line) + ', ' + esc(r.reason); }).join('<br>') : ''));
+      })
+      .catch(function (err) { say('importMsg', 'bad', esc(err.message)); });
+  });
+
+  // ---------- emails ----------
+  function renderWindow() {
+    var w = R.contactWindow('D1', SWIMMER.classOf, today);
+    if (!w) return;
+    el('windowNote').innerHTML = w.open
+      ? esc(w.message)
+      : '<strong>' + esc(w.message) + '</strong> ' + w.daysAway + ' days away.';
+  }
+
+  function renderDraftSchools() {
+    el('draftSchool').innerHTML = schools.map(function (s) {
+      return '<option value="' + esc(s.id) + '">' + esc(s.name) +
+        (s.verified ? '' : ' (no confirmed address)') + '</option>';
+    }).join('');
+  }
+
+  el('draftGo').addEventListener('click', function () {
+    var school = schools.filter(function (s) { return s.id === el('draftSchool').value; })[0];
+    if (!school) return;
+    var draft = R.draftEmail({
+      swim: S, standards: St, swimmer: SWIMMER, results: results, today: today,
+      profileUrl: location.origin, school: school
+    });
+
+    var warn = draft.warnings.length
+      ? '<div class="msg show bad">' + draft.warnings.map(esc).join('<br>') + '</div>' : '';
+
+    // mailto is the send path that works today. A verified sending domain is
+    // not set up yet, and a coach replies to the athlete anyway rather than to
+    // a no-reply address, so this is the better default regardless.
+    var mailto = 'mailto:' + encodeURIComponent(draft.to) +
+      '?subject=' + encodeURIComponent(draft.subject) +
+      '&body=' + encodeURIComponent(draft.body);
+
+    el('draftOut').innerHTML = warn +
+      '<p class="hint" style="margin-top:12px"><strong>To</strong> ' + esc(draft.to || 'no address on file') +
+      '<br><strong>Subject</strong> ' + esc(draft.subject) + '</p>' +
+      '<pre class="draft">' + esc(draft.body) + '</pre>' +
+      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
+      (draft.to ? '<a class="minor" style="text-decoration:none;display:inline-block" href="' +
+        esc(mailto) + '">Open in your email</a>' : '') +
+      '<button class="minor" id="copyDraft">Copy the text</button></div>';
+
+    var copy = el('copyDraft');
+    if (copy) copy.addEventListener('click', function () {
+      navigator.clipboard.writeText(draft.body).then(function () { copy.textContent = 'Copied'; });
+    });
+  });
+
+  // ---------- start ----------
+  var saved = '';
+  try { saved = sessionStorage.getItem('k') || ''; } catch (e) {}
+  if (saved) {
+    key = saved;
+    api('/api/schools').then(open).catch(function () { el('gate').hidden = false; });
+  } else {
+    el('gate').hidden = false;
+  }
+})();
+</script>
+</body>
+</html>
