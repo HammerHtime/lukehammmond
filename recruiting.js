@@ -211,7 +211,8 @@ function draftEmail(input) {
   lines.push(greeting);
   lines.push('');
   lines.push('My name is ' + swimmer.name + '. I am a distance freestyler with ' + swimmer.club +
-    ' in ' + swimmer.city + ', ' + swimmer.province + ', and I graduate in ' + swimmer.classOf + '.' +
+    ', and I live in ' + swimmer.city + ', ' + swimmer.province + ', Canada. I graduate in ' +
+    swimmer.classOf + '.' +
     ' I am writing because I am interested in swimming for ' + (school && school.name ? school.name : 'your programme') + '.');
   lines.push('');
   lines.push('Long course bests:');

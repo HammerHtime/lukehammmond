@@ -20,17 +20,19 @@ const SWIMMER = {
   name: 'Luke Hammond',
   shortName: 'Luke',
   classOf: 2029,
-  club: 'Lakeshore Swim Club',
-  clubShort: 'LSC',
-  // Cleared 18 September 2026. The club head coach changed and the new name is
-  // not known yet. It is set from the back end now rather than living in code,
-  // because a club coach changing is normal and should never need a developer.
-  //
-  // Publishing the WRONG name is worse than publishing none. Coaches phone the
-  // club coach, that is the thing they said they actually do, so a stale name
-  // sends a US programme to someone who no longer coaches him.
-  coach: '',
-  coachTitle: 'Head Coach, Lakeshore Swim Club',
+  club: 'Mississauga Swim Club',
+  clubShort: 'MSC',
+  // Moved from Lakeshore Swim Club, September 2026. Worth knowing when reading
+  // the results below: every swim on record was swum for Lakeshore. A club
+  // change mid-development is completely ordinary and coaches read it without
+  // comment, but the history and the badge do not match and that is why.
+  formerClub: 'Lakeshore Swim Club',
+  // Still overridable from the back end, which is where it should be set when
+  // it next changes. Publishing the WRONG name is worse than publishing none,
+  // because the one thing college coaches said they actually do is telephone
+  // the club coach.
+  coach: 'Aris Bousoulegkas',
+  coachTitle: 'Head Coach, Mississauga Swim Club',
   city: 'Etobicoke',
   province: 'Ontario',
   country: 'Canada',
@@ -48,7 +50,8 @@ const SWIMMER = {
 
   // Anything a coach could not work out from a times sheet.
   about: [
-    'Distance freestyler out of Lakeshore Swim Club in Etobicoke, Ontario.',
+    'Distance freestyler with Mississauga Swim Club, training under head coach ' +
+    'Aris Bousoulegkas. Lives in Etobicoke, Ontario. Started racing in spring 2022.',
     'Selected to the Swim Canada National ID Development Program and the Swim ' +
     'Ontario Aerobic Development Program.',
     'Ranked inside the top five in Canada for age across four distance freestyle events.'

@@ -42,6 +42,7 @@
     rankingLines(bests);
     compTable(results, bests);
     clubCoach();
+    clubLines(results);
     coachPanel(yards);
     gallery();
   }
@@ -249,6 +250,35 @@
     return '<p style="color:var(--muted);font-size:0.8rem;line-height:1.7;margin-top:1.75rem;">' +
       'Luke is class of ' + esc(SWIMMER.classOf) + '. Under NCAA Division I rules a coach cannot reply ' +
       'until ' + esc(R.friendlyDate(w.replyDate)) + '. He would rather you had his times before then.</p>';
+  }
+
+  // Everything that names the club. It was written into the markup in four
+  // places, which is why a club change was a code change. It is data now.
+  function clubLines(results) {
+    var club = String(coach.club || SWIMMER.club || '').trim();
+
+    var lead = el('about-lead');
+    if (lead) {
+      // The old paragraph said "14-year-old", named the former club, and
+      // repeated the rankings in prose where they could drift from the badges
+      // above. All three are gone. This is built from the same data as
+      // everything else, so it cannot disagree with itself.
+      lead.textContent = SWIMMER.about[0];
+    }
+
+    var card = el('contact-club');
+    if (card) {
+      card.textContent = club + (SWIMMER.city ? ' \u2014 ' + SWIMMER.city + ', ON' : '');
+    }
+
+    var footer = el('footer-line');
+    if (footer) {
+      // "Updated April 2026" was typed in and then stopped being true. The date
+      // of his most recent swim is the only honest answer, and it maintains
+      // itself.
+      var latest = (results || []).reduce(function (a, r) { return r.date > a ? r.date : a; }, '');
+      footer.textContent = club + (latest ? ' \u00b7 Times current to ' + friendlyMonth(latest) : '');
+    }
   }
 
   // The club coach. Coaches told researchers repeatedly that the thing they

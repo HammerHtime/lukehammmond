@@ -256,13 +256,39 @@ ok('so is one marked by country', Sc.isCanadian({ division: 'D1', country: 'Cana
 ok('a US school is not', !Sc.isCanadian({ division: 'D1', country: 'USA' }));
 check('a nonsense division is still refused', Sc.normaliseSchool({ name: 'X', division: 'D9' }).ok, false);
 
+// ---------- the club ----------
+// He moved clubs in September 2026. The old name was in the data AND in three
+// places in the hand-written markup, so a club change was a code change. It is
+// data now, and the tests check the markup too, because that is where the
+// copies that survive a data edit live.
+check('the club is current', SWIMMER.club, 'Mississauga Swim Club');
+check('and the former one is recorded, not erased', SWIMMER.formerClub, 'Lakeshore Swim Club');
+['index.html', 'live-profile.js', 'recruiting.js'].forEach(function (f) {
+  const src = require('fs').readFileSync(require('path').join(__dirname, f), 'utf8');
+  ok(f + ' names no former club', src.indexOf('Lakeshore') === -1);
+});
+
+// The club is in Mississauga and he lives in Etobicoke. The email said "with
+// Mississauga Swim Club in Etobicoke", which puts the club in the wrong town.
+const clubDraft = R.draftEmail({
+  swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
+  profileUrl: 'https://example.org',
+  school: { id: 'x', name: 'X', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
+});
+ok('the email names the club', clubDraft.body.indexOf('Mississauga Swim Club') !== -1);
+ok('and does not put it in the wrong town',
+  clubDraft.body.indexOf('Mississauga Swim Club in Etobicoke') === -1);
+ok('while still saying where he lives', clubDraft.body.indexOf('I live in Etobicoke') !== -1);
+ok('and names the new coach', clubDraft.body.indexOf('Aris Bousoulegkas') !== -1);
+
 // ---------- the club coach ----------
 // Coaches said the thing they actually do is telephone the club coach. So a
 // stale name is not a cosmetic problem, it sends a US programme to someone who
 // no longer coaches him. Better nothing than wrong.
-check('no coach name is hardcoded any more', SWIMMER.coach, '');
+check('the coach is the current one', SWIMMER.coach, 'Aris Bousoulegkas');
 const noCoach = R.draftEmail({
-  swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
+  swim: S, standards: St, swimmer: Object.assign({}, SWIMMER, { coach: '' }),
+  results: results, today: '2026-09-18',
   profileUrl: 'https://example.org',
   school: { id: 'x', name: 'X', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
 });
@@ -282,6 +308,8 @@ ok('and names them once one is set', withCoach.body.indexOf('My club coach is A 
   const src = require('fs').readFileSync(require('path').join(__dirname, f), 'utf8');
   ok(f + ' carries no former coach name', src.indexOf('Vowles') === -1);
 });
+// And the rule still holds when it is cleared again, which it will be.
+ok('clearing the coach still removes the line', noCoach.body.indexOf('club coach') === -1);
 
 // ---------- the email ----------
 const draft = R.draftEmail({
