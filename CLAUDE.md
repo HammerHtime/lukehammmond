@@ -60,6 +60,33 @@ this app invents a number it is worth less than the spreadsheet it replaced.
 - board.test.js   The safety net. Run after every change.
 - netlify/functions/  The server side. Netlify Blobs storage behind an admin key.
 
+## The plan, decided 18 September 2026
+Nothing is sent until SPRING 2027, after another full season of swimming.
+Andrew's call, and it is well timed rather than cautious: a Division I coach
+cannot reply until 15 June 2027 anyway, so arriving in spring means the file
+is on his desk just before the window opens, with a season of improvement on
+it rather than without.
+
+What that means for this project between now and then.
+
+Everything is preparation. The job is to arrive in spring with a board that is
+accurate, a page that is current, and every answer a form will ask for already
+on file. Not to send anything.
+
+So:
+- Sending is NOT a blocker. netlify/functions/send.js is still unwritten and
+  that is fine. Do not push Andrew towards a verified sending domain until
+  spring is close. The drafts open in his own email, which gets better replies
+  anyway.
+- The thing that matters most is boring and already built: entering a time
+  after each meet. Every swim this season moves the board, and the board in
+  spring is the product of that habit. Protect it.
+- The questionnaire answer sheet should be full before spring, not during it.
+  Finding a guidance counsellor's phone number in March is easy. Finding it
+  the week you are trying to send thirty emails is not.
+- Anything with a lead time, ie, NCAA Eligibility Center registration, tests,
+  transcripts, gets done on its own schedule, not in the spring rush.
+
 ## The dates that matter
 Luke is class of 2029, ie, Grade 10 now. Under NCAA Division I rules a coach
 cannot reply to him until 15 June 2027. He may write at any time and many

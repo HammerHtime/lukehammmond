@@ -55,20 +55,20 @@ The more useful finding: his 400 IM of 4:12.90 is his most marketable event,
 because IM depth is thinner than distance free depth across most of D2. The
 board should probably lead with it. That is a decision for Andrew.
 
-## Not built yet
-- Sending. netlify/functions/send.js is not written. See the blocker below.
-  The admin screen drafts the email and opens it in your own mail app, which
-  is the path that works today and gets better replies anyway.
+## Deliberately not built, and not a problem
+- Sending. netlify/functions/send.js is not written, and it does not need to
+  be. Andrew decided on 18 September 2026 that nothing goes out until spring
+  2027, after another season. The admin screen drafts each email and opens it
+  in his own mail app, which gets better replies anyway because a coach
+  answers the athlete rather than a no-reply address.
+  The domain question is therefore parked, not open. Revisit in spring.
 
 ## Blockers and open questions
 
-### Sending needs a domain
-Andrew chose "the site sends it." Resend, or any sender, needs a domain that
-is verified for email. A netlify.app subdomain cannot be verified. Until a
-domain is owned and verified, nothing can actually reach a coach, and mail
-from an unverified sender lands in spam anyway. A draft-in-your-own-email
-fallback is the honest interim, and it gets better replies regardless, because
-a coach replies to the athlete rather than to a no-reply address.
+### Sending needs a domain, PARKED until spring 2027
+Still true, just not urgent. Any sender needs a domain verified for email and
+a netlify.app subdomain cannot be. Since nothing is sent until spring, this is
+a spring problem. Buying a domain early would only mean paying for it longer.
 
 ### Bucknell, engine versus recorded
 The board records Bucknell as P3. The engine reads it P2, because the recorded
