@@ -74,6 +74,24 @@
   .msg.info{background:var(--pool-wash);color:var(--pool)}
 
   .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* Forty-three rows is past the point where a wall of them can be read. The
+     table scrolls on its own so the filter above it stays put while you look. */
+  .scroll.tall{max-height:62vh;overflow-y:auto}
+  /* The school table was wider than the window, which pushed the remove button
+     off the right edge where nobody would find it. Everything else on the page
+     keeps nowrap, because a time must never break across lines. Here the long
+     text columns wrap instead. */
+  #schoolTable{min-width:0}
+  #schoolTable td{white-space:normal}
+  #schoolTable td:nth-child(3){word-break:break-all}
+  #schoolTable th,#schoolTable td{padding:9px 10px}
+  #schoolTable td:last-child,#schoolTable th:last-child{width:1%;white-space:nowrap}
+  .scroll.tall thead th{position:sticky;top:0;background:var(--card);z-index:1;
+    box-shadow:0 1px 0 var(--line)}
+  .drop{background:none;border:1px solid var(--line);color:var(--ink-faint);
+    border-radius:6px;font-size:11.5px;font-weight:650;padding:3px 9px;cursor:pointer}
+  .drop:hover{border-color:var(--warn);color:var(--warn)}
+  .drop.sure{border-color:var(--warn);color:#fff;background:var(--warn)}
   table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
   th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line-soft);white-space:nowrap;vertical-align:top}
   th{font-size:11.5px;text-transform:uppercase;letter-spacing:.055em;color:var(--ink-faint);font-weight:650}
@@ -286,7 +304,13 @@
   </div></div>
 
   <h2>Schools and contacts</h2>
-  <div class="card scroll"><table id="schoolTable"></table></div>
+  <div class="card"><div class="pad" style="padding-bottom:10px">
+    <label for="schoolQ">Narrow the list</label>
+    <p class="hint" id="schoolCount" style="margin:0 0 8px"></p>
+    <input id="schoolQ" placeholder="Name, division, conference, ie, USPORTS or MAAC or Guelph" autocomplete="off">
+  </div>
+  <div class="scroll tall"><table id="schoolTable"></table></div>
+  <div class="pad" style="padding-top:0"><div class="msg" id="schoolMsg"></div></div></div>
   <div class="card" style="margin-top:12px"><div class="pad">
     <label for="rosterQ">Find a programme</label>
     <p class="hint" id="rosterCount" style="margin:0 0 8px"></p>
@@ -1100,24 +1124,83 @@
   });
 
   // ---------- schools ----------
+  // Which schools the table is showing. The filter is a plain substring over
+  // the fields you would actually type, ie, name, division and conference.
+  var schoolFilter = '';
+
+  function schoolsShown() {
+    var q = schoolFilter.trim().toLowerCase();
+    if (!q) return schools;
+    return schools.filter(function (s) {
+      return (s.name + ' ' + s.division + ' ' + (s.conference || '') + ' ' +
+        (s.state || '') + ' ' + (s.coach || '')).toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
   function renderSchools() {
-    var head = '<thead><tr><th>School</th><th>Coach</th><th>Email</th><th>Confirmed</th><th>Source</th></tr></thead>';
-    var body = schools.map(function (s) {
+    var shown = schoolsShown();
+    var canadian = schools.filter(function (s) {
+      return window.Schools && window.Schools.isCanadian(s); }).length;
+    el('schoolCount').innerHTML = schools.length + ' on the board, ie, ' + canadian +
+      ' Canadian and ' + (schools.length - canadian) + ' American' +
+      (shown.length !== schools.length ? '. Showing <strong>' + shown.length + '</strong>.' : '.');
+
+    var head = '<thead><tr><th>School</th><th>Coach</th><th>Email</th><th>Confirmed</th>' +
+      '<th>Source</th><th></th></tr></thead>';
+    var body = shown.map(function (s) {
       return '<tr>' +
         '<td><div style="display:flex;gap:9px;align-items:center">' + badge(s) +
           '<div><strong>' + esc(s.name) + '</strong><div class="conf">' + esc(s.division) +
           (s.conference ? ', ' + esc(s.conference) : '') + '</div></div></div></td>' +
-        '<td>' + esc(s.coach || '—') + '</td>' +
+        '<td>' + esc(s.coach || '\u2014') + '</td>' +
         '<td>' + (s.email ? esc(s.email) : '<span class="conf">not found</span>') + '</td>' +
         '<td>' + (s.verified
           ? '<span class="p P1">yes</span>' + (s.verifiedOn ? '<div class="conf">' + esc(s.verifiedOn) + '</div>' : '')
           : '<span class="p none">no</span>') + '</td>' +
         '<td class="wrap-cell">' + (s.staffUrl
-          ? '<a href="' + esc(s.staffUrl) + '" target="_blank" rel="noopener">directory</a>' : '—') + '</td>' +
+          ? '<a href="' + esc(s.staffUrl) + '" target="_blank" rel="noopener">directory</a>' : '\u2014') + '</td>' +
+        '<td><button class="drop" data-drop="' + esc(s.id) + '">remove</button></td>' +
         '</tr>';
     }).join('');
-    el('schoolTable').innerHTML = head + '<tbody>' + body + '</tbody>';
+    el('schoolTable').innerHTML = head + '<tbody>' + (body ||
+      '<tr><td colspan="6" class="conf">Nothing matches that.</td></tr>') + '</tbody>';
+
+    // Two clicks to remove, because there is no undo and the list took a lot of
+    // gathering. The first click arms the button and says what will go.
+    Array.prototype.forEach.call(el('schoolTable').querySelectorAll('[data-drop]'), function (b) {
+      b.addEventListener('click', function () {
+        var id = b.dataset.drop;
+        var school = schools.filter(function (x) { return x.id === id; })[0];
+        if (!school) return;
+        if (b.classList.contains('sure')) { dropSchool(school); return; }
+        Array.prototype.forEach.call(el('schoolTable').querySelectorAll('.drop.sure'), function (o) {
+          o.classList.remove('sure'); o.textContent = 'remove';
+        });
+        b.classList.add('sure');
+        b.textContent = 'remove ' + school.name + '?';
+      });
+    });
   }
+
+  // Removing is a save of the whole list without that school, which is how the
+  // store works. It takes the card off the board, out of the email screen and
+  // out of this table at once, because all three read the same list.
+  function dropSchool(school) {
+    var next = schools.filter(function (s) { return s.id !== school.id; });
+    api('/api/schools', { method: 'PUT', body: JSON.stringify({ schools: next }) })
+      .then(function () {
+        schools = next;
+        renderAll();
+        say('schoolMsg', 'ok', esc(school.name) + ' is off the board. ' + next.length + ' left.' +
+          ' Adding it again from the search below brings it back with nothing assumed.');
+      })
+      .catch(function (err) { say('schoolMsg', 'bad', esc(err.message)); });
+  }
+
+  el('schoolQ').addEventListener('input', function () {
+    schoolFilter = el('schoolQ').value;
+    renderSchools();
+  });
 
   // The full universe of programmes, so nothing is missed. It is deliberately
   // separate from the board: the board is the short list actually being

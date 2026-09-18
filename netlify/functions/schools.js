@@ -18,9 +18,15 @@ export default async (request) => {
 
   if (request.method === 'GET') {
     const stored = await readJson(KEY, null);
-    // Nothing saved yet means the board has never been edited, so hand back
-    // the researched seed rather than an empty screen.
-    return json({ schools: stored && stored.length ? stored : lib.seedSchools(), seeded: !stored });
+    // Nothing saved yet means the board has never been edited, so hand back the
+    // researched seed rather than an empty screen.
+    //
+    // The test is "has anything ever been saved", NOT "is the saved list
+    // empty". Those are different questions and conflating them meant removing
+    // the last school silently restored all forty-three, ie, the one delete
+    // that cannot be undone was the one that did not work.
+    const everSaved = Array.isArray(stored);
+    return json({ schools: everSaved ? stored : lib.seedSchools(), seeded: !everSaved });
   }
 
   let body;

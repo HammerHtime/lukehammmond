@@ -248,6 +248,37 @@ check('low confidence where none were gathered', row('hamilton').confidence, 'Lo
 check('RIT is benchmarked against a champion', row('rit').comparisons[0].basis, 'champion');
 check('American is benchmarked against a roster swimmer', row('american').comparisons[0].basis, 'roster');
 
+// ---------- taking a school off the board ----------
+// Adding was easy and removing did not exist, so a school added by mistake was
+// there forever. Two clicks, because there is no undo and the list took a lot
+// of gathering.
+const adminSrc2 = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
+ok('every row carries a remove button', /data-drop="' \+ esc\(s\.id\)/.test(adminSrc2));
+ok('the first click only arms it', /b\.classList\.contains\('sure'\)/.test(adminSrc2));
+ok('and names what would go', /'remove ' \+ school\.name \+ '\?'/.test(adminSrc2));
+ok('arming one disarms the others', /querySelectorAll\('\.drop\.sure'\)/.test(adminSrc2));
+ok('removing saves the list without it',
+  /schools\.filter\(function \(s\) \{ return s\.id !== school\.id; \}\)/.test(adminSrc2));
+ok('through the same endpoint everything else uses',
+  adminSrc2.indexOf("api('/api/schools', { method: 'PUT', body: JSON.stringify({ schools: next }) })") !== -1);
+
+// Forty-three rows is past what can be read as a wall, so the table filters
+// and scrolls under a sticky header.
+ok('the list can be narrowed', adminSrc2.indexOf('id="schoolQ"') !== -1);
+ok('and says how many are showing', /Showing <strong>/.test(adminSrc2));
+ok('the table scrolls on its own', /\.scroll\.tall\{max-height/.test(adminSrc2));
+ok('with a header that stays put', /\.scroll\.tall thead th\{position:sticky/.test(adminSrc2));
+// It was wider than the window, which put the remove button off the right edge.
+ok('the school table wraps rather than overflowing', /#schoolTable td\{white-space:normal\}/.test(adminSrc2));
+
+// The store has to tell "never saved" from "saved an empty list". Conflating
+// them meant removing the last school silently restored all forty-three, ie,
+// the one delete that cannot be undone was the one that did not work.
+const fnSrc = require('fs').readFileSync(
+  require('path').join(__dirname, 'netlify', 'functions', 'schools.js'), 'utf8');
+ok('the store asks whether anything was ever saved', /const everSaved = Array\.isArray\(stored\)/.test(fnSrc));
+ok('and does not reseed an emptied list', fnSrc.indexOf('stored && stored.length') === -1);
+
 // ---------- Canadian programmes are marked on sight ----------
 // A red edge and a maple leaf, and not for decoration. U SPORTS puts no
 // calendar on contact, so these 26 are the only schools on the board he can
