@@ -150,7 +150,7 @@ function draftEmail(input) {
   lines.push('');
   lines.push('Long course bests:');
   headlineTimes.forEach(function (t) {
-    lines.push('  ' + t.line + (t.rank ? '  [#' + t.rank + ' ' + t.rankBasis + ']' : ''));
+    lines.push('  ' + t.line + (t.rank ? '  [ranked #' + t.rank + ' in Canada for age]' : ''));
   });
   lines.push('');
   if (swimmer.academics && swimmer.academics.gpa) {

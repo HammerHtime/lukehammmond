@@ -56,14 +56,20 @@
     var node = el('hero-stats');
     if (!node) return;
     var html = (SWIMMER.primary || []).slice(0, 3).map(function (p) {
-      var best = bests[S.eventId(p.distance, p.stroke, p.course)];
-      if (!best) return '';
+      var id = S.eventId(p.distance, p.stroke, p.course);
+      var best = bests[id];
+      var rank = window.SwimmerData.rankFor(rankings, id);
+      // No ranking on file means no box, rather than a box with nothing in it.
+      if (!best || !rank) return '';
       return '<div class="hero-stat">' +
-        '<div class="hero-stat-val">#' + esc(p.rank) + '</div>' +
-        '<div class="hero-stat-label">Canada — ' + esc(p.distance) + 'm ' +
+        '<div class="hero-stat-val">#' + esc(rank.rank) + '</div>' +
+        '<div class="hero-stat-label">Ranked in Canada · ' + esc(p.distance) + 'm ' +
         esc(S.STROKE_SHORT[p.stroke]) + ' · ' + esc(best.time) + '</div></div>';
     }).join('');
-    if (html) node.innerHTML = html;
+    // Clear every ranking and the whole strip goes, rather than leaving a row
+    // of empty boxes under his name.
+    node.innerHTML = html;
+    node.style.display = html ? '' : 'none';
   }
 
   // The flip cards, rebuilt with the same classes so the existing CSS and the
@@ -110,7 +116,8 @@
           '<div class="time-card-front">' +
             '<div class="time-event">' + esc(p.distance) + 'm ' + esc(S.STROKE_LABEL[p.stroke]) + '</div>' +
             '<div class="time-value gold">' + esc(best.time) +
-              (p.rank ? '<span class="time-pb-badge">#' + esc(p.rank) + ' 🇨🇦</span>' : '') +
+              (rank ? '<span class="time-pb-badge">#' + esc(rank.rank) +
+                ' in Canada</span>' : '') +
             '</div>' +
             '<div class="time-course">' + esc(courseLabel) + ' · ' + esc(when) + '</div>' +
             progress +

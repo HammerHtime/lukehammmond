@@ -111,6 +111,27 @@ ADMIN.concat(PUBLIC).filter(function (f, i, all) { return all.indexOf(f) === i; 
 });
 check('every front end file is wrapped in its own scope', unwrapped, []);
 
+// ---------- a rank is a ranking, never a placing ----------
+// Two separate mistakes live here, and both shipped once.
+//
+// First, "#4" printed beside a time at a meet reads as a fourth place finish.
+// It is his national ranking for that event. The page has to say which.
+//
+// Second, the hero boxes and the card badges were reading the rank hardcoded
+// in swimmer.js rather than the one edited in the back end, so changing a
+// ranking moved the intro sentence and nothing else. Both now go through
+// rankFor, and nothing in the page code may read a rank any other way.
+const profileSource = fs.readFileSync(path.join(__dirname, 'live-profile.js'), 'utf8');
+ok('the page never reads a hardcoded rank', !/\bp\.rank\b/.test(profileSource));
+check('every rank on the page comes from the stored map',
+  (profileSource.match(/rankFor\(rankings,/g) || []).length >= 2, true);
+ok('the card badge says which country', /in Canada/.test(profileSource));
+ok('the hero box says it is a ranking', /Ranked in Canada/.test(profileSource));
+ok('the page never calls a ranking a place', !/>Place</.test(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8')));
+
+const recruitSource = fs.readFileSync(path.join(__dirname, 'recruiting.js'), 'utf8');
+ok('the coach email calls it a ranking too', /ranked #/.test(recruitSource));
+
 // ---------- the pages load what this file claims they load ----------
 function tagsIn(page) {
   const html = fs.readFileSync(path.join(__dirname, page), 'utf8');
