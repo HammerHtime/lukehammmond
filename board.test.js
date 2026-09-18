@@ -165,7 +165,7 @@ check('an event with no mapping gets no conversion', C.toYards(S, bests['200-bre
 
 // ---------- the board ----------
 const schools = Sc.seedSchools();
-check('the board is seeded', schools.length, 43);
+check('the board is seeded', schools.length, 64);
 // Ten Ontario schools went on 18 September 2026. They are the only ones he can
 // write to today, because U SPORTS puts no calendar on contact.
 // Every university in Canada with a men's swim team, ie, all 26.
@@ -186,10 +186,14 @@ check('four in the Atlantic', schools.filter(function (s) { return s.conference 
 // Three schools publish no personal coach address at all. Carleton publishes
 // only a club manager, Sherbrooke and UQTR only a department mailbox. Each is
 // recorded as unsendable rather than dressed up with a guessed address.
-check('forty of forty-three are sendable', schools.filter(Sc.isSendable).length, 40);
-check('and the three that are not are named',
+// Eight schools publish no personal coach address at all, and every one is
+// recorded as unsendable rather than dressed up with a guessed address. Five of
+// the eight are Patriot League, where the big athletics sites publish a
+// recruiting form instead of a person.
+check('fifty-six of sixty-four are sendable', schools.filter(Sc.isSendable).length, 56);
+check('and the eight that are not are named',
   schools.filter(function (s) { return !Sc.isSendable(s); }).map(function (s) { return s.id; }),
-  ['carleton', 'sherbrooke', 'uqtr']);
+  ['carleton', 'sherbrooke', 'uqtr', 'navy', 'army', 'bostonu', 'lehigh', 'colgate']);
 schools.forEach(function (s) {
   ok(s.name + ' records where the address came from', Boolean(s.staffUrl));
   ok(s.name + ' records when it was checked', Boolean(s.verifiedOn));
@@ -219,9 +223,13 @@ check('Gannon is a current fit', row('gannon').computedFit, 'Current fit');
 check('Gannon is ahead on the 500', row('gannon').comparisons[0].ahead, true);
 check('Canisius is a current fit', row('canisius').computedFit, 'Current fit');
 check('St. Bonaventure sits inside the roster group', row('stbonaventure').comparisons[0].inside, true);
-check('St. Bonaventure is a current fit', row('stbonaventure').computedFit, 'Current fit');
+// Their real squad is six deep in the 500, not the five mixed-conference times
+// the card used to carry, so he sits further back and the card says so.
+check('St. Bonaventure now spans current fit to reach', row('stbonaventure').computedFit, 'Current fit / reach');
 check('Niagara is a target', row('niagara').computedFit, 'Target');
-check('American spans target to reach', row('american').computedFit, 'Target / reach');
+// American's real 2026 squad is two men in the 500, and he is inside them, so
+// the card reads better than it did off the single time it used to carry.
+check('American spans current fit to reach', row('american').computedFit, 'Current fit / reach');
 check('Ithaca reads as one span, not three', row('ithaca').computedFit, 'Target / reach');
 check('Marist spans target to reach', row('marist').computedFit, 'Target / reach');
 
@@ -269,11 +277,13 @@ ok('and says what it left alone', /already here and left alone/.test(adminSrc0))
 
 // The merge itself, on the real lists. Seventeen American schools plus five
 // added by hand is what a board in use actually looks like.
+// A board in use, ie, the American schools plus one added by hand from the
+// roster search that never found a contact.
 const inUse = schools.filter(function (s) { return s.country === 'USA'; })
   .concat([{ id: 'x1', name: 'Florida State University', division: 'D1', country: 'USA' }]);
 const topped = Sc.mergeSchools(inUse, schools);
 check('the missing ones are added', topped.added, 26);
-check('the ones already there are left alone', topped.updated, 17);
+check('the ones already there are left alone', topped.updated, schools.length - 26);
 check('and the hand-added one survives',
   topped.schools.filter(function (s) { return s.id === 'x1'; }).length, 1);
 check('nothing is lost', topped.schools.length, inUse.length + 26);
@@ -383,7 +393,8 @@ check('every school lands in exactly one tier',
 // and seven entered nobody in any of his events, which is a fact about the
 // programme rather than a gap in the research.
 check('nine schools have nothing to score', countTier('Not scored'), 9);
-check('Loyola is one of them', tierOf('loyolamd'), 'Not scored');
+check('Loyola now has a real squad behind it', row('loyolamd').evidenceCount, 3);
+check('Hamilton is one of them', tierOf('hamilton'), 'Not scored');
 check('Queen\u2019s is another, having entered nobody', tierOf('queens'), 'Not scored');
 check('Canisius is not', tierOf('canisius'), 'You\u2019d race');
 
@@ -408,12 +419,12 @@ check('while the board still shows what was recorded', tierOf('fairfield'), 'You
 // The bar was not understood, and that is a design failure rather than a
 // reading failure. "Fourth fastest of five" needs no explaining.
 const bonniesPlace = B.placeIn(S, row('stbonaventure').comparisons[0]);
-check('he slots in fifth of six', bonniesPlace.position, 5);
-check('the squad counts him', bonniesPlace.of, 6);
-check('four of them are quicker', bonniesPlace.behind, 4);
+check('he slots in sixth of seven', bonniesPlace.position, 6);
+check('the squad counts him', bonniesPlace.of, 7);
+check('five of them are quicker', bonniesPlace.behind, 5);
 check('and he is quicker than one', bonniesPlace.fasterThan, 1);
-ok('the ladder holds everyone including him', bonniesPlace.ladder.length === 6);
-check('and he is in the right rung', bonniesPlace.ladder[4].mine, true);
+ok('the ladder holds everyone including him', bonniesPlace.ladder.length === 7);
+check('and he is in the right rung', bonniesPlace.ladder[5].mine, true);
 ok('the ladder is in order', bonniesPlace.ladder.every(function (r, i, all) {
   return i === 0 || all[i - 1].hundredths <= r.hundredths; }));
 
@@ -601,7 +612,7 @@ check('drawing did not move Bucknell', row('bucknell').suggestedPriority, 'P2');
 
 // ---------- what a time drop unlocks ----------
 const faster500 = B.whatIfFaster(S, yards, schools, '500-free-SCY', '4:32.00');
-check('a 4:32 500 moves two schools up', faster500.moved.length, 2);
+check('a 4:32 500 moves three schools up', faster500.moved.length, 3);
 ok('Niagara is one of them', faster500.moved.some(function (m) { return m.school.indexOf('Niagara') !== -1 && m.to === 'P1'; }));
 const fasterMile = B.whatIfFaster(S, yards, schools, '1650-free-SCY', '16:00.00');
 ok('a 16:00 mile moves RIT up', fasterMile.moved.some(function (m) { return m.school.indexOf('Rochester') !== -1 && m.to === 'P1'; }));
@@ -1360,6 +1371,10 @@ check('initials skip the joining words', Sc.initialsFor({ name: 'Rensselaer Poly
 // but it reads the same on the board and should.
 check('nine schools remain unassessed',
   rows.filter(function (r) { return r.evidenceCount === 0; }).length, 9);
+// Pitt-Johnstown is a brand new programme whose first season was 2025-26. It
+// entered the conference meet and put nobody in any of his events, which is a
+// fact about the roster rather than a gap in the research.
+check('Pitt-Johnstown has no distance group yet', row('pittjohnstown').evidenceCount, 0);
 // Lethbridge and Manitoba both field men and neither entered one in the 400
 // free, the 1500 or the 400 IM. That is the roster, not a missing source.
 check('Lethbridge fielded nobody in his events', row('lethbridge').evidenceCount, 0);
@@ -1377,8 +1392,8 @@ check('the engine reads Fairfield higher', row('fairfield').suggestedPriority, '
 ok('and flags the clash', row('fairfield').disagrees);
 // RPI, Fairfield and Iona all read higher than recorded now that their
 // conference times are in, and Bucknell reads higher off its own benchmark.
-check('four schools now disagree with the recorded call',
-  rows.filter(function (r) { return r.disagrees; }).length, 4);
+check('five schools now disagree with the recorded call',
+  rows.filter(function (r) { return r.disagrees; }).length, 5);
 
 console.log((failed === 0 ? '  PASS' : '  FAIL') + '  board.test.js  ' + (passed + failed) + ' checks, ' + failed + ' failed');
 process.exit(failed === 0 ? 0 : 1);
