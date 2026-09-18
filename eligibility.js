@@ -121,55 +121,99 @@ function convertMark(percent) {
 // The timeline
 // ---------------------------------------------------------------------------
 // Dated, so the back end can say what is next rather than what exists.
-const MILESTONES = [
-  { date: '2026-10-01', by: 'now', title: 'Open a free NCAA Profile Page account',
-    detail: 'Costs nothing, reserves the NCAA ID, and transitions to a full certification account later without losing it. NCAA tells students to register before Grade 9, so this is already late.',
-    why: 'Needed before any official visit and before signing anything.' },
-  { date: '2026-10-01', by: 'now', title: 'Check the high school in the NCAA High School Portal',
-    detail: 'A course only counts if the SCHOOL holds an Eligibility Center account and lists that course as NCAA approved. If it has never dealt with the NCAA, a review is needed and it is slow.',
-    why: 'Discovering this in Grade 12 is too late to fix. web3.ncaa.org/hsportal' },
-  { date: '2026-10-01', by: 'now', title: 'Map every course against the NCAA Ontario sheet',
-    detail: 'Applied, College, Open and Workplace level courses earn nothing. Kinesiology PSK4U and Exercise Science PSE4U are named as not approved, and they are exactly what a swimmer picks.',
-    why: 'Luke’s stated interest is exercise science and kinesiology. Those two courses are worth zero NCAA credit.' },
-  { date: '2026-10-01', by: 'now', title: 'Check the birth date against the age rule',
-    detail: 'The five year eligibility clock starts at the earlier of first full time enrolment, or the academic year after a 19th birthday that falls before 1 September. Adopted 23 June 2026. There are no waivers left.',
-    why: 'An Ontario victory lap, a prep year or a gap year can burn a year of eligibility outright. Decide now, not in Grade 12.' },
-  { date: '2026-11-01', by: 'this term', title: 'Confirm Grade 9 marks are on the transcript',
-    detail: 'NCAA warns that many Canadian transcripts omit ninth year marks. Grade 9 core courses count toward the 16.',
-    why: 'If they are missing, the Grade 9 school has to send them, and that takes chasing.' },
-  { date: '2027-06-01', by: 'end of Grade 10', title: 'Upload the transcript after two academic years',
-    detail: 'The guidance counsellor sends it. NCAA asks for it at this point.', why: '' },
-  { date: '2027-06-01', by: 'end of Grade 10', title: 'Transition to a full certification account',
-    detail: 'Academic and Athletics Certification, for Division I or II. A Canadian pays the international rate. NCAA has stopped publishing the amount; its last published figure was 160 USD in July 2024.',
-    why: 'Must be complete before official visits and before signing.' },
-  { date: '2027-06-15', by: '15 June 2027', title: 'Division I and II coaches may reply',
-    detail: 'Calls, texts and emails from coaches become permitted. Division II may also offer expense-paid official visits from this date.',
-    why: 'Have the times, transcript, résumé and video ready BEFORE this date, not after.' },
-  { date: '2027-08-01', by: '1 August 2027', title: 'Division I off-campus contact and official visits open',
-    detail: 'The first date a D1 programme may pay for a visit.', why: '' },
-  { date: '2028-05-01', by: 'spring of Grade 11', title: 'Sit the SAT or ACT',
-    detail: 'The NCAA dropped the test requirement in January 2023. The universities have brought it back, ie, Ohio State requires it of international freshmen and the Ivies have largely reinstated.',
-    why: 'Two different bodies made two different decisions. The NCAA not needing it does not mean the university does not.' },
-  { date: '2028-09-01', by: 'September 2028, HARD', title: 'Ten core courses done, seven in English, maths and science',
-    detail: 'The start of the seventh semester. After it, a course needed for this cannot be replaced or repeated for a better grade.',
-    why: 'There is an argument this does not bind a student with solely international credentials, but Ontario schools can hold NCAA accounts, which sends them down the domestic path. Plan as if it applies. It costs nothing.' },
-  { date: '2029-04-01', by: '1 April 2029', title: 'Request the final athletics certification',
-    detail: 'In the Eligibility Center account, for swimming, for a fall 2029 enrolment. Do it even if other tasks are outstanding.', why: '' },
-  { date: '2029-06-30', by: 'June 2029', title: 'Graduate on time with the OSSD',
-    detail: 'Sixteen approved core credits inside eight semesters from the start of Grade 9, ie, September 2025 to June 2029. Minimum 2.3 core GPA for Division I, 2.2 for Division II.',
-    why: 'The OSSD is the only proof of graduation the NCAA accepts from Ontario, alongside the Diplôme d’Études Secondaires.' }
-];
+// Built from the graduation year rather than written out, because every date
+// below moves with it. Written-out years were correct for 2029 and would have
+// quietly stayed at 2029 if the class ever changed, which is the same bug this
+// project has already shipped twice.
+function milestones(classOf) {
+  const g = Number(classOf);
+  if (!Number.isFinite(g)) return [];
+  const grade10 = g - 3;     // the academic year now
+  const grade11 = g - 2;
+  const seventh = g - 1;     // seventh semester starts this September
 
-function nextMilestones(today, count) {
+  return [
+    { date: (grade10) + '-10-01', by: 'now', title: 'Open a free NCAA Profile Page account',
+      detail: 'Costs nothing, reserves the NCAA ID, and transitions to a full certification account later without losing it. NCAA tells students to register before Grade 9, so this is already late.',
+      why: 'Needed before any official visit and before signing anything.' },
+    { date: (grade10) + '-10-01', by: 'now', title: 'Check the high school in the NCAA High School Portal',
+      detail: 'A course only counts if the SCHOOL holds an Eligibility Center account and lists that course as NCAA approved. If it has never dealt with the NCAA, a review is needed and it is slow.',
+      why: 'Discovering this in Grade 12 is too late to fix. web3.ncaa.org/hsportal' },
+    { date: (grade10) + '-10-01', by: 'now', title: 'Map every course against the NCAA Ontario sheet',
+      detail: 'Applied, College, Open and Workplace level courses earn nothing. Kinesiology PSK4U and Exercise Science PSE4U are named as not approved, and they are exactly what a swimmer picks.',
+      why: 'Luke\u2019s stated interest is exercise science and kinesiology. Those two courses are worth zero NCAA credit.' },
+    { date: (grade10) + '-11-01', by: 'this term', title: 'Confirm Grade 9 marks are on the transcript',
+      detail: 'NCAA warns that many Canadian transcripts omit ninth year marks. Grade 9 core courses count toward the 16.',
+      why: 'If they are missing, the Grade 9 school has to send them, and that takes chasing.' },
+    { date: (grade11) + '-06-01', by: 'end of Grade 10', title: 'Upload the transcript after two academic years',
+      detail: 'The guidance counsellor sends it. NCAA asks for it at this point.', why: '' },
+    { date: (grade11) + '-06-01', by: 'end of Grade 10', title: 'Transition to a full certification account',
+      detail: 'Academic and Athletics Certification, for Division I or II. A Canadian pays the international rate. NCAA has stopped publishing the amount; its last published figure was 160 USD in July 2024.',
+      why: 'Must be complete before official visits and before signing.' },
+    { date: (grade11) + '-06-15', by: '15 June ' + grade11, title: 'Division I and II coaches may reply',
+      detail: 'Calls, texts and emails from coaches become permitted. Division II may also offer expense-paid official visits from this date.',
+      why: 'Have the times, transcript and video ready BEFORE this date, not after.' },
+    { date: (grade11) + '-08-01', by: '1 August ' + grade11, title: 'Division I off-campus contact and official visits open',
+      detail: 'The first date a D1 programme may pay for a visit.', why: '' },
+    { date: (seventh) + '-05-01', by: 'spring of Grade 11', title: 'Sit the SAT or ACT',
+      detail: 'The NCAA dropped the test requirement in January 2023. The universities have brought it back, ie, Ohio State requires it of international freshmen and the Ivies have largely reinstated.',
+      why: 'Two different bodies made two different decisions. The NCAA not needing it does not mean the university does not.' },
+    { date: (seventh) + '-09-01', by: 'September ' + seventh + ', HARD', title: 'Ten core courses done, seven in English, maths and science',
+      detail: 'The start of the seventh semester. After it, a course needed for this cannot be replaced or repeated for a better grade.',
+      why: 'There is an argument this does not bind a student with solely international credentials, but Ontario schools can hold NCAA accounts, which sends them down the domestic path. Plan as if it applies. It costs nothing.' },
+    { date: g + '-04-01', by: '1 April ' + g, title: 'Request the final athletics certification',
+      detail: 'In the Eligibility Center account, for swimming, for a fall ' + g + ' enrolment. Do it even if other tasks are outstanding.', why: '' },
+    { date: g + '-06-30', by: 'June ' + g, title: 'Graduate on time with the OSSD',
+      detail: 'Sixteen approved core credits inside eight semesters from the start of Grade 9, ie, September ' + (g - 4) + ' to June ' + g + '. Minimum 2.3 core GPA for Division I, 2.2 for Division II.',
+      why: 'The OSSD is the only proof of graduation the NCAA accepts from Ontario, alongside the Dipl\u00f4me d\u2019\u00c9tudes Secondaires.' }
+  ];
+}
+
+// Kept for anything that wants the list without passing a year.
+const MILESTONES = milestones(2029);
+
+function nextMilestones(today, count, classOf) {
   const day = String(today || '');
-  return MILESTONES.filter(function (m) { return m.date >= day; })
+  return milestones(classOf || 2029).filter(function (m) { return m.date >= day; })
     .sort(function (a, b) { return a.date.localeCompare(b.date); })
     .slice(0, count || 4);
 }
 
-function overdue(today) {
+function overdue(today, classOf) {
   const day = String(today || '');
-  return MILESTONES.filter(function (m) { return m.date < day; });
+  return milestones(classOf || 2029).filter(function (m) { return m.date < day; });
+}
+
+// The age rule, answered for one birth date rather than left as a worry.
+//
+// The clock starts at the EARLIER of first full time enrolment, or the start
+// of the academic year following the 19th birthday, and the second only fires
+// if the athlete turns 19 BEFORE 1 September.
+//
+// Returns what is known, and says plainly what is not. A birth date that falls
+// after 1 September sits outside the clean case the rule was written for, and
+// the reading is genuinely arguable. This function does not pretend otherwise.
+function ageClock(birthMonth, birthDay, classOf) {
+  const m = Number(birthMonth), d = Number(birthDay), g = Number(classOf);
+  if (!Number.isFinite(m) || !Number.isFinite(d) || !Number.isFinite(g)) return null;
+
+  // Before 1 September, ie, month 1 to 8, or 9 with a day before the 1st,
+  // which cannot happen, so month 1 to 8 is the whole of it.
+  const beforeSeptember = m < 9;
+
+  return {
+    turns19: 'the year of the 19th birthday',
+    triggerFires: beforeSeptember,
+    onTimeEnrolment: g,
+    message: beforeSeptember
+      ? 'The birthday falls before 1 September, so the clock can start on its own, ' +
+        'whether or not he has enrolled. A delayed start costs eligibility.'
+      : 'The birthday falls AFTER 1 September, so the trigger does not fire in the ' +
+        'straightforward way it does for a summer birthday. That is the favourable side ' +
+        'of the line.',
+    confirm: 'The reading for a birth date after 1 September is arguable. Confirm it in ' +
+      'writing with the NCAA Eligibility Center before deciding anything on the strength of it.'
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -195,6 +239,8 @@ const api = {
   HALF_CREDIT: HALF_CREDIT,
   BANDS: BANDS,
   MILESTONES: MILESTONES,
+  milestones: milestones,
+  ageClock: ageClock,
   MYTHS: MYTHS,
   checkCourse: checkCourse,
   convertMark: convertMark,

@@ -341,6 +341,28 @@ check('95 wastes fifteen marks', El.convertMark(95).wasted, 15);
 check('a mark at the top has nowhere to go', El.convertMark(100).marksToNextPoint, 0);
 check('a nonsense mark returns nothing', El.convertMark(120), null);
 
+// Dates derive from the graduation year. Written-out years were right for 2029
+// and would have quietly stayed at 2029 if the class ever changed.
+check('the hard deadline moves with the class',
+  El.milestones(2031).filter(function (m) { return m.by.indexOf('HARD') !== -1; })[0].date, '2030-09-01');
+check('so does graduation',
+  El.milestones(2031).filter(function (m) { return /OSSD/.test(m.title); })[0].date, '2031-06-30');
+check('and the June contact date',
+  El.milestones(2031).filter(function (m) { return /coaches may reply/.test(m.title); })[0].date, '2029-06-15');
+check('a nonsense class yields nothing', El.milestones('soon').length, 0);
+
+// The age rule, for a birth date after 1 September. The trigger that starts the
+// five year clock on its own fires only for a birthday BEFORE 1 September, so a
+// mid-September birthday sits on the favourable side of it.
+const sept = El.ageClock(9, 14, 2029);
+check('a September birthday does not fire the trigger', sept.triggerFires, false);
+const june = El.ageClock(6, 1, 2029);
+check('a June birthday does', june.triggerFires, true);
+const aug31 = El.ageClock(8, 31, 2029);
+check('the last day of August still does', aug31.triggerFires, true);
+ok('and the answer never claims to be settled', sept.confirm.indexOf('Confirm it in') !== -1);
+check('a missing birth date yields nothing', El.ageClock(null, null, 2029), null);
+
 // The timeline has to be able to say what is next, not just what exists.
 const soon = El.nextMilestones('2026-09-18', 5);
 check('five things are next', soon.length, 5);
