@@ -154,42 +154,19 @@ function friendlyDate(iso) {
   return Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] + ' ' + m[1];
 }
 
-// A short, plain line of evidence, ie, "400 Free LCM 4:10.86, 2 seconds off
-// the Canadian Junior Trials cut". This is what a coach skims for.
-function timeLine(swim, best, gap) {
-  let line = best.name + ' ' + best.course + '  ' + best.time;
-  if (gap) {
-    line += gap.made
-      ? '  (under the ' + 'Junior Trials cut)'
-      : '  (' + swim.formatGap(gap.behindBy).replace('+', '') + ' off the Junior Trials cut)';
-  }
-  return line;
-}
-
 // The interest email for one school.
 //
-// Rewritten 18 September 2026 because the first version read like a form
-// letter, which is fatal. Coaches described inboxes in the hundreds to
-// thousands, and the thing that gets an email deleted is that it could have
-// been sent to two hundred programmes.
+// Rewritten 18 September 2026 to Andrew's own draft. He wrote the letter he
+// wants sent, so the wording here is his, not a machine's idea of warm. What
+// this file adds is that every fact in it is read from the live data rather
+// than typed once and left to rot, ie, the times, the rankings, the events,
+// the seasons, the GPA and the club all come from the profile. Enter a new
+// swim in the back end and every draft changes with it.
 //
-// What changed, and why each one:
-//
-// "My name is Luke Hammond" is the deadest opening in email and the signature
-// already says who he is. "I am writing because I am interested in" announces
-// the obvious. Both gone.
-//
-// The Junior Trials gap came off every time. A US head coach carries his own
-// standards and a Canadian cut is noise to him. Andrew made that call for the
-// page and it was just as true here.
-//
-// The improvement curve went IN, because it is the strongest thing Luke has
-// and the first version left it out entirely. Coaches named rate of
-// improvement as one of two swimming criteria. A minute and nine seconds off
-// a 400 free in three years says more than the 4:10 does.
-//
-// And it sounds like a fifteen year old now, not a solicitor. He is writing
-// to a coach about swimming, not filing something.
+// Two of his earlier rules are deliberately overruled by that draft, and both
+// were his call to make. It opens with "My name is Luke Hammond" and it closes
+// by thanking the coach for reading. He is fifteen and writing to an adult he
+// has never met. Polite beats clever.
 function draftEmail(input) {
   const swim = input.swim;
   const swimmer = input.swimmer;
@@ -209,108 +186,122 @@ function draftEmail(input) {
       'wrote to him and not to two hundred others will not reply.');
   }
 
-  const bests = swim.personalBests(results);
   const rankings = (input.rankings && Object.keys(input.rankings).length)
     ? input.rankings
     : seedRankingsFrom(swimmer);
 
   // His events, strongest first by points, one row per event.
   const ranked = swim.rankedByPoints(results, 5, true);
-
-  const lines = [];
-  lines.push(school && school.coach ? 'Dear Coach ' + lastName(school.coach) + ',' : 'Dear Coach,');
-  lines.push('');
-
-  const where = swimmer.city + ', ' + swimmer.province;
   const named = (school && school.name) ? school.name : 'your programme';
-  lines.push('I\u2019m a distance freestyler from ' + where + ', Canada. I swim for ' +
-    swimmer.club + ' and I\u2019m class of ' + swimmer.classOf + '.');
-  lines.push('');
-  // Why THIS programme. A line the coach can tell was written for him.
-  //
-  // Anything Andrew writes himself wins. Failing that, this is built from the
-  // programme's own conference times, which is real homework rather than
-  // flattery, ie, it says what their distance group actually swam and where
-  // Luke sits against it. A coach can check every number in it.
-  lines.push(school && school.personalNote
-    ? school.personalNote
-    : programmeLine(swim, school, results, named));
+  const lines = [];
+
+  lines.push(school && school.coach ? 'Hi Coach ' + lastName(school.coach) + ',' : 'Hi Coach,');
   lines.push('');
 
-  lines.push('Where I am right now:');
+  lines.push('My name is ' + swimmer.name + '. I’m a Class of ' + swimmer.classOf +
+    ' swimmer from ' + swimmer.city + ', ' + swimmer.province + ', Canada, and I currently ' +
+    'train with the ' + swimmer.club + '.');
+  lines.push('');
+
+  lines.push('I’m reaching out because I’ve been learning more about ' + named +
+    ' and your swim program. I’m very interested in finding a university where I can ' +
+    'continue developing as a swimmer while also being part of a strong academic and team ' +
+    'environment, and ' + named + ' is a school I wanted to introduce myself to early in ' +
+    'the process.');
+  lines.push('');
+
+  // Why THIS programme, in one sentence the coach can tell was written for him.
+  // Anything Andrew writes himself wins. Failing that it is built from the
+  // programme's own conference times, which is homework rather than flattery.
+  // Silent when there is neither, because a sentence that could have gone to
+  // two hundred programmes is worse than no sentence.
+  const why = (school && school.personalNote)
+    ? school.personalNote
+    : programmeLine(swim, school, results, named, true);
+  if (why) {
+    lines.push(why);
+    lines.push('');
+  }
+
+  lines.push('My primary events are ' + eventsSentence(ranked) +
+    '. Some of my current best times are:');
   lines.push('');
   ranked.forEach(function (best) {
     const rank = rankings[best.event];
-    lines.push('  ' + pad(best.name + ' ' + best.course, 16) + padLeft(best.time, 9) +
-      (rank ? '   #' + rank.rank + ' in Canada for my age' : ''));
+    lines.push(best.name + ' ' + best.course + ': ' + best.time +
+      (rank ? ', #' + rank.rank + ' in Canada for my age' : ''));
   });
   lines.push('');
 
-  // The curve. Its own paragraph, because it is the argument.
-  const lead = ranked[0];
-  if (lead) {
-    const curve = swim.progression(results, lead.distance, lead.stroke, lead.course);
-    if (curve && curve.seasons.length > 1) {
-      lines.push('The ' + spoken(lead) + ' is my main event. In ' +
-        curve.seasons[0].season + ' I swam ' + curve.seasons[0].time + ' in it. I\u2019ve taken ' +
-        plainGap(swim, curve.totalDrop) + ' off since' +
-        (curve.everySeason ? ', and I\u2019ve been faster every season' : '') + '.');
-
-      // A second event improving the same way is what turns one good curve into
-      // a swimmer. Only said when it is true.
-      const other = ranked.filter(function (r) { return r.stroke !== 'free'; })[0];
-      if (other) {
-        const otherCurve = swim.progression(results, other.distance, other.stroke, other.course);
-        if (otherCurve && otherCurve.everySeason && otherCurve.seasons.length > 1) {
-          lines.push('Same in the ' + spoken(other) + ', where I\u2019ve gone from ' +
-            otherCurve.seasons[0].time + ' to ' + otherCurve.current.time + '.');
-        }
-      }
-      lines.push('');
-    }
+  // The curve. Its own paragraph, because it is the argument. A minute and ten
+  // seconds off a 400 free in three years says more than the 4:10 does.
+  const curveLine = progressParagraph(swim, results, ranked);
+  if (curveLine) {
+    lines.push(curveLine);
+    lines.push('');
   }
 
   if (swimmer.training) {
-    lines.push(swimmer.training);
+    lines.push(swimmer.training + ' I enjoy the distance events and the training that comes ' +
+      'with them, and I’m looking for a university program where I can continue to ' +
+      'develop and contribute to the team.');
+    lines.push('');
   }
-  if (swimmer.academics && swimmer.academics.gpa) {
-    // The school itself, not only the swimming. A coach is recruiting someone
-    // who has to get in and stay in, and every coach interviewed said academic
-    // strength is what lets them stretch a small pot of money further.
-    lines.push('School matters to me too. I\u2019m at ' + swimmer.academics.gpa + ' out of ' +
-      swimmer.academics.gpaScale + ', and I\u2019m interested in ' +
-      (swimmer.academics.interestsShort || listOut(swimmer.academics.interests).toLowerCase()) +
-      '. I\u2019d want a place where I can do that properly and swim, not one or the other' +
-      (school && school.academicNote ? ', and ' + school.academicNote : '') + '.');
-  }
-  lines.push('');
 
+  if (swimmer.academics && swimmer.academics.gpa) {
+    // The school itself, not only the swimming. Every coach interviewed said
+    // academic strength is what lets them stretch a small pot of money further.
+    lines.push('Academics are also very important to me. I currently have a ' +
+      swimmer.academics.gpa + ' GPA on a ' + swimmer.academics.gpaScale +
+      ' scale and I’m particularly interested in studying ' +
+      (swimmer.academics.interestsShort || listOut(swimmer.academics.interests).toLowerCase()) +
+      '. Finding the right combination of academics, athletics and university experience ' +
+      'will be a big part of my decision' +
+      (school && school.academicNote ? ', and ' + school.academicNote : '') + '.');
+    lines.push('');
+  }
+
+  // The link carries the school's own code, so a click can be told apart later.
   const link = profileUrl + (school && school.id
     ? (profileUrl.indexOf('?') === -1 ? '?' : '&') + 'c=' + encodeURIComponent(school.id)
     : '');
-  lines.push('Everything I\u2019ve swum is here, and it updates after every meet:');
+  lines.push('I’ve put together a swimmer profile that includes my current times and ' +
+    'will continue to update automatically as I compete:');
+  lines.push('');
   lines.push(link);
   lines.push('');
 
-  if (swimmer.coach) {
-    lines.push('My coach ' + swimmer.coach + ' would be glad to talk to you about me.');
+  if (swimmer.swimcloud) {
+    lines.push('My SwimCloud profile is also available here:');
+    lines.push('');
+    lines.push(swimmer.swimcloud);
     lines.push('');
   }
+
+  if (swimmer.coach) {
+    lines.push('My coach, ' + swimmer.coach + ', would also be happy to speak with you about ' +
+      'my swimming, training and development.');
+    lines.push('');
+  }
+
+  lines.push('I know I’m still early in the recruiting process, but I wanted to introduce ' +
+    'myself and let you know that I’m genuinely interested in learning more about ' +
+    named + ' and your program.');
+  lines.push('');
+  lines.push('Thank you for taking the time to read my email. I hope I’ll have the ' +
+    'opportunity to connect with you as I continue through the recruiting process.');
+  lines.push('');
+
+  lines.push(swimmer.name);
+  lines.push('Class of ' + swimmer.classOf);
+  lines.push(swimmer.club);
+  lines.push(swimmer.city + ', ' + swimmer.province + ', Canada');
+  if (swimmer.contact && swimmer.contact.email) lines.push(swimmer.contact.email);
 
   const division = String((school && school.division) || 'D1').toUpperCase();
   const window = contactWindow(CONTACT_RULES[division] ? division : 'D1', swimmer.classOf, today);
-  if (window && !window.open) {
-    lines.push('I know you can\u2019t reply until ' + friendlyDate(window.replyDate) +
-      '. I\u2019d rather you had my times before then than after.');
-    lines.push('');
-  }
 
-  lines.push(swimmer.name);
-  lines.push(swimmer.club + ' \u00b7 ' + where);
-  if (swimmer.contact && swimmer.contact.email) lines.push(swimmer.contact.email);
-  if (swimmer.swimcloud) lines.push(swimmer.swimcloud);
-
-  const subject = swimmer.name + ' \u00b7 ' + swimmer.classOf + ' distance free \u00b7 ' +
+  const subject = swimmer.name + ' · ' + swimmer.classOf + ' distance free · ' +
     (ranked[0] ? ranked[0].name + ' ' + ranked[0].time : 'Canada');
 
   return {
@@ -325,6 +316,54 @@ function draftEmail(input) {
   };
 }
 
+// "the 400, 800 and 1500 freestyle, along with the 200 free and 400 IM".
+//
+// Built rather than typed, because his event profile will move. The split is
+// the distance freestyles first, since that is his identity, then everything
+// else. Said the way a swimmer says it out loud.
+function eventsSentence(ranked) {
+  const distanceFree = ranked
+    .filter(function (r) { return r.stroke === 'free' && r.distance >= 400; })
+    .sort(function (a, b) { return a.distance - b.distance; });
+  const rest = ranked.filter(function (r) { return distanceFree.indexOf(r) === -1; });
+
+  const head = distanceFree.length
+    ? 'the ' + listOut(distanceFree.map(function (r) { return String(r.distance); })) + ' freestyle'
+    : '';
+  const tail = rest.length
+    ? 'the ' + listOut(rest.map(function (r) { return spoken(r); }))
+    : '';
+
+  if (head && tail) return head + ', along with ' + tail;
+  return head || tail;
+}
+
+// The improvement paragraph, from the two events with a real curve behind them.
+// Only claims "every season" when that is literally true of the data.
+function progressParagraph(swim, results, ranked) {
+  const lead = ranked[0];
+  if (!lead) return '';
+  const curve = swim.progression(results, lead.distance, lead.stroke, lead.course);
+  if (!curve || curve.seasons.length < 2) return '';
+
+  let text = 'One of the things I’m most proud of is the progress I’ve made over the ' +
+    'past few seasons. In ' + curve.seasons[0].season + ', my ' + spoken(lead) + ' was ' +
+    curve.seasons[0].time + '. I’ve since brought that down to ' + curve.current.time +
+    (curve.everySeason ? ' and have continued to improve each season' : '') + '.';
+
+  // A second event improving the same way is what turns one good curve into a
+  // swimmer. Only said when it is true.
+  const other = ranked.filter(function (r) { return r.stroke !== 'free'; })[0];
+  if (other) {
+    const otherCurve = swim.progression(results, other.distance, other.stroke, other.course);
+    if (otherCurve && otherCurve.everySeason && otherCurve.seasons.length > 1) {
+      text += ' My ' + spoken(other) + ' has followed a similar path, improving from ' +
+        otherCurve.seasons[0].time + ' to ' + otherCurve.current.time + '.';
+    }
+  }
+  return text;
+}
+
 // The "why your programme" sentence, built from what their swimmers actually
 // did. Their times come from conference results, so this is checkable, and a
 // coach reading his own group's times back knows the sender looked.
@@ -332,11 +371,12 @@ function draftEmail(input) {
 // Returns a plain line when there is nothing researched, rather than inventing
 // enthusiasm. A sentence that could have been sent to anyone is the thing that
 // gets an email deleted.
-function programmeLine(swim, school, results, named) {
+function programmeLine(swim, school, results, named, silent) {
+  const generic = silent
+    ? ''
+    : 'I\u2019ve been reading about ' + named + ' and I\u2019d like to swim there.';
   const benchmarks = (school && school.benchmarks) || [];
-  if (!benchmarks.length) {
-    return 'I\u2019ve been reading about ' + named + ' and I\u2019d like to swim there.';
-  }
+  if (!benchmarks.length) return generic;
 
   const bests = swim.personalBests(results);
   const yards = {};
@@ -349,9 +389,7 @@ function programmeLine(swim, school, results, named) {
   const usable = benchmarks.filter(function (b) {
     return yards[b.event] && (b.time || (b.times && b.times.length));
   })[0];
-  if (!usable) {
-    return 'I\u2019ve been reading about ' + named + ' and I\u2019d like to swim there.';
-  }
+  if (!usable) return generic;
 
   const theirs = usable.times && usable.times.length
     ? usable.times[0] + ' to ' + usable.times[usable.times.length - 1]
@@ -384,29 +422,6 @@ function useConverter(fn) { if (typeof fn === 'function') input_convert = fn; }
 // "400 im", which is the sort of thing that makes a reader stop.
 function spoken(result) {
   return result.distance + ' ' + (result.stroke === 'im' ? 'IM' : result.stroke);
-}
-
-// A gap said the way a person says it, ie, "a minute and nine seconds", not
-// "-1:09.67". Nobody reads a signed duration aloud, and nobody writes "1
-// minute" in a sentence either.
-const SPELLED = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
-  'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen',
-  'seventeen', 'eighteen', 'nineteen', 'twenty'];
-
-// Small numbers are spelled out in a sentence. "a minute and 10 seconds" reads
-// like a machine wrote it, which is the whole problem this rewrite is fixing.
-function spell(n) {
-  return n <= 20 ? SPELLED[n] : String(n);
-}
-
-function plainGap(swim, hundredths) {
-  const total = Math.abs(Math.round(hundredths / 100));
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  if (!minutes) return spell(seconds) + ' seconds';
-  const m = (minutes === 1 ? 'a minute' : spell(minutes) + ' minutes');
-  if (!seconds) return m;
-  return m + ' and ' + spell(seconds) + (seconds === 1 ? ' second' : ' seconds');
 }
 
 function seedRankingsFrom(swimmer) {
@@ -448,8 +463,8 @@ const api = {
   contactWindow: contactWindow,
   friendlyDate: friendlyDate,
   draftEmail: draftEmail,
-  plainGap: plainGap,
   spoken: spoken,
+  eventsSentence: eventsSentence,
   programmeLine: programmeLine,
   useConverter: useConverter,
   lastName: lastName,

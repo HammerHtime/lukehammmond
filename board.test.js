@@ -403,12 +403,16 @@ const canDraft = R.draftEmail({
   profileUrl: 'https://example.org',
   school: { id: 'utoronto', name: 'University of Toronto', coach: 'A Coach', email: 'c@utoronto.ca', division: 'USPORTS' }
 });
-ok('a Canadian coach is not told to wait', canDraft.body.indexOf('15 June 2027') === -1);
-ok('an American one still is', R.draftEmail({
+// The letter itself quotes no calendar at anybody now. What must still hold is
+// that the app knows the difference, because that is what the screen beside the
+// draft tells Andrew before he sends.
+ok('no letter quotes the calendar', canDraft.body.indexOf('15 June 2027') === -1);
+check('a Canadian coach may reply now', canDraft.window.open, true);
+check('and an American one may not yet', R.draftEmail({
   swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
   profileUrl: 'https://example.org',
   school: { id: 'x', name: 'X', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
-}).body.indexOf('15 June 2027') !== -1);
+}).window.replyDate, '2027-06-15');
 
 // The school record has to accept a Canadian programme at all.
 check('a U SPORTS school is valid', Sc.normaliseSchool({ name: 'University of Toronto', division: 'USPORTS', conference: 'OUA' }).ok, true);
@@ -448,7 +452,7 @@ check('and the portal check is openly not done yet', SWIMMER.school.ncaaPortalCh
 // places in the hand-written markup, so a club change was a code change. It is
 // data now, and the tests check the markup too, because that is where the
 // copies that survive a data edit live.
-check('the club is current', SWIMMER.club, 'Mississauga Swim Club');
+check('the club is current', SWIMMER.club, 'Mississauga Aquatic Club');
 check('and the former one is recorded, not erased', SWIMMER.formerClub, 'Lakeshore Swim Club');
 ['index.html', 'live-profile.js', 'recruiting.js'].forEach(function (f) {
   const src = require('fs').readFileSync(require('path').join(__dirname, f), 'utf8');
@@ -456,15 +460,15 @@ check('and the former one is recorded, not erased', SWIMMER.formerClub, 'Lakesho
 });
 
 // The club is in Mississauga and he lives in Etobicoke. The email said "with
-// Mississauga Swim Club in Etobicoke", which puts the club in the wrong town.
+// Mississauga Aquatic Club in Etobicoke", which puts the club in the wrong town.
 const clubDraft = R.draftEmail({
   swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
   profileUrl: 'https://example.org',
   school: { id: 'x', name: 'X', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
 });
-ok('the email names the club', clubDraft.body.indexOf('Mississauga Swim Club') !== -1);
+ok('the email names the club', clubDraft.body.indexOf('Mississauga Aquatic Club') !== -1);
 ok('and does not put it in the wrong town',
-  clubDraft.body.indexOf('Mississauga Swim Club in Etobicoke') === -1);
+  clubDraft.body.indexOf('Mississauga Aquatic Club in Etobicoke') === -1);
 ok('while still saying where he lives', clubDraft.body.indexOf('from Etobicoke, Ontario') !== -1);
 ok('and names the new coach', clubDraft.body.indexOf('Aris Bousoulegkas') !== -1);
 
@@ -487,7 +491,7 @@ const withCoach = R.draftEmail({
   results: results, today: '2026-09-18', profileUrl: 'https://example.org',
   school: { id: 'x', name: 'X', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
 });
-ok('and names them once one is set', withCoach.body.indexOf('My coach A New Coach') !== -1);
+ok('and names them once one is set', withCoach.body.indexOf('My coach, A New Coach,') !== -1);
 
 // The old name must not survive anywhere, including the hand-written markup,
 // which is where two of the four copies were.
@@ -504,14 +508,22 @@ const draft = R.draftEmail({
   profileUrl: 'https://example.org',
   school: { id: 'canisius', name: 'Canisius University', coach: 'Pat Smith', email: 'coach@canisius.edu', division: 'D1' }
 });
-ok('the email greets the coach by name', draft.body.indexOf('Dear Coach Smith') === 0);
+ok('the email greets the coach by name', draft.body.indexOf('Hi Coach Smith') === 0);
 // The rewrite briefly stopped naming the school anywhere in the body. Without
 // a personal note there was nothing school-specific at all, which is worse
 // than the form letter it replaced.
 ok('the email names the school', draft.body.indexOf('Canisius University') !== -1);
 ok('the email carries the 400 free', draft.body.indexOf('4:10.86') !== -1);
 ok('the email carries the profile link', draft.body.indexOf('https://example.org?c=canisius') !== -1);
-ok('the email explains the reply date', draft.body.indexOf('15 June 2027') !== -1);
+// The NCAA date came out of the letter. Andrew's draft says the same thing in
+// a fifteen year old's words, ie, "I know I'm still early in the recruiting
+// process", and the hard date is still on the screen beside the draft where it
+// belongs. Telling a coach the rule he wrote is not warm.
+ok('the letter does not quote the NCAA calendar at him',
+  draft.body.indexOf('15 June 2027') === -1);
+ok('but it says he is not expecting a reply yet',
+  /still early in the recruiting process/.test(draft.body));
+check('and the date is still returned for the screen', draft.window.replyDate, '2027-06-15');
 // A school with a contact but no personal note still warns, deliberately. The
 // thing that gets an email deleted is that it could have gone to two hundred
 // programmes, and no template can supply the line that fixes that.
@@ -527,8 +539,20 @@ const personalised = R.draftEmail({
 check('a personalised one raises nothing', personalised.warnings.length, 0);
 ok('and it uses the line rather than the generic one',
   personalised.body.indexOf('Buffalo is an easy drive') !== -1);
-ok('dropping the generic sentence when it does',
-  personalised.body.indexOf('I\u2019ve been looking at') === -1);
+ok('dropping the researched sentence when it does',
+  personalised.body.indexOf('I\u2019ve looked at what your') === -1);
+
+// With nothing researched and nothing written, the letter says nothing about
+// the programme rather than reaching for a sentence that could have gone to
+// two hundred of them. The paragraph above it already says he has been reading
+// about the school.
+const bare = R.draftEmail({
+  swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
+  profileUrl: 'https://example.org',
+  school: { id: 'x', name: 'X University', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
+});
+ok('no invented enthusiasm', bare.body.indexOf('I\u2019d like to swim there') === -1);
+ok('and no empty gap where it would have been', bare.body.indexOf('\n\n\n') === -1);
 
 // The email for a real school, end to end.
 const realDraft = R.draftEmail({
@@ -537,7 +561,7 @@ const realDraft = R.draftEmail({
   school: schools.filter(function (s) { return s.id === 'gannon'; })[0]
 });
 check('it is addressed to the verified address', realDraft.to, 'medo001@gannon.edu');
-ok('it greets Coach Medo', realDraft.body.indexOf('Dear Coach Medo') === 0);
+ok('it greets Coach Medo', realDraft.body.indexOf('Hi Coach Medo') === 0);
 check('and warns only that it needs a personal line', realDraft.warnings.length, 1);
 
 const noContact = R.draftEmail({
@@ -546,34 +570,92 @@ const noContact = R.draftEmail({
 });
 check('a missing coach email is a warning', noContact.warnings.length, 2);
 
-// ---------- the email reads like a person wrote it ----------
-// It read like a form letter. Coaches described inboxes in the hundreds, and
-// the thing that gets one deleted is that it could have gone to anyone.
+// ---------- the email is Andrew's letter, filled from live data ----------
+// He wrote the letter he wants sent. The job here is that every fact in it is
+// read from the profile rather than typed once, so a new swim in the back end
+// changes every draft.
 const voice = R.draftEmail({
   swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
   profileUrl: 'https://example.org',
   school: { id: 'x', name: 'X University', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
 });
-ok('it does not open with "My name is"', voice.body.indexOf('My name is') === -1);
-ok('nor announce that it is writing', voice.body.indexOf('I am writing because') === -1);
-ok('nobody "carries" a GPA', voice.body.indexOf('carry a') === -1);
-ok('and it does not thank them for their time', voice.body.indexOf('Thank you for your time') === -1);
 
-// The Junior Trials gap came off. A US coach carries his own standards and a
-// Canadian cut is noise to him, which was already true of the page.
+// Two earlier rules are overruled by his draft, and both were his to overrule.
+// He is fifteen, writing to an adult he has never met. Polite beats clever.
+ok('it introduces himself', voice.body.indexOf('My name is Luke Hammond') !== -1);
+ok('and thanks them for reading',
+  voice.body.indexOf('Thank you for taking the time to read my email') !== -1);
+ok('it says the class year in words', voice.body.indexOf('I\u2019m a Class of 2029 swimmer') !== -1);
+ok('it names the club with the article', voice.body.indexOf('train with the Mississauga Aquatic Club') !== -1);
+ok('it names the school in the opening', voice.body.indexOf('learning more about X University') !== -1);
+
+// The Junior Trials gap stays off. A US coach carries his own standards.
 ok('no Junior Trials gap', voice.body.indexOf('Junior Trials') === -1);
 
-// The improvement curve went in, because it is the strongest thing he has and
-// the first version left it out completely.
-ok('the curve is in the email', voice.body.indexOf('is my main event') !== -1);
-ok('said in words, not as a signed duration', voice.body.indexOf('a minute and ten seconds') !== -1);
-ok('and it claims every season only when true', voice.body.indexOf('faster every season') !== -1);
+// The events sentence is built, not typed, because his event profile will move.
+check('his events read the way a swimmer says them',
+  R.eventsSentence(S.rankedByPoints(results, 5, true)),
+  'the 400, 800 and 1500 freestyle, along with the 200 free and 400 IM');
+ok('and it is in the letter',
+  voice.body.indexOf('My primary events are the 400, 800 and 1500 freestyle') !== -1);
 
-// Small numbers are spelled out in a sentence.
-check('a gap under a minute', R.plainGap(S, -213), 'two seconds');
-check('a gap over one', R.plainGap(S, -6967), 'a minute and ten seconds');
-check('an exact minute', R.plainGap(S, -6000), 'a minute');
-check('and big numbers stay numerals', R.plainGap(S, -3050), '30 seconds');
+// The times block, one line per event, with the ranking only where one is set.
+ok('the 400 free is listed with its ranking',
+  voice.body.indexOf('400 Free LCM: 4:10.86, #2 in Canada for my age') !== -1);
+ok('the 800 too', voice.body.indexOf('800 Free LCM: 8:43.49, #3 in Canada for my age') !== -1);
+ok('the 1500 too', voice.body.indexOf('1500 Free LCM: 16:59.80, #5 in Canada for my age') !== -1);
+ok('the 200 too', voice.body.indexOf('200 Free LCM: 1:59.75, #4 in Canada for my age') !== -1);
+// No ranking is set for the 400 IM, so none is claimed. This is the same rule
+// as the public page, ie, a blank box means no badge, never a stale one.
+ok('and the 400 IM is listed without one', voice.body.indexOf('400 IM SCM: 4:41.07\n') !== -1);
+ok('with nothing invented after it', !/400 IM SCM: 4:41\.07,/.test(voice.body));
+
+// A cleared ranking must disappear from the letter, not revert to the seed.
+const noRanks = R.draftEmail({
+  swim: S, standards: St, swimmer: SWIMMER, results: results, today: '2026-09-18',
+  profileUrl: 'https://example.org', rankings: { '400-free-LCM': { rank: 9 } },
+  school: { id: 'x', name: 'X University', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
+});
+ok('a saved ranking is used', noRanks.body.indexOf('400 Free LCM: 4:10.86, #9 in Canada') !== -1);
+ok('and the ones not saved are gone', noRanks.body.indexOf('800 Free LCM: 8:43.49\n') !== -1);
+
+// The improvement curve is the argument. It came from the data, so it stays
+// true when he swims again.
+ok('the curve is in the letter', voice.body.indexOf('In 2023, my 400 free was 5:20.53') !== -1);
+ok('and says where it got to', voice.body.indexOf('brought that down to 4:10.86') !== -1);
+ok('claiming every season only when true',
+  voice.body.indexOf('have continued to improve each season') !== -1);
+ok('the second event follows it',
+  voice.body.indexOf('My 400 IM has followed a similar path, improving from 6:01.58 to 4:41.07') !== -1);
+
+// Training, academics and the two links.
+ok('the training load is his own sentence',
+  voice.body.indexOf('I train six days a week, about fifteen hours in the water.') !== -1);
+ok('the GPA is read from the profile',
+  voice.body.indexOf('3.5 GPA on a 4.0 scale') !== -1);
+ok('and the field of study reads as a choice',
+  voice.body.indexOf('studying history or exercise science') !== -1);
+ok('the profile link carries the school code',
+  voice.body.indexOf('https://example.org?c=x') !== -1);
+ok('and SwimCloud is offered as well',
+  voice.body.indexOf('https://www.swimcloud.com/swimmer/3306753/') !== -1);
+ok('the club coach is offered by name',
+  voice.body.indexOf('My coach, Aris Bousoulegkas, would also be happy to speak with you') !== -1);
+
+// The sign off, four lines, in his order.
+const tail = voice.body.trim().split('\n').slice(-4);
+check('the letter signs off as he wrote it', tail,
+  ['Luke Hammond', 'Class of 2029', 'Mississauga Aquatic Club', 'Etobicoke, Ontario, Canada']);
+
+// Nothing the engine cannot see. A swimmer with no results still gets a letter
+// rather than a half sentence with a hole in it.
+const empty = R.draftEmail({
+  swim: S, standards: St, swimmer: SWIMMER, results: [], today: '2026-09-18',
+  profileUrl: 'https://example.org',
+  school: { id: 'x', name: 'X University', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
+});
+ok('an empty season still writes a letter', empty.body.indexOf('My name is Luke Hammond') !== -1);
+ok('and claims no progress it cannot show', empty.body.indexOf('most proud of') === -1);
 
 // The 400 IM is not the "400 im".
 check('an initialism survives being said aloud', R.spoken({ distance: 400, stroke: 'im' }), '400 IM');

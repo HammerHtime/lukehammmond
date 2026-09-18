@@ -20,7 +20,7 @@ const SWIMMER = {
   name: 'Luke Hammond',
   shortName: 'Luke',
   classOf: 2029,
-  club: 'Mississauga Swim Club',
+  club: 'Mississauga Aquatic Club',
   clubShort: 'MSC',
   // Moved from Lakeshore Swim Club, September 2026. Worth knowing when reading
   // the results below: every swim on record was swum for Lakeshore. A club
@@ -32,7 +32,7 @@ const SWIMMER = {
   // because the one thing college coaches said they actually do is telephone
   // the club coach.
   coach: 'Aris Bousoulegkas',
-  coachTitle: 'Head Coach, Mississauga Swim Club',
+  coachTitle: 'Head Coach, Mississauga Aquatic Club',
   city: 'Etobicoke',
   province: 'Ontario',
   country: 'Canada',
@@ -48,13 +48,13 @@ const SWIMMER = {
     // What the email says. The full list reads "History and Exercise Science
     // and Kinesiology" once it is joined with "and", which is one "and" too
     // many for a sentence.
-    interestsShort: 'history and exercise science',
+    interestsShort: 'history or exercise science',
     note: 'Intended field of study, not yet declared.'
   },
 
   // Anything a coach could not work out from a times sheet.
   about: [
-    'Distance freestyler with Mississauga Swim Club, training under head coach ' +
+    'Distance freestyler with Mississauga Aquatic Club, training under head coach ' +
     'Aris Bousoulegkas. Lives in Etobicoke, Ontario. Started racing in spring 2022.',
     'Selected to the Swim Canada National ID Development Program and the Swim ' +
     'Ontario Aerobic Development Program.',
