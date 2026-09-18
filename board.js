@@ -331,8 +331,12 @@ function conferenceContext(swim, school, comparison) {
     // subject and so says nothing, ie, who won, what they won, and what it has
     // to do with Luke were all left to the reader. A line on a board has to
     // stand on its own.
-    sentence: 'It took ' + winner + ' to win this event at the ' + conf.meet.replace(/^2026 /, '') +
-      ' in 2026. ' + (gap <= 0
+    // The year comes off the meet name rather than being assumed. Canada West
+    // races its championship in November, so its 2025-26 meet is the 2025 one,
+    // and hardcoding 2026 produced "at the 2025 Canada West Championships in
+    // 2026", which is both wrong and confusing.
+    sentence: 'It took ' + winner + ' to win this event at the ' + conf.meet + '. ' +
+      (gap <= 0
         ? 'You are already quicker than that.'
         : 'You are ' + swim.formatGap(gap).replace('+', '') + ' off that.')
   };

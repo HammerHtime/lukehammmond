@@ -248,6 +248,28 @@ check('low confidence where none were gathered', row('hamilton').confidence, 'Lo
 check('RIT is benchmarked against a champion', row('rit').comparisons[0].basis, 'champion');
 check('American is benchmarked against a roster swimmer', row('american').comparisons[0].basis, 'roster');
 
+// ---------- Canadian programmes are marked on sight ----------
+// A red edge and a maple leaf, and not for decoration. U SPORTS puts no
+// calendar on contact, so these 26 are the only schools on the board he can
+// write to today. Every American one is silent until June 2027.
+const adminMarkup = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
+ok('the card takes a Canadian class', /class="school' \+ \(canada \? ' canada' : ''\)/.test(adminMarkup));
+ok('which draws a red left edge', /\.school\.canada\{border-left:4px solid var\(--leaf\)/.test(adminMarkup));
+ok('the leaf is inline SVG, not an emoji', adminMarkup.indexOf('<svg class="leaf"') !== -1);
+ok('and takes its colour from the theme', /\.leaf\{[^}]*color:var\(--leaf\)/.test(adminMarkup));
+// Both dark-mode forms, ie, the system preference and an explicit choice.
+ok('the red is redefined for dark mode',
+  /prefers-color-scheme: dark\)\{ :root:not\(\[data-theme="light"\]\)\{ --leaf:/.test(adminMarkup));
+ok('and for an explicit dark theme', /:root\[data-theme="dark"\]\{--leaf:/.test(adminMarkup));
+ok('and the key says what the edge means', /a red edge means U SPORTS/.test(adminMarkup));
+// The flag follows the helper, not a hardcoded list, so a school added later
+// gets it without anyone remembering to.
+check('every U SPORTS school is Canadian',
+  schools.filter(function (s) { return s.division === 'USPORTS' && !Sc.isCanadian(s); }).length, 0);
+check('and no American one is',
+  schools.filter(function (s) { return s.country === 'USA' && Sc.isCanadian(s); }).length, 0);
+check('twenty-six carry the flag', schools.filter(Sc.isCanadian).length, 26);
+
 // ---------- the tier says what year one looks like ----------
 // P1, P2 and P3 were a code you had to remember, and the card carried a second
 // scale underneath saying the same thing. The keys stay, because they sort and
@@ -389,11 +411,21 @@ ok('he is behind that time', canisiusConf.gap > 0);
 // and what it has to do with Luke were all left to the reader. Andrew could not
 // read it, which is the only test that matters.
 check('the line stands on its own', canisiusConf.sentence,
-  'It took 15:39.33 to win this event at the MAAC Championships in 2026. You are 44.78 off that.');
+  'It took 15:39.33 to win this event at the 2026 MAAC Championships. You are 44.78 off that.');
 ok('it names what it took', canisiusConf.sentence.indexOf('It took 15:39.33 to win') === 0);
-ok('and where', /at the MAAC Championships in 2026/.test(canisiusConf.sentence));
+ok('and which meet', /at the 2026 MAAC Championships/.test(canisiusConf.sentence));
+// Canada West races in November, so its 2025-26 meet is the 2025 one. The year
+// comes off the meet name, never assumed, or this read "the 2025 Canada West
+// Championships in 2026".
+ok('a November conference is not relabelled', /at the 2025 Canada West Championships\./.test(
+  B.conferenceContext(S, row('victoria').school,
+    row('victoria').comparisons.filter(function (c) { return c.event === '400-im-SCM'; })[0]).sentence));
+ok('and no sentence says a year twice',
+  rows.every(function (r) { return r.comparisons.every(function (c) {
+    const cf = B.conferenceContext(S, r.school, c);
+    return !cf || !/\b(20\d\d)\b.*\bin \1\b/.test(cf.sentence); }); }));
 ok('and where you sit against it', /You are 44\.78 off that\./.test(canisiusConf.sentence));
-ok('the meet year is not said twice', !/2026 MAAC Championships in 2026/.test(canisiusConf.sentence));
+
 
 // Ithaca sits in a different conference, so the same event gives a different
 // bar. That is the whole reason the column exists.
