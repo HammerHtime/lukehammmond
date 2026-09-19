@@ -132,6 +132,57 @@
   /* Canadian programmes carry a red edge and a leaf. Not decoration: U SPORTS
      puts no calendar on contact, so these are the only schools on the board he
      can write to today. Everything American is silent until June 2027. */
+  /* ---- the pipeline on a school card ---- */
+  .pipeline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin: 10px 0 4px; }
+  .pipeline select { max-width: 190px; font-size: 12.5px; padding: 5px 8px; margin: 0; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fact { font-size: 11.5px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--ink-faint); }
+  .fact.good { border-color: var(--good); color: var(--good); }
+  .fact.warn { border-color: var(--warn); color: var(--warn); }
+  .fact.pool { border-color: var(--pool); color: var(--pool); }
+  .fact.mute { opacity: .8; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* ---- the dashboard ---- */
+  .dash { margin-bottom: 22px; border-color: var(--pool); }
+  .dash-head { display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .dash-head h2 { margin: 0; font-size: 20px; }
+  .dash-date { font-size: 12.5px; color: var(--ink-faint); }
+  .dash-tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    margin-bottom: 18px; }
+  .dash-tile { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+    background: var(--line-soft); }
+  .dash-tile-label { font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--ink-faint); font-weight: 700; }
+  .dash-tile-value { font-size: 22px; font-weight: 640; margin-top: 2px; }
+  .dash-tile-sub { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+  .dash-pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+  .dash-pill { font-size: 12.5px; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--card); }
+  .dash-pill strong { font-weight: 700; }
+  .dash-pill.good { border-color: var(--good); color: var(--good); }
+  .dash-pill.warn { border-color: var(--warn); color: var(--warn); }
+  .dash-pill.mute, .dash-pill.zero { color: var(--ink-faint); border-color: var(--line); }
+  .dash-stages { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px;
+    color: var(--ink-faint); margin-bottom: 4px; }
+  .dash-sub { font-size: 12.5px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--ink-faint); margin: 18px 0 8px; }
+  .dash-list { list-style: none; margin: 0; padding: 0; }
+  .dash-item { display: flex; gap: 10px; align-items: baseline; padding: 7px 0 7px 12px;
+    border-left: 3px solid var(--line); margin-bottom: 4px; flex-wrap: wrap; }
+  .dash-item.viewed { border-left-color: var(--pool); }
+  .dash-item.can-send { border-left-color: var(--good); }
+  .dash-item.follow-up, .dash-item.disagrees { border-left-color: var(--warn); }
+  .dash-item.no-contact, .dash-item.stale-contact { border-left-color: var(--bad); }
+  .dash-item-school { font-weight: 640; min-width: 170px; }
+  .dash-more .dash-item-school { font-weight: 400; color: var(--ink-faint); font-style: italic; }
+  .dash-item-text { font-size: 13px; color: var(--ink-faint); }
+  @media (max-width: 560px) { .dash-item-school { min-width: 0; width: 100%; } }
+
   .school.canada{border-left:4px solid var(--leaf);padding-left:15px}
   .leaf{width:15px;height:15px;flex:none;vertical-align:-2px;color:var(--leaf)}
   .school-where .leaf{margin-right:5px}
@@ -217,7 +268,16 @@
       <a href="#" id="lock">Lock</a></div>
   </div>
 
-  <!-- The thing that happens most often goes first and nothing above it. -->
+  <!-- Where Luke stands, who can be written to, and what needs doing. Above
+       Add a swim because it is the answer to "what now", and the form below is
+       only useful once that question has one. -->
+  <div class="card dash" id="dashCard"><div class="pad">
+    <div id="dashTimes"></div>
+    <div id="dashCounts"></div>
+    <div id="dashAttention"></div>
+  </div></div>
+
+  <!-- The thing that happens most often goes next and nothing between them. -->
   <h2>Add a swim</h2>
   <div class="card"><div class="pad">
     <div class="field"><label>Course</label><div class="chips" id="courseChips"></div></div>
@@ -283,6 +343,7 @@
 
   <h2>The board</h2>
   <div id="boardTable"></div>
+  <div class="msg" id="boardMsg"></div>
   <p class="hint" id="boardNote"></p>
 
   <h2>What a drop would unlock</h2>
@@ -378,6 +439,7 @@
 <script src="standards.js"></script>
 <script src="board.js"></script>
 <script src="recruiting.js"></script>
+<script src="dashboard.js"></script>
 <script>
 (function () {
   'use strict';
@@ -404,6 +466,7 @@
   var key = '';
   var results = [];
   var schools = [];
+  var visits = {};
   var today = new Date().toISOString().slice(0, 10);
 
   function api(path, options) {
@@ -450,17 +513,21 @@
     Promise.all([
       fetch('/api/results').then(function (r) { return r.json(); }).catch(function () { return {}; }),
       api('/api/schools').catch(function () { return { schools: [] }; }),
+      // /api/visits has existed since the visit counter shipped and nothing
+      // has ever read it, ie, the data was collected and never shown.
+      api('/api/visits').catch(function () { return { visits: {} }; }),
       fetch('/api/profile').then(function (r) { return r.json(); }).catch(function () { return {}; }),
       fetch('/api/photos').then(function (r) { return r.json(); }).catch(function () { return {}; })
     ]).then(function (both) {
       var raw = both[0] && Array.isArray(both[0].results) && both[0].results.length ? both[0].results : SEED;
       results = clean(raw);
       schools = both[1].schools || [];
-      if (both[2] && both[2].profile) {
-        rankings = window.SwimmerData.rankingsFrom(both[2].profile);
-        coach = both[2].profile.coach || {};
+      visits = (both[2] && both[2].visits) || {};
+      if (both[3] && both[3].profile) {
+        rankings = window.SwimmerData.rankingsFrom(both[3].profile);
+        coach = both[3].profile.coach || {};
       }
-      photos = (both[3] && both[3].photos) || [];
+      photos = (both[4] && both[4].photos) || [];
       buildPickers();
       renderAll();
       checkTopUp();
@@ -474,6 +541,7 @@
   }
 
   function renderAll() {
+    renderDashboard();
     renderCoach();
     renderEligibility();
     renderRosterCount();
@@ -485,6 +553,126 @@
     renderDraftSchools();
     renderMeets();
     renderWindow();
+  }
+
+
+  // ---------- the dashboard ----------
+  // Three questions, answered before anything else on the screen: where does
+  // Luke stand today, who is allowed to hear from him, and what needs doing.
+  function renderDashboard() {
+    var D = window.Dashboard;
+    if (!D || !B) return;
+
+    var bests = S.personalBests(results);
+    var yards = C ? C.yardBests(S, results) : {};
+    var rows = B.scoreBoard(S, C.boardBests(S, results), schools);
+
+    // ---- Luke today ----
+    // His primary events, plus the yards equivalent an American coach reads,
+    // so the first thing on the screen is the number the whole board turns on.
+    var tiles = (SWIMMER.primary || []).map(function (pr) {
+      var id = S.eventId(pr.distance, pr.stroke, pr.course);
+      var best = bests[id];
+      if (!best) return '';
+      // The yards line is the number an American coach actually reads. It is
+      // only shown where a mapping exists, ie, never invented for an event
+      // that has no honest equivalent.
+      var map = C && C.mappingFor ? C.mappingFor(id) : null;
+      var yard = map && yards[map.to];
+      return '<div class="dash-tile">' +
+        '<div class="dash-tile-label">' + esc(best.distance) + 'm ' +
+          esc(S.STROKE_LABEL[best.stroke]) + ' ' + esc(best.course) + '</div>' +
+        '<div class="dash-tile-value">' + esc(best.time) + '</div>' +
+        (yard ? '<div class="dash-tile-sub">' + esc(yard.time) + ' \u00b7 ' +
+          esc(yard.name) + ' yards</div>' : '') +
+        '</div>';
+    }).filter(Boolean).join('');
+
+    el('dashTimes').innerHTML =
+      '<div class="dash-head"><h2>' + esc(SWIMMER.name) + ', class of ' + esc(SWIMMER.classOf) + '</h2>' +
+      '<span class="dash-date">' + esc(friendlyToday()) + '</span></div>' +
+      (tiles ? '<div class="dash-tiles">' + tiles + '</div>' : '');
+
+    // ---- the picture ----
+    var ctx = {
+      today: today,
+      visits: visits,
+      windowFor: function (division) { return R.contactWindow(division, SWIMMER.classOf, today); },
+      tierLabel: function (p) { var t = B.tierFor(p, true); return t ? t.label : null; }
+    };
+    var picture = D.summarise(rows, ctx);
+    var c = picture.counts;
+
+    function pill(n, label, tone) {
+      return '<span class="dash-pill' + (tone ? ' ' + tone : '') + (n ? '' : ' zero') + '">' +
+        '<strong>' + n + '</strong> ' + esc(label) + '</span>';
+    }
+
+    // The split that matters most and was invisible until today. Forty of the
+    // sixty-four programmes can legally be written to and can legally write
+    // back. The app used to say nobody could until June 2027.
+    el('dashCounts').innerHTML =
+      '<div class="dash-pills">' +
+        pill(c.schools, 'on the board') +
+        pill(c.openNow, 'can be emailed today', 'good') +
+        pill(c.waiting, 'wait for 15 June 2027', 'mute') +
+        pill(c.viewedRecently, 'opened the profile', c.viewedRecently ? 'good' : '') +
+        pill(c.disagreeing, 'engine disagrees', c.disagreeing ? 'warn' : '') +
+        pill(c.staleContacts + c.noContact, 'contacts to check', (c.staleContacts + c.noContact) ? 'warn' : '') +
+        pill(c.staleBenchmarks + c.noBenchmarks, 'benchmarks to check', (c.staleBenchmarks + c.noBenchmarks) ? 'warn' : '') +
+      '</div>' +
+      '<div class="dash-stages">' +
+        D.STAGES.filter(function (st) { return c.byStage[st.key]; }).map(function (st) {
+          return '<span class="dash-stage"><strong>' + c.byStage[st.key] + '</strong> ' +
+            esc(st.label.toLowerCase()) + '</span>';
+        }).join('') +
+      '</div>';
+
+    // ---- what needs attention ----
+    // One item per school, its most urgent. Then capped at three per kind,
+    // because forty schools that can all be emailed today is one fact, not
+    // forty. The first cut of this screen listed them one per line and read
+    // like a phone book, ie, it was a count wearing a queue's clothes.
+    var seen = {};
+    var perSchool = picture.attention.filter(function (item) {
+      if (seen[item.school.id]) return false;
+      seen[item.school.id] = true;
+      return true;
+    });
+
+    var PER_KIND = 3;
+    var kindCount = {};
+    var queue = [];
+    var overflow = {};
+    perSchool.forEach(function (item) {
+      kindCount[item.kind] = (kindCount[item.kind] || 0) + 1;
+      if (kindCount[item.kind] <= PER_KIND) queue.push(item);
+      else overflow[item.kind] = (overflow[item.kind] || 0) + 1;
+    });
+
+    var more = Object.keys(overflow).map(function (kind) {
+      var n = overflow[kind];
+      return '<li class="dash-item ' + esc(kind) + ' dash-more">' +
+        '<span class="dash-item-school">' + n + ' more</span>' +
+        '<span class="dash-item-text">' + esc(D.summaryFor(kind)) + '</span></li>';
+    }).join('');
+
+    el('dashAttention').innerHTML = queue.length
+      ? '<h3 class="dash-sub">What needs attention</h3>' +
+        '<ul class="dash-list">' + queue.map(function (item) {
+          return '<li class="dash-item ' + esc(item.kind) + '">' +
+            '<span class="dash-item-school">' + esc(item.school.name) + '</span>' +
+            '<span class="dash-item-text">' + esc(item.text) + '</span></li>';
+        }).join('') + more + '</ul>'
+      : '<p class="hint" style="margin:14px 0 0">Nothing outstanding. Every school on the board ' +
+        'has a verified contact, current benchmarks and a settled priority.</p>';
+  }
+
+  function friendlyToday() {
+    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+      'August', 'September', 'October', 'November', 'December'];
+    var p = today.split('-');
+    return Number(p[2]) + ' ' + months[Number(p[1]) - 1] + ' ' + p[0];
   }
 
   // ---------- add a swim ----------
@@ -1023,6 +1211,81 @@
   var LEAF = '<svg class="leaf" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true">' +
     '<path d="M256 32l-30 56c-3 6-9 5-15 2l-22-11 16 87c3 16-8 16-14 9l-38-43-6 22c-1 3-4 6-10 5l-49-10 13 47c3 10 5 15-3 18l-11 5 52 42c5 4 8 7 6 14l-9 30 50-4c14-2 20 1 20 10l-2 56h15l-3-56c0-9 6-12 20-10l50 4-9-30c-2-7 1-10 6-14l52-42-11-5c-8-3-6-8-3-18l13-47-49 10c-6 1-9-2-10-5l-6-22-38 43c-6 7-17 7-14-9l16-87-22 11c-6 3-12 4-15-2z"/></svg>';
 
+  // One line per school: where it is in the pipeline, when a coach may hear
+  // from it, how old what we know is, and whether anyone has been on the page.
+  // Moving a school along the pipeline. Saved straight away rather than behind
+  // a Save button, because the whole point is that it takes one click after
+  // sending an email, and a step that takes two clicks does not get taken.
+  //
+  // Entering "contacted" stamps the date, so the follow-up counter on the
+  // dashboard starts on its own. Andrew should never have to type today's date
+  // to make the app notice that he sent something today.
+  function setStage(id, stage) {
+    var next = schools.map(function (sc) {
+      if (sc.id !== id) return sc;
+      var copy = Object.assign({}, sc, { status: stage });
+      if (stage === 'contacted' && !sc.lastContact) copy.lastContact = today;
+      if (stage === 'researching') copy.lastContact = '';
+      return copy;
+    });
+    api('/api/schools', { method: 'PUT', body: JSON.stringify({ schools: next }) })
+      .then(function (r) {
+        schools = r.schools || next;
+        renderDashboard();
+        renderBoard();
+        renderSchools();
+      })
+      .catch(function (err) { say('boardMsg', 'bad', esc(err.message)); });
+  }
+
+  function pipelineRow(school) {
+    var D = window.Dashboard;
+    if (!D) return '';
+    var stage = D.stageOf(school);
+    var age = D.ageReport(school, today);
+    var win = R.contactWindow(school.division, SWIMMER.classOf, today);
+    var visit = visits[school.id];
+
+    var options = D.STAGES.map(function (st) {
+      return '<option value="' + esc(st.key) + '"' +
+        (st.key === stage ? ' selected' : '') + '>' + esc(st.label) + '</option>';
+    }).join('');
+
+    var facts = [];
+    if (win) {
+      facts.push(win.open
+        ? '<span class="fact good">can be emailed today</span>'
+        : '<span class="fact mute">coach may reply ' + esc(R.friendlyDate(win.replyDate)) + '</span>');
+    }
+    if (school.lastContact) {
+      var waited = D.daysBetween(school.lastContact, today);
+      facts.push('<span class="fact">emailed ' + esc(waited) + 'd ago</span>');
+    }
+    // Stated in days rather than as a date, because "94 days" prompts a recheck
+    // and "2026-06-17" does not.
+    if (school.email) {
+      facts.push(age.contactStale
+        ? '<span class="fact warn">contact ' + (age.contactDays === null
+            ? 'never verified' : esc(age.contactDays) + 'd old') + '</span>'
+        : '<span class="fact">contact ' + esc(age.contactDays) + 'd old</span>');
+    }
+    if ((school.benchmarks || []).length && age.benchmarkStale) {
+      facts.push('<span class="fact warn">benchmarks ' + (age.benchmarkDays === null
+        ? 'undated' : esc(age.benchmarkDays) + 'd old') + '</span>');
+    }
+    if (visit && visit.count) {
+      facts.push('<span class="fact pool">' + esc(visit.count) + ' profile ' +
+        (visit.count === 1 ? 'visit' : 'visits') + ', last ' + esc(visit.last) + '</span>');
+    }
+
+    return '<div class="pipeline">' +
+      '<label class="sr-only" for="stage-' + esc(school.id) + '">Pipeline stage</label>' +
+      '<select id="stage-' + esc(school.id) + '" data-stage="' + esc(school.id) + '">' +
+        options + '</select>' +
+      '<div class="facts">' + facts.join('') + '</div>' +
+      '</div>';
+  }
+
   function renderBoard() {
     // boardBests, not yardBests. American programmes race yards, which he has
     // never swum, so those run on converted times. Canadian programmes race
@@ -1083,12 +1346,15 @@
         // pill unreadable in the first place.
         '<div class="school-tags">' +
           '<span class="tag">' + esc(r.confidence) + ' confidence</span>' +
-          '<span class="tag">' + esc(r.school.status || 'Not contacted') + '</span>' +
           (r.school.verified ? '<span class="tag fit-good">contact on file</span>' : '') +
           (r.disagrees && suggested
             ? '<span class="tag fit-warn">engine reads it \u201c' + esc(suggested.label) + '\u201d</span>' : '') +
           (fromEngine ? '<span class="tag">engine\u2019s call, you have not set one</span>' : '') +
         '</div>' +
+
+        // The pipeline. A free-text "status" tag was being shown and could not
+        // be set from anywhere, so every school read "Not contacted" forever.
+        pipelineRow(r.school) +
 
         (r.school.note ? '<p class="school-note">' + esc(r.school.note) + '</p>' : '') +
 
@@ -1123,6 +1389,10 @@
     // screen could make that a person would not catch.
     Array.prototype.forEach.call(el('boardTable').querySelectorAll('[data-email]'), function (b) {
       b.addEventListener('click', function () { draftFor(b.dataset.email); });
+    });
+
+    Array.prototype.forEach.call(el('boardTable').querySelectorAll('[data-stage]'), function (sel) {
+      sel.addEventListener('change', function () { setStage(sel.dataset.stage, sel.value); });
     });
 
     var unassessed = rows.filter(function (r) { return r.evidenceCount === 0; }).length;

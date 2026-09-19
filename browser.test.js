@@ -35,7 +35,7 @@ function check(name, actual, expected) {
 // pages, which is what the last test in this file checks.
 const PUBLIC = ['swim.js', 'swimmer.js', 'convert.js', 'photos.js', 'recruiting.js',
   'standards.js', 'charts.js'];
-const ADMIN = ['swim.js', 'swimmer.js', 'convert.js', 'school-utils.js', 'roster.js', 'eligibility.js', 'photos.js', 'standards.js', 'board.js', 'recruiting.js'];
+const ADMIN = ['swim.js', 'swimmer.js', 'convert.js', 'school-utils.js', 'roster.js', 'eligibility.js', 'photos.js', 'standards.js', 'board.js', 'recruiting.js', 'dashboard.js'];
 
 // One shared global, no `module`, exactly as a browser presents it.
 function loadLikeABrowser(files) {

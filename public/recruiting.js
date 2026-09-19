@@ -13,11 +13,23 @@
 // Source: NCAA Division I recruiting calendar, swimming and diving.
 // Recorded 18 September 2026.
 //
-// NCAA Division II. Published guidance disagrees. Some sources give the same
-// 15 June after sophomore year date, others say D2 coaches may call and write
-// at any time with only in-person contact restricted. Until the NCAA Division
-// II recruiting guide is read directly, the app uses the later, safer date and
-// marks it unconfirmed, ie, it never promises a reply that may not come.
+// NCAA Division II. Resolved 19 September 2026 by reading the NCAA's own
+// 2026-27 Division II Coaches Off-Campus Recruiting Guide. Under the freshman
+// and sophomore heading it says, in full: "Athletically related recruiting
+// materials may be sent at anytime." The 15 June gate in that guide covers
+// only in-person off-campus contact and official visits. Division II dropped
+// the communication restriction on 1 August 2024.
+//
+// This was the app's most expensive wrong answer. Nine programmes on the board
+// are Division II and the app was telling Andrew none of them could write back
+// until June 2027. They can write back today.
+//
+// NCAA Division III. Resolved the same day from the Division III Manual
+// itself, Bylaw 13.02.10.1: "There are no restrictions on the timing for
+// electronic communication (e.g., telephone call, electronic mail, Instant
+// Messenger, text messages or facsimiles) to prospective student-athletes."
+// Bylaw 13.4.1.1 says the same of recruiting materials, and 13.02.10.2 permits
+// a telephone call at any time.
 // Wrapped in a function on purpose. The browser runs every script tag in ONE
 // shared scope, so two files that both declare `const api` at the top level
 // throw "Identifier 'api' has already been declared" and every script after
@@ -38,21 +50,27 @@ const CONTACT_RULES = {
   },
   D2: {
     division: 'NCAA Division II',
-    rule: 'A coach may not reply until 15 June after sophomore year.',
-    monthDay: '06-15',
-    yearsBeforeGraduation: 2,
-    confirmed: false,
-    source: 'Published guidance disagrees. Using the later date until the NCAA Division II recruiting guide is read directly.',
-    recorded: '2026-09-18'
+    rule: 'A coach may write, call and text at any time. Meeting in person off campus, and any expense-paid visit, waits until 15 June after sophomore year.',
+    monthDay: null,
+    yearsBeforeGraduation: null,
+    open: true,
+    // The half that is still on a calendar. Kept separate from `open` so the
+    // app can say "write now, visit later" rather than flattening the two.
+    inPersonMonthDay: '06-15',
+    inPersonYearsBeforeGraduation: 2,
+    confirmed: true,
+    source: 'NCAA 2026-27 Division II Coaches Off-Campus Recruiting Guide, freshman and sophomore heading: "Athletically related recruiting materials may be sent at anytime." The 15 June heading in the same guide lists only in-person off-campus contacts and official visits.',
+    recorded: '2026-09-19'
   },
   D3: {
     division: 'NCAA Division III',
-    rule: 'A coach may not reply until 15 June after sophomore year.',
-    monthDay: '06-15',
-    yearsBeforeGraduation: 2,
-    confirmed: false,
-    source: 'Division III rules are widely described as far looser than Division I, with little or no restriction on when a coach may make contact. Not yet read from the NCAA Division III manual, so the app uses the later, safer date and promises nothing it has not confirmed.',
-    recorded: '2026-09-18'
+    rule: 'A coach may write, call, text or message at any time. There is no date.',
+    monthDay: null,
+    yearsBeforeGraduation: null,
+    open: true,
+    confirmed: true,
+    source: 'NCAA Division III Manual, Bylaw 13.02.10.1: "There are no restrictions on the timing for electronic communication (e.g., telephone call, electronic mail, Instant Messenger, text messages or facsimiles) to prospective student-athletes." Bylaw 13.4.1.1 says the same of recruiting materials, and 13.02.10.2 permits a telephone call at any time.',
+    recorded: '2026-09-19'
   },
   NAIA: {
     division: 'NAIA',
@@ -90,6 +108,24 @@ const CONTACT_RULES = {
   }
 };
 
+// The date a coach in this division may first meet Luke off campus or pay for
+// a visit. Only Division II has one of these while still being open to write.
+function inPersonDateFor(division, classOf) {
+  const rule = CONTACT_RULES[division];
+  if (!rule || !rule.inPersonMonthDay) return null;
+  if (!Number.isFinite(Number(classOf))) return null;
+  return (Number(classOf) - rule.inPersonYearsBeforeGraduation) + '-' + rule.inPersonMonthDay;
+}
+
+function openMessage(rule, division, classOf) {
+  const visit = inPersonDateFor(division, classOf);
+  if (visit) {
+    return 'A ' + rule.division + ' coach can reply now. Meeting in person off campus, ' +
+      'and any expense-paid visit, waits until ' + friendlyDate(visit) + '.';
+  }
+  return 'A ' + rule.division + ' coach is not bound by the NCAA calendar and can reply now.';
+}
+
 // The date a coach in this division may first write back.
 function replyDateFor(division, classOf) {
   const rule = CONTACT_RULES[division];
@@ -116,7 +152,10 @@ function contactWindow(division, classOf, today) {
       confirmed: rule.confirmed,
       rule: rule.rule,
       source: rule.source,
-      message: 'A ' + rule.division + ' coach is not bound by the NCAA calendar and can reply now.' +
+      // Division II is open for writing and closed for visiting, so the date
+      // still matters there even though a coach may reply today.
+      inPersonDate: inPersonDateFor(division, classOf),
+      message: openMessage(rule, division, classOf) +
         (rule.confirmed ? '' : ' Not yet confirmed from that body\u2019s own rules.')
     };
   }
@@ -460,6 +499,7 @@ function listOut(items) {
 const api = {
   CONTACT_RULES: CONTACT_RULES,
   replyDateFor: replyDateFor,
+  inPersonDateFor: inPersonDateFor,
   contactWindow: contactWindow,
   friendlyDate: friendlyDate,
   draftEmail: draftEmail,

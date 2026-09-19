@@ -633,7 +633,26 @@ check('a D1 coach cannot reply until June 2027', R.replyDateFor('D1', 2029), '20
 check('the window is shut today', R.contactWindow('D1', 2029, '2026-09-18').open, false);
 check('and open the day it opens', R.contactWindow('D1', 2029, '2027-06-15').open, true);
 check('and open after', R.contactWindow('D1', 2029, '2027-08-01').open, true);
-ok('the D2 rule is marked unconfirmed', R.CONTACT_RULES.D2.confirmed === false);
+// Division II was the app's most expensive wrong answer. The rule was recorded
+// as "a coach may not reply until 15 June after sophomore year" and marked
+// unconfirmed, with a note saying it would stand until the NCAA Division II
+// recruiting guide was read directly. That guide was read on 19 September 2026.
+// Under its freshman and sophomore heading it says, in full: "Athletically
+// related recruiting materials may be sent at anytime." Its 15 June heading
+// lists only in-person off-campus contacts and official visits.
+//
+// Nine programmes on the board are Division II. The app had been telling Andrew
+// that none of them could write back for another nine months.
+ok('the D2 rule is confirmed now, from the NCAA guide itself', R.CONTACT_RULES.D2.confirmed === true);
+ok('and it cites that guide', R.CONTACT_RULES.D2.source.indexOf('2026-27 Division II Coaches') !== -1);
+check('a D2 coach may reply today', R.contactWindow('D2', 2029, '2026-09-19').open, true);
+check('and there is no reply date to wait for', R.contactWindow('D2', 2029, '2026-09-19').replyDate, null);
+// The half of the D2 rule that IS still on a calendar. Flattening the two into
+// one "open" would have been the same mistake in the other direction.
+check('but meeting in person still waits', R.inPersonDateFor('D2', 2029), '2027-06-15');
+ok('and the message says so',
+  R.contactWindow('D2', 2029, '2026-09-19').message.indexOf('15 June 2027') !== -1);
+ok('while Division I has no such split', R.inPersonDateFor('D1', 2029) === null);
 ok('the shut message names the date', R.contactWindow('D1', 2029, '2026-09-18').message.indexOf('15 June 2027') !== -1);
 
 // ---------- Canadian programmes ----------
@@ -648,8 +667,21 @@ ok('and now it is confirmed, from U SPORTS own policy', canada.confirmed === tru
 ok('while the CCAA, unresearched, still does not claim to be',
   R.CONTACT_RULES.CCAA.confirmed === false);
 check('the CCAA reads the same way', R.contactWindow('CCAA', 2029, '2026-09-18').open, true);
-check('Division III still uses the safe date', R.contactWindow('D3', 2029, '2026-09-18').open, false);
-ok('and is marked unconfirmed', R.CONTACT_RULES.D3.confirmed === false);
+// Division III, read from the Division III Manual on 19 September 2026. Bylaw
+// 13.02.10.1: "There are no restrictions on the timing for electronic
+// communication (e.g., telephone call, electronic mail, Instant Messenger,
+// text messages or facsimiles) to prospective student-athletes."
+check('a D3 coach may reply today', R.contactWindow('D3', 2029, '2026-09-19').open, true);
+ok('confirmed from the Division III manual', R.CONTACT_RULES.D3.confirmed === true);
+ok('and it cites the bylaw', R.CONTACT_RULES.D3.source.indexOf('13.02.10.1') !== -1);
+check('with no date attached', R.contactWindow('D3', 2029, '2026-09-19').replyDate, null);
+ok('and no in-person gate either', R.inPersonDateFor('D3', 2029) === null);
+
+// The NAIA has NOT been read, so it keeps the later, safer date and keeps
+// saying it is unconfirmed. Confirming two bodies is not a licence to assume
+// the third.
+ok('the NAIA is still unconfirmed', R.CONTACT_RULES.NAIA.confirmed === false);
+check('and still uses the safe date', R.contactWindow('NAIA', 2029, '2026-09-19').open, false);
 
 // The email used to read every school as Division I, which told a Canadian
 // coach he could not reply until June 2027. He can.
@@ -1089,6 +1121,158 @@ check('a blank never overwrites a verified contact',
 check('a nonsense address is refused', Sc.normaliseSchool({ name: 'A', division: 'D1', email: 'not-an-address' }).ok, false);
 check('a school with no division is refused', Sc.normaliseSchool({ name: 'A' }).ok, false);
 check('verified is false without an address', Sc.normaliseSchool({ name: 'A', division: 'D1', verified: true }).school.verified, false);
+
+// ---------- the dashboard ----------
+// The back end had everything and surfaced nothing. It opened onto a form and
+// a table of sixty-four rows, and the counting was left to Andrew: which
+// schools may be written to, which contact is old enough to bounce, which
+// coach has been on the page, which email was never answered.
+const Dash = require('./public/dashboard.js');
+
+// The pipeline. `status` has always been free text defaulting to "Not
+// contacted", shown as a tag and settable from nowhere, so every school read
+// "Not contacted" forever. Old values map rather than being thrown away.
+check('the pipeline runs in order', Dash.STAGES.map(function (s) { return s.key; }),
+  ['researching', 'ready', 'contacted', 'viewed', 'replied', 'call', 'visit', 'closed']);
+check('an empty status starts at the beginning', Dash.stageOf({ status: '' }), 'researching');
+check('so does the old default', Dash.stageOf({ status: 'Not contacted' }), 'researching');
+check('a label maps back to its key', Dash.stageOf({ status: 'Ready to contact' }), 'ready');
+check('free text is read where it plainly means something',
+  Dash.stageOf({ status: 'coach replied' }), 'replied');
+check('and where it means closed', Dash.stageOf({ status: 'declined' }), 'closed');
+// 'no' as a prefix matched "nonsense" and filed it as closed. Anything
+// unrecognised now sits at the start rather than somewhere invented.
+check('nonsense is not read as a decision', Dash.stageOf({ status: 'nonsense' }), 'researching');
+check('nor is a month', Dash.stageOf({ status: 'November' }), 'researching');
+check('but a bare no is', Dash.stageOf({ status: 'no' }), 'closed');
+
+// Data age. Contacts go stale faster than benchmarks: staff move in the
+// spring, and a bounced address in 2027 is a wasted slot.
+ok('a contact is stale sooner than a benchmark',
+  Dash.CONTACT_STALE_DAYS < Dash.BENCHMARK_STALE_DAYS);
+check('days are counted plainly', Dash.daysBetween('2026-06-01', '2026-09-19'), 110);
+check('a missing date counts as nothing', Dash.daysBetween('', '2026-09-19'), null);
+check('so does rubbish', Dash.daysBetween('soon', '2026-09-19'), null);
+
+const fresh = Dash.ageReport(
+  { email: 'a@b.ca', verifiedOn: '2026-09-01', benchmarks: [1], benchmarksCheckedOn: '2026-09-01' },
+  '2026-09-19');
+ok('a recent contact is not flagged', fresh.contactStale === false);
+ok('nor are recent benchmarks', fresh.benchmarkStale === false);
+
+const old = Dash.ageReport(
+  { email: 'a@b.ca', verifiedOn: '2026-01-05', benchmarks: [1], benchmarksCheckedOn: '2024-01-05' },
+  '2026-09-19');
+ok('an old contact is flagged', old.contactStale);
+ok('and old benchmarks are', old.benchmarkStale);
+
+// Never verified is worse than verified long ago, and both need a look.
+const never = Dash.ageReport({ email: 'a@b.ca', verifiedOn: '', benchmarks: [] }, '2026-09-19');
+ok('a contact that was never verified is flagged', never.contactStale);
+check('and has no age to report', never.contactDays, null);
+// A school with no email is not a stale contact, it is a missing one. Calling
+// it stale would hide it among the ones that merely need re-checking.
+ok('a school with no email is not called stale',
+  Dash.ageReport({ email: '', verifiedOn: '' }, '2026-09-19').contactStale === false);
+ok('and a school with no benchmarks is not called stale either',
+  Dash.ageReport({ email: 'a@b.ca', verifiedOn: '2026-09-01', benchmarks: [] }, '2026-09-19')
+    .benchmarkStale === false);
+
+// The summary. Built on the real board so the numbers are the real numbers.
+const dashSchools = Sc.seedSchools();
+const dashResults = require('./public/swimmer.js').SEED_RESULTS
+  .map(S.normaliseResult).filter(function (r) { return r.ok; })
+  .map(function (r) { return r.result; });
+const dashRows = B.scoreBoard(S, C.boardBests(S, dashResults), dashSchools);
+const dashCtx = {
+  today: '2026-09-19',
+  visits: {},
+  windowFor: function (division) { return R.contactWindow(division, 2029, '2026-09-19'); },
+  tierLabel: function (p) { const t = B.tierFor(p, true); return t ? t.label : null; }
+};
+const picture = Dash.summarise(dashRows, dashCtx);
+
+check('every school is counted once', picture.counts.schools, dashSchools.length);
+check('and split into those who may answer and those who may not',
+  picture.counts.openNow + picture.counts.waiting, dashSchools.length);
+// The number this whole screen exists to show. Forty of the sixty-four can be
+// written to today. Before the D2 and D3 rules were read, the app said none.
+ok('most of the board can be emailed today', picture.counts.openNow > picture.counts.waiting);
+check('and the ones waiting are the Division I programmes',
+  picture.counts.waiting,
+  dashSchools.filter(function (sc) { return sc.division === 'D1'; }).length);
+
+// Every school lands on exactly one rung.
+const staged = Object.keys(picture.counts.byStage)
+  .reduce(function (n, k) { return n + picture.counts.byStage[k]; }, 0);
+check('every school sits on exactly one rung', staged, dashSchools.length);
+
+// Attention items. Ranked so the rarest, most perishable signal is first.
+const withVisit = Object.assign({}, dashCtx, {
+  visits: { fairfield: { count: 3, first: '2026-09-12', last: '2026-09-18', days: {} } }
+});
+const visited = Dash.summarise(dashRows, withVisit);
+check('a coach on the page is counted', visited.counts.viewedRecently, 1);
+check('and is the first thing on the list', visited.attention[0].kind, 'viewed');
+ok('naming the school', visited.attention[0].school.id === 'fairfield');
+ok('and how many times', visited.attention[0].text.indexOf('3 visits') !== -1);
+
+// A visit from a year ago is not news.
+const stale = Dash.summarise(dashRows, Object.assign({}, dashCtx, {
+  visits: { fairfield: { count: 3, first: '2025-01-01', last: '2025-01-02', days: {} } } }));
+check('an old visit is not reported as activity', stale.counts.viewedRecently, 0);
+
+// Contacted and unanswered becomes a follow-up, but only after a fair wait.
+function withStatus(id, patch) {
+  return dashRows.map(function (row) {
+    return row.school.id === id
+      ? Object.assign({}, row, { school: Object.assign({}, row.school, patch) })
+      : row;
+  });
+}
+const waited = Dash.summarise(
+  withStatus('fairfield', { status: 'contacted', lastContact: '2026-09-01' }), dashCtx);
+ok('an unanswered email becomes a follow-up',
+  waited.attention.some(function (a) { return a.kind === 'follow-up'; }));
+const justSent = Dash.summarise(
+  withStatus('fairfield', { status: 'contacted', lastContact: '2026-09-18' }), dashCtx);
+ok('but not the day after it was sent',
+  !justSent.attention.some(function (a) { return a.kind === 'follow-up'; }));
+
+// The cheapest win: allowed to answer, never asked.
+ok('a school that may answer and has not been asked is surfaced',
+  picture.attention.some(function (a) { return a.kind === 'can-send'; }));
+ok('and a Division I one is not, because it may not answer yet',
+  !picture.attention.some(function (a) {
+    return a.kind === 'can-send' && a.school.division === 'D1';
+  }));
+
+// Overflow wording is generic on purpose. Saying "36 more can be emailed
+// today, NCAA Division II coaches may reply now" borrows one school's division
+// and implies it of thirty-six.
+ok('an overflow line names no division', Dash.summaryFor('can-send').indexOf('Division') === -1);
+Object.keys(Dash.KIND_SUMMARY).forEach(function (kind) {
+  ok(kind + ' has a plural summary', /^(have|are|can|were)\b/.test(Dash.KIND_SUMMARY[kind]));
+});
+check('an unknown kind still says something', Dash.summaryFor('nope'), 'need a look');
+
+// ---------- the back end shows what it collects ----------
+// /api/visits shipped with the visit counter and nothing ever read it.
+const adminSrcDash = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'admin.html'), 'utf8');
+ok('the back end now reads the visit data it collects',
+  adminSrcDash.indexOf("api('/api/visits')") !== -1);
+ok('the dashboard renders before anything else', /renderAll\(\)\s*\{\s*\n\s*renderDashboard\(\);/.test(adminSrcDash));
+ok('the dashboard card sits above Add a swim',
+  adminSrcDash.indexOf('id="dashCard"') < adminSrcDash.indexOf('<h2>Add a swim</h2>'));
+ok('each school carries a pipeline control', adminSrcDash.indexOf('data-stage=') !== -1);
+ok('and changing it saves straight away', /addEventListener\('change', function \(\) \{ setStage/.test(adminSrcDash));
+// Entering "contacted" stamps the date, so the follow-up counter starts on its
+// own rather than waiting for someone to type today's date.
+ok('moving to contacted stamps the date',
+  /stage === 'contacted' && !sc\.lastContact\) copy\.lastContact = today/.test(adminSrcDash));
+ok('the stale status tag is gone from the card',
+  adminSrcDash.indexOf("esc(r.school.status || 'Not contacted')") === -1);
 
 // ---------- the public page carries no editing tools ----------
 // A coach opening the page used to be able to click a gallery photo and get a
