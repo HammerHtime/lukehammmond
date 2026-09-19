@@ -8,7 +8,12 @@ export default async (request) => {
   if (!process.env.ADMIN_KEY) return needsSetup();
   if (!isAdmin(request)) return denied();
   if (request.method !== 'GET') return json({ error: 'Method not allowed.' }, 405);
-  return json({ visits: await readJson('visits', {}) });
+  // Both halves in one call: who opened their own link, and how busy the site
+  // has been overall.
+  return json({
+    visits: await readJson('visits', {}),
+    traffic: await readJson('traffic', null)
+  });
 };
 
 export const config = { path: '/api/visits' };

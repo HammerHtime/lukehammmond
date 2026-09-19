@@ -1215,7 +1215,9 @@ const visited = Dash.summarise(dashRows, withVisit);
 check('a coach on the page is counted', visited.counts.viewedRecently, 1);
 check('and is the first thing on the list', visited.attention[0].kind, 'viewed');
 ok('naming the school', visited.attention[0].school.id === 'fairfield');
-ok('and how many times', visited.attention[0].text.indexOf('3 visits') !== -1);
+// No session figure on this record, so it reports raw opens and says "opens"
+// rather than claiming three separate readers.
+ok('and how many times', visited.attention[0].text.indexOf('3 opens') !== -1);
 
 // A visit from a year ago is not news.
 const stale = Dash.summarise(dashRows, Object.assign({}, dashCtx, {
@@ -1255,6 +1257,89 @@ Object.keys(Dash.KIND_SUMMARY).forEach(function (kind) {
   ok(kind + ' has a plural summary', /^(have|are|can|were)\b/.test(Dash.KIND_SUMMARY[kind]));
 });
 check('an unknown kind still says something', Dash.summaryFor('nope'), 'need a look');
+
+// ---------- how busy the site is ----------
+// Two different questions sharing one logger. The per-school counts say which
+// programmes opened a link you sent. The traffic totals say whether anybody is
+// reading the page at all, which the school counts cannot answer because they
+// only ever saw visits carrying ?c=.
+const visitFn = require('fs').readFileSync(
+  require('path').join(__dirname, 'netlify', 'functions', 'visit.js'), 'utf8');
+
+// It used to return early when there was no school, so every untagged visit
+// was thrown away, ie, anyone who typed the address or was forwarded the link
+// without its label did not exist as far as the site was concerned.
+ok('a visit with no school is still counted',
+  visitFn.indexOf('await writeJson(TRAFFIC, traffic)') <
+  visitFn.indexOf("if (!school || !/^[a-z0-9-]+$/i.test(school)) return json({ ok: true })"));
+ok('the totals are kept apart from the school counts', /const TRAFFIC = 'traffic'/.test(visitFn));
+ok('and both come back in one read',
+  /visits: await readJson\('visits', \{\}\)/.test(
+    require('fs').readFileSync(require('path').join(__dirname, 'netlify', 'functions', 'visits.js'), 'utf8')));
+
+// Still nothing that identifies a person. This is the line that must not move.
+// Checked against the CODE rather than the prose, since the comment above it
+// names these fields precisely to say they are not read.
+const visitCode = visitFn.split('\n').filter(function (line) {
+  return line.trim().indexOf('//') !== 0;
+}).join('\n').toLowerCase();
+['request.headers', 'x-forwarded-for', 'user-agent', 'cookie', 'referer', 'connection-ip']
+  .forEach(function (field) {
+    ok('the counter never reads ' + field, visitCode.indexOf(field) === -1);
+  });
+ok('the reading endpoint is still private',
+  /if \(!isAdmin\(request\)\) return denied\(\)/.test(
+    require('fs').readFileSync(require('path').join(__dirname, 'netlify', 'functions', 'visits.js'), 'utf8')));
+
+// The page side. A session flag that dies with the tab, so a reload is not a
+// second reader. No cookie behind it, which is why it is a session count and
+// never a people count.
+const profileJs = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'live-profile.js'), 'utf8');
+ok('every visit is sent, labelled or not', profileJs.indexOf("school: from || ''") !== -1);
+ok('the tab is asked whether it has been here', /sessionStorage\.getItem\('seen'\)/.test(profileJs));
+ok('and blocked storage counts every view as a session',
+  /catch \(e\) \{ \/\* no storage, so treat it as a fresh session \*\/ \}/.test(profileJs));
+ok('a failed count never breaks the page', /a failed count must never break the page/.test(profileJs));
+
+// The report.
+const traffic = {
+  views: 412, sessions: 266, first: '2026-07-02', last: '2026-09-19',
+  days: {
+    '2026-09-19': { views: 9, sessions: 6 },
+    '2026-09-18': { views: 22, sessions: 14 },
+    '2026-06-01': { views: 99, sessions: 80 }
+  },
+  pages: { '/': 380, '/onepager.html': 32 }
+};
+const rep = Dash.trafficReport(traffic, '2026-09-19', 30);
+check('the all-time total is reported', rep.views, 412);
+check('and sessions beside it', rep.sessions, 266);
+check('the window only counts days inside it', rep.recentViews, 31);
+check('and the days it actually saw', rep.activeDays, 2);
+check('today is called out', rep.todayViews, 9);
+check('a day outside the window is excluded', rep.recentViews < traffic.views, true);
+// A number with an unstated definition is the thing people quietly misread.
+ok('the report says what it is not counting', rep.note.indexOf('Read it as a floor') !== -1);
+ok('and that a session is a tab, not a person', rep.note.indexOf('not one person') !== -1);
+check('nothing recorded yet reports nothing', Dash.trafficReport(null, '2026-09-19', 30), null);
+check('and neither does an empty record', Dash.trafficReport({ views: 0 }, '2026-09-19', 30), null);
+
+// A reload is not a second reader.
+check('a session count is preferred where it exists',
+  Dash.openCount({ count: 5, sessions: 2 }), { n: 2, word: 'visit', exact: true });
+// Sessions only started being recorded today, so older records have none and
+// must say which number they are showing rather than overstating it.
+check('an older record falls back to raw opens and says so',
+  Dash.openCount({ count: 5 }), { n: 5, word: 'open', exact: false });
+check('no record reads as nothing', Dash.openCount(null).n, 0);
+
+const adminForTraffic = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'admin.html'), 'utf8');
+ok('the back end shows the traffic', adminForTraffic.indexOf('id="dashTraffic"') !== -1);
+ok('and asks for it when it loads', /traffic = \(both\[2\] && both\[2\]\.traffic\)/.test(adminForTraffic));
+ok('with an honest line when there is nothing yet',
+  adminForTraffic.indexOf('No page views recorded yet') !== -1);
 
 // ---------- the back end shows what it collects ----------
 // /api/visits shipped with the visit counter and nothing ever read it.

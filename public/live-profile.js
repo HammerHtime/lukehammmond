@@ -606,16 +606,40 @@
 
   // A coach arriving from an emailed link carries ?c=<school>. A bare count
   // against a school id, nothing about the person reading.
+  // Every visit is counted, not only the ones carrying a school. It used to
+  // return early with no ?c=, so anyone who typed the address, found it through
+  // SwimCloud, or was forwarded the link without its label was invisible, and
+  // the site could not answer "is anybody reading this at all".
+  //
+  // What goes up the wire: a school id if the link had one, which page, and
+  // whether this is the first page this tab has opened. No cookie, no IP, no
+  // identifier. It can say how many and on which day. It cannot say who, and
+  // nothing here is trying to.
   function logVisit() {
     try {
-      var from = new URLSearchParams(location.search).get('c');
-      if (!from) return;
+      var from = null;
+      try { from = new URLSearchParams(location.search).get('c'); } catch (e) { from = null; }
+
+      // Dies with the tab, so it separates a person arriving from the same
+      // person pressing reload. A private window starts fresh every time, and
+      // blocked storage just means every view counts as a session, which is
+      // the safe way for it to fail.
+      var fresh = true;
+      try {
+        if (sessionStorage.getItem('seen') === '1') fresh = false;
+        else sessionStorage.setItem('seen', '1');
+      } catch (e) { /* no storage, so treat it as a fresh session */ }
+
       fetch('/api/visit', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ school: from })
+        body: JSON.stringify({
+          school: from || '',
+          page: location.pathname || '/',
+          fresh: fresh
+        })
       }).catch(function () {});
-    } catch (err) { /* a failed log must never break the page */ }
+    } catch (err) { /* a failed count must never break the page */ }
   }
 
   function start() {
