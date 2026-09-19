@@ -1399,6 +1399,93 @@ ok('a superseded split set is detectable',
   S.parseTime(Ch.SPLITS['400-free-LCM'].time) > S.parseTime(seedBests['400-free-LCM'].time));
 ok('the panel has somewhere to say so', publicHtml.indexOf('id="splits-note"') !== -1);
 
+// ---------- the school-specific coach view ----------
+// A coach who follows the link in their own email opens the page with their
+// own programme's comparison at the top. The numbers come from the server,
+// because schools.js is not deployed: it holds ninety coach addresses and
+// every programme's benchmarks, and a coach must never be able to read it.
+const coachFn = require('fs').readFileSync(
+  require('path').join(__dirname, 'netlify', 'functions', 'coach.js'), 'utf8');
+
+ok('the coach endpoint exists', coachFn.length > 0);
+ok('it is mounted at /api/coach', /path: '\/api\/coach'/.test(coachFn));
+ok('and refuses anything but a read', /request\.method !== 'GET'/.test(coachFn));
+
+// The response is built as an allowlist. Deleting fields from the school record
+// instead would publish anything added to schools.js later, which is the exact
+// shape of the bug that put the whole file on the internet.
+const built = coachFn.slice(coachFn.indexOf('function publicComparison'),
+  coachFn.indexOf('export default'));
+ok('the response names the fields it returns', built.indexOf('name: row.school.name') !== -1);
+['email', 'assistantEmail', 'priority', 'confidence', 'notes', 'contactNote', 'staffUrl',
+  'nextAction', 'lastContact', 'coachReply'].forEach(function (field) {
+  ok('the coach response never carries ' + field, built.indexOf(field) === -1);
+});
+ok('and it returns one school, never the list', built.indexOf('schools') === -1);
+
+// The token is an HMAC under ADMIN_KEY, compared in constant time. It is not
+// privacy, ie, whoever is sent the link can open it and may forward it. It
+// stops the addresses being guessed one school at a time.
+ok('the token is signed, not guessable', /createHmac\('sha256', process\.env\.ADMIN_KEY\)/.test(coachFn));
+ok('and compared in constant time', /timingSafeEqual/.test(coachFn));
+ok('a wrong token is refused', /if \(!admin && !tokenOk\(id, url\.searchParams\.get\('t'\)\)\) return denied\(\)/.test(coachFn));
+// A school that is not on the board and a school with a bad token must answer
+// the same way, or the endpoint becomes a way to find out which ids exist.
+ok('an unknown school looks the same as a bad token to a stranger',
+  /if \(!school\) return admin \? json\(\{ error: 'No such school\.' \}, 404\) : denied\(\)/.test(coachFn));
+
+// The page side.
+ok('the page has somewhere to put it', publicHtml.indexOf('id="school-panel"') !== -1);
+ok('and it starts hidden', /<section id="school-panel" hidden/.test(publicHtml));
+// live-profile.js already built an element with id "coach-panel" for the yards
+// block. Naming this one the same meant the older code found this one with
+// getElementById and wrote the yards panel into it, so the school panel turned
+// up on every visit carrying entirely the wrong content.
+check('only one element claims the id coach-panel',
+  (publicHtml.match(/id="coach-panel"/g) || []).length, 0);
+ok('the yards block still builds its own', liveJs.indexOf("block.id = 'coach-panel'") !== -1);
+ok('and the school panel uses a different id', liveJs.indexOf("el('school-panel')") !== -1);
+ok('two functions with one name would have shadowed each other',
+  liveJs.indexOf('function schoolPanel()') !== -1 &&
+  liveJs.indexOf('function coachPanel(yards)') !== -1);
+ok('nothing is shown without both a school and a token',
+  /if \(!from \|\| !token\) return;/.test(liveJs));
+ok('and a refused token leaves the ordinary page alone',
+  /r\.ok \? r\.json\(\) : null/.test(liveJs));
+
+// ---------- the one page for coaches ----------
+// A PDF typed out by hand is right the day it is made and wrong a meet later,
+// and a coach reading a slower time than the swimmer owns is worse off than a
+// coach reading nothing.
+const onePager = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'onepager.html'), 'utf8');
+const onePagerJs = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'onepager.js'), 'utf8');
+
+ok('the one pager is deployed', onePager.length > 0);
+ok('it is kept out of search results', /name="robots" content="noindex/.test(onePager));
+ok('it prints to A4', /@page \{ size: A4/.test(onePager));
+ok('it reads the stored results', onePagerJs.indexOf("fetch('/api/results')") !== -1);
+ok('and falls back to the shipped record when the back end is unreachable',
+  onePagerJs.indexOf('D.SEED_RESULTS') !== -1);
+ok('it carries no typed times', !/\d:\d\d\.\d\d/.test(onePagerJs));
+ok('every yards figure is marked as converted',
+  onePagerJs.indexOf('has never swum a yard') !== -1);
+ok('a ranked event cannot be left off the sheet',
+  /Object\.keys\(rankings\)\.forEach/.test(onePagerJs));
+// The QR is optional. A missing square is nothing, a broken image on a coach's
+// desk is worse than no square.
+ok('the QR is drawn only if its library loaded', /if \(!host \|\| !window\.qrcode\) return;/.test(onePagerJs));
+ok('the QR library is pinned by hash',
+  /integrity="sha512-[A-Za-z0-9+/=]{88}"/.test(onePager));
+ok('and loaded cross-origin with no referrer', /crossorigin="anonymous" referrerpolicy="no-referrer"/.test(onePager));
+
+// The back end can reach both.
+ok('the back end links the one pager', adminSrcDash.indexOf('href="/onepager.html"') !== -1);
+ok('and offers a per-school link to copy', adminSrcDash.indexOf('data-coachlink=') !== -1);
+ok('which is minted on the server, not in the page',
+  /api\('\/api\/coach\?link=1&c='/.test(adminSrcDash));
+
 // ---------- what is actually deployed ----------
 // This block exists because of a live leak, not a hypothetical one.
 //

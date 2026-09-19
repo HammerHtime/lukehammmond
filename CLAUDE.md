@@ -26,8 +26,8 @@ is a prompt to look again, ie, it is the feature.
 - Scoring, bands, conversion factors and benchmarks are not, without a reason
   written down first.
 - After ANY change, run the tests. They must stay green:
-    npm test          120 checks
-    npm run lint      confirms every js file still parses
+    npm test          1155 checks
+    npm run lint      confirms every js file parses, functions included
     npm run check     lint then test, run this before pushing
 
 ## Three ideas that run through everything
@@ -47,25 +47,57 @@ suggested priority. A missing Junior Trials cut shows nothing. An event with
 no conversion mapping shows a dash. Never a zero, never a guess. The moment
 this app invents a number it is worth less than the spreadsheet it replaced.
 
+## What gets deployed
+Only public/. Nothing else.
+
+This is not a style choice. The publish root used to be the whole repository,
+with a redirect per file that had to stay private, and it failed in production:
+Netlify serves files case-insensitively but matches redirects case-sensitively,
+so /schools.JS returned the whole board, ie, ninety coach addresses and every
+benchmark, while /schools.js correctly 404ed. A blocklist cannot be tested for
+the file nobody remembered to add to it. An allowlist can, and board.test.js
+now asserts the shape of public/.
+
+So: a new file is private unless it is deliberately put in public/.
+
 ## Files
-- index.html      The public profile. What a coach reads. NOT YET BUILT.
-- admin.html      The private back end. NOT YET BUILT.
+- public/index.html   The public profile. What a coach reads.
+- public/admin.html   The private back end. Opens on the dashboard.
+- public/onepager.html  The printable one page for coaches. Reads live data.
+- public/charts.js    Progression charts and the split panel.
+- public/dashboard.js Counts the board, ages the data, builds the queue.
+- schools.js      NOT deployed. The board's schools, benchmarks and contacts.
 - swim.js         Events, courses, time parsing, personal bests. The data core.
 - swimmer.js      Who Luke is, and every swim on record.
 - convert.js      Metres to yards. Every factor carries the pair it came from.
 - standards.js    Time standards, ie, the Canadian Junior Trials cuts.
-- schools.js      The board's schools, their benchmarks, contacts, importer.
 - board.js        The engine. Scoring, fit bands, what-if.
 - recruiting.js   NCAA contact rules and the interest email.
 - board.test.js   The safety net. Run after every change.
 - netlify/functions/  The server side. Netlify Blobs storage behind an admin key.
 
-## The plan, decided 18 September 2026
-Nothing is sent until SPRING 2027, after another full season of swimming.
-Andrew's call, and it is well timed rather than cautious: a Division I coach
-cannot reply until 15 June 2027 anyway, so arriving in spring means the file
-is on his desk just before the window opens, with a season of improvement on
-it rather than without.
+## The plan, decided 18 September 2026, revised 19 September 2026
+The original plan said nothing is sent until SPRING 2027, on the reasoning that
+a coach cannot reply until 15 June 2027 anyway.
+
+That reasoning holds for Division I and for nobody else. Read directly from the
+sources on 19 September 2026:
+
+- NCAA Division II dropped its communication restriction on 1 August 2024. Its
+  own 2026-27 recruiting guide says athletically related recruiting materials
+  may be sent at any time to a freshman or sophomore. Only in-person off-campus
+  contact and paid visits wait for 15 June 2027.
+- NCAA Division III Bylaw 13.02.10.1: there are no restrictions on the timing of
+  electronic communication at all.
+- U SPORTS has no calendar over it and never did.
+
+Of the 64 programmes on the board, 40 can be written to today and can legally
+write back. 24 are Division I and wait. The app had been telling Andrew that
+none of them could answer before June 2027, which was wrong for 40 of them.
+
+So the plan now splits. Division I is still a spring 2027 arrival, for exactly
+the reason above. Canada, Division II and Division III are live work this
+autumn. The NAIA has not been read and keeps the later, safer date until it is.
 
 What that means for this project between now and then.
 

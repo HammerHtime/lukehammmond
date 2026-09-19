@@ -40,6 +40,7 @@
     heroStats(bests);
     heroBadge(bests);
     if (window.Charts) window.Charts.renderProgression(results);
+    schoolPanel();
     timeCards(results, bests);
     rankingLines(bests);
     compTable(results, bests);
@@ -523,6 +524,67 @@
     return raw.map(function (r) { return S.normaliseResult(r); })
       .filter(function (n) { return n.ok; })
       .map(function (n) { return n.result; });
+  }
+
+  // A coach who followed their own signed link gets their own comparison at the
+  // top of the page, before the generic profile. The numbers come from the
+  // server, because the board itself is not deployed: schools.js holds ninety
+  // coach addresses and every programme's benchmarks, and a coach must never be
+  // able to read it. The response carries one school and nothing else.
+  function schoolPanel() {
+    var panel = el('school-panel');
+    if (!panel) return;
+    var params;
+    try { params = new URLSearchParams(location.search); } catch (err) { return; }
+    var from = params.get('c'), token = params.get('t');
+    if (!from || !token) return;
+
+    fetch('/api/coach?c=' + encodeURIComponent(from) + '&t=' + encodeURIComponent(token))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (body) {
+        // A bad or missing token simply shows the ordinary page. No error, no
+        // mention that a panel exists, ie, nothing to poke at.
+        if (!body || !body.comparison || !body.comparison.events.length) return;
+        var cmp = body.comparison;
+
+        var rows = cmp.events.map(function (ev) {
+          var provenance = ev.mineEstimated && ev.mineFrom
+            ? 'Converted from his ' + esc(ev.mineFrom.time) + ' ' + esc(ev.mineFrom.event) +
+              '. Not a time he has swum.'
+            : '';
+          // The basis follows a full stop, so it needs a capital. It read
+          // "Not a time he has swum. roster depth, 4 swimmers."
+          var basis = [ev.basis, ev.context].filter(Boolean).map(function (t) {
+            return esc(t.charAt(0).toUpperCase() + t.slice(1));
+          }).join(' ');
+          return '<div class="coach-row">' +
+            '<div class="coach-event">' + esc(ev.name) + '</div>' +
+            '<div>' +
+              '<div class="coach-time">' + esc(ev.mine) + '</div>' +
+              '<div class="coach-line">' + esc(ev.line) +
+                (ev.theirs ? ' Your group: ' + esc(ev.theirs) + '.' : '') + '</div>' +
+              (provenance || basis
+                ? '<div class="coach-sub">' + provenance + (provenance && basis ? ' ' : '') + basis +
+                  (ev.sourceUrl ? ' <a href="' + esc(ev.sourceUrl) +
+                    '" target="_blank" rel="noopener">Results</a>' : '') + '</div>'
+                : '') +
+            '</div></div>';
+        }).join('');
+
+        panel.innerHTML =
+          '<div class="coach-card">' +
+            '<p class="coach-eyebrow">Put beside your squad</p>' +
+            '<h2 class="coach-title">' + esc(SWIMMER.shortName || SWIMMER.name) +
+              ' and ' + esc(cmp.school.name) + '</h2>' +
+            '<div class="coach-rows">' + rows + '</div>' +
+            '<p class="coach-foot">Class of ' + esc(SWIMMER.classOf) + ', ' +
+              esc(SWIMMER.club) + '. His full record is below. ' +
+              'Every yards time on this page is converted from a metres swim and is marked ' +
+              'as such, because he has never raced a yard.</p>' +
+          '</div>';
+        panel.hidden = false;
+      })
+      .catch(function () { /* the ordinary page is the fallback */ });
   }
 
   // A coach arriving from an emailed link carries ?c=<school>. A bare count

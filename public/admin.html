@@ -265,6 +265,7 @@
   <div class="top">
     <h1>The board</h1>
     <div class="who"><a href="/" target="_blank" rel="noopener">View public page</a> &middot;
+      <a href="/onepager.html" target="_blank" rel="noopener">One page for coaches</a> &middot;
       <a href="#" id="lock">Lock</a></div>
   </div>
 
@@ -1213,6 +1214,35 @@
 
   // One line per school: where it is in the pipeline, when a coach may hear
   // from it, how old what we know is, and whether anyone has been on the page.
+  // The link for one coach's email. It opens the public page with that
+  // programme's comparison at the top, and only that programme's, ie, a
+  // Fairfield coach sees Luke beside Fairfield and cannot see the board.
+  //
+  // The token is signed on the server under ADMIN_KEY, so it is minted there
+  // rather than here. It is not a password: whoever is sent the link can open
+  // it. It stops the addresses being guessed one school at a time.
+  function copyCoachLink(id, button) {
+    var label = button.textContent;
+    api('/api/coach?link=1&c=' + encodeURIComponent(id))
+      .then(function (r) {
+        var link = location.origin + r.path;
+        var done = function () {
+          button.textContent = 'Copied';
+          setTimeout(function () { button.textContent = label; }, 2200);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(done, function () {
+            say('boardMsg', 'info', 'Copy this: <code>' + esc(link) + '</code>');
+          });
+        } else {
+          // No clipboard on an insecure origin or an older browser, so show it
+          // rather than silently doing nothing.
+          say('boardMsg', 'info', 'Copy this: <code>' + esc(link) + '</code>');
+        }
+      })
+      .catch(function (err) { say('boardMsg', 'bad', esc(err.message)); });
+  }
+
   // Moving a school along the pipeline. Saved straight away rather than behind
   // a Save button, because the whole point is that it takes one click after
   // sending an email, and a step that takes two clicks does not get taken.
@@ -1369,6 +1399,7 @@
             ? '<button class="minor" data-email="' + esc(r.school.id) + '">Email ' +
               esc(r.school.coach ? 'Coach ' + R.lastName(r.school.coach) : 'the coach') + '</button>'
             : '<span class="conf">No coach address on file, so there is nobody to write to yet.</span>') +
+          '<button class="minor" data-coachlink="' + esc(r.school.id) + '">Copy their link</button>' +
           (r.school.staffUrl
             ? '<a class="minor" style="text-decoration:none" href="' + esc(r.school.staffUrl) +
               '" target="_blank" rel="noopener">Staff page</a>' : '') +
@@ -1393,6 +1424,10 @@
 
     Array.prototype.forEach.call(el('boardTable').querySelectorAll('[data-stage]'), function (sel) {
       sel.addEventListener('change', function () { setStage(sel.dataset.stage, sel.value); });
+    });
+
+    Array.prototype.forEach.call(el('boardTable').querySelectorAll('[data-coachlink]'), function (b) {
+      b.addEventListener('click', function () { copyCoachLink(b.dataset.coachlink, b); });
     });
 
     var unassessed = rows.filter(function (r) { return r.evidenceCount === 0; }).length;

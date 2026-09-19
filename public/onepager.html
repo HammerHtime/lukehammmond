@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Luke Hammond, one page</title>
+<!--
+  The coach one-pager.
+
+  Everything on it is read from the same stored results as the website, so the
+  moment a time goes into the back end this sheet is current too. Nothing here
+  is typed. That is the whole reason it exists: a PDF that is typed out once
+  goes stale the week after it is printed, and then it is worse than nothing,
+  because a coach is reading a slower time than the swimmer owns.
+
+  It prints. Use the browser's own Print to PDF. That keeps it dependency free
+  and means the file is generated on the day it is sent rather than sitting in
+  a folder going out of date.
+-->
+<style>
+  :root {
+    --ink: #10202e; --soft: #556470; --faint: #8b98a3;
+    --line: #d8e0e7; --rule: #0a6ebd; --gold: #8a6a12;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #eef2f6; color: var(--ink);
+    font: 400 13px/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  .sheet {
+    width: 210mm; min-height: 297mm; margin: 18px auto; padding: 16mm 15mm;
+    background: #fff; box-shadow: 0 2px 18px rgba(16,32,46,.14);
+  }
+  .bar { display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 16px; border-bottom: 3px solid var(--rule); padding-bottom: 10px; }
+  h1 { margin: 0; font-size: 30px; letter-spacing: -.01em; }
+  .tagline { color: var(--soft); font-size: 13px; margin-top: 3px; }
+  .bar-right { text-align: right; font-size: 12px; color: var(--soft); line-height: 1.7; }
+  h2 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--rule); margin: 18px 0 7px; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 9.5px; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--faint); font-weight: 700; padding: 0 8px 4px 0; border-bottom: 1px solid var(--line); }
+  td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--line); font-size: 12.5px;
+    vertical-align: baseline; }
+  td.t { font-weight: 700; font-variant-numeric: tabular-nums; }
+  td.y { font-variant-numeric: tabular-nums; color: var(--soft); }
+  .rank { color: var(--gold); font-weight: 700; white-space: nowrap; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 26px; }
+  .pair { display: grid; grid-template-columns: 92px 1fr; gap: 2px 10px;
+    font-size: 12.5px; padding: 3px 0; }
+  .pair dt { color: var(--faint); font-size: 9.5px; text-transform: uppercase;
+    letter-spacing: .09em; padding-top: 2px; }
+  .pair dd { margin: 0; }
+  ul.plain { margin: 0; padding-left: 15px; }
+  ul.plain li { margin-bottom: 3px; font-size: 12.5px; }
+  .foot { margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;
+    font-size: 10.5px; color: var(--faint); line-height: 1.7; }
+  .qr { text-align: center; }
+  .qr img, .qr canvas, .qr svg, .qr table { width: 76px; height: 76px; display: block; }
+  .qr table { border-collapse: collapse; }
+  .qr td { padding: 0; border: none; }
+  .qr-label { font-size: 8.5px; letter-spacing: .08em; text-transform: uppercase;
+    margin-top: 4px; color: var(--faint); }
+  .note { font-size: 10.5px; color: var(--soft); margin-top: 5px; line-height: 1.6; }
+  .print-bar { max-width: 210mm; margin: 14px auto 0; text-align: right; }
+  .print-bar button { font: inherit; padding: 7px 14px; border-radius: 7px;
+    border: 1px solid var(--rule); background: var(--rule); color: #fff; cursor: pointer; }
+  @media print {
+    body { background: #fff; }
+    .sheet { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+    .print-bar { display: none; }
+    @page { size: A4; margin: 14mm; }
+  }
+</style>
+</head>
+<body>
+<div class="print-bar"><button id="printIt" type="button">Print or save as PDF</button></div>
+<div class="sheet" id="sheet">
+  <p style="color:var(--soft)">Loading his times&hellip;</p>
+</div>
+
+<script src="swim.js"></script>
+<script src="swimmer.js"></script>
+<script src="convert.js"></script>
+<script src="standards.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"
+        integrity="sha512-ZDSPMa/JM1D+7kdg2x3BsruQ6T/JpJo3jWDWkCZsP+5yVyp1KfESqLI+7RqB5k24F7p2cV7i2YHh/890y6P6Sw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="onepager.js"></script>
+</body>
+</html>
