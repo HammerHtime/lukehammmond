@@ -1090,6 +1090,131 @@ check('a nonsense address is refused', Sc.normaliseSchool({ name: 'A', division:
 check('a school with no division is refused', Sc.normaliseSchool({ name: 'A' }).ok, false);
 check('verified is false without an address', Sc.normaliseSchool({ name: 'A', division: 'D1', verified: true }).school.verified, false);
 
+// ---------- the public page carries no editing tools ----------
+// A coach opening the page used to be able to click a gallery photo and get a
+// FILE PICKER, and every photo tile carried a remove button. It only touched
+// their own browser storage, but a coach should never be shown an interface
+// that looks like they can edit the athlete's profile. There was also a live
+// theme editor on the page, with colour pickers and a postMessage handshake
+// left over from a site builder. Photos are managed in admin.html now.
+const publicHtml = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'index.html'), 'utf8');
+
+ok('no file picker on the public page', publicHtml.indexOf('type="file"') === -1);
+ok('no upload affordance', !/uploadable|upload-hint|upload-remove/.test(publicHtml));
+ok('no remove-photo button', publicHtml.indexOf('Remove photo') === -1);
+ok('no theme editor panel', publicHtml.indexOf('tweaks-panel') === -1);
+ok('no edit-mode handshake with a parent frame', publicHtml.indexOf('__edit_mode') === -1);
+ok('and the page never writes to browser storage',
+  !/localStorage\.(set|remove)Item/.test(publicHtml));
+
+// The split panel and the lightbox are real dialogs now, not bare divs.
+ok('the split panel announces itself as a dialog', /id="splits-modal"[^>]*role="dialog"/.test(publicHtml));
+ok('and is labelled by its own title', /aria-labelledby="splits-title"/.test(publicHtml));
+ok('its close button has a name', /data-close-splits[^>]*aria-label=/.test(publicHtml));
+
+// ---------- the stylesheet is not broken ----------
+// Two rules had lost their opening. The orphaned declarations after
+// .hero-stat-label were discarded by the browser, and .reveal had lost its
+// selector AND its opacity, so the fade animation silently stopped existing.
+const pageCss = publicHtml.slice(publicHtml.indexOf('<style>') + 7, publicHtml.indexOf('</style>'));
+check('every CSS rule is closed exactly once',
+  pageCss.split('{').length, pageCss.split('}').length);
+ok('the reveal rule has its selector back', /\.js \.reveal \{/.test(pageCss));
+ok('and it sets the opacity it starts from', /\.js \.reveal \{\s*opacity: 0;/.test(pageCss));
+// Gated on .js, so a script failure cannot leave a coach looking at a blank page.
+ok('nothing is hidden unless the script is running', pageCss.indexOf('\n  .reveal {') === -1);
+ok('reduced motion turns the animation off', /prefers-reduced-motion[\s\S]{0,120}\.reveal/.test(pageCss));
+
+// ---------- claims are counted, not typed ----------
+ok('the hero badge is filled from the rankings', publicHtml.indexOf('id="hero-badge-claim"') !== -1);
+ok('and carries no typed claim of its own', publicHtml.indexOf('Ranked Top 5 in Canada · 4 Distance') === -1);
+const liveJs = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'live-profile.js'), 'utf8');
+ok('the bracket comes off the worst rank, so it holds for every event counted',
+  /Math\.max\.apply\(null, held\.map/.test(liveJs));
+
+// Forty of the sixty-four programmes on the board are not Division I. A page
+// that says the goal is Division I tells a U SPORTS, D2 or D3 coach they are
+// not the target, and "scholarship" says the same to the Ivies and to D3,
+// neither of which award athletic money at all.
+ok('the public copy does not promise Division I', publicHtml.indexOf('Division I') === -1);
+ok('and does not hang the goal on a scholarship', !/earning a scholarship/.test(publicHtml));
+
+// ---------- the no-script fallback matches the data ----------
+// index.html carries static cards and a static results table for the case
+// where the scripts do not run. That copy had drifted to 4:11.47 while the
+// stored best was 4:10.86, ie, the page was showing a slower time and calling
+// it his best. These checks fail the moment it drifts again.
+const seedResults = require('./public/swimmer.js').SEED_RESULTS
+  .map(S.normaliseResult).filter(function (r) { return r.ok; })
+  .map(function (r) { return r.result; });
+const seedBests = S.personalBests(seedResults);
+const seedRanks = require('./public/swimmer.js').seedRankings();
+
+Object.keys(seedRanks).forEach(function (id) {
+  const best = seedBests[id];
+  if (!best) return;
+  ok('the fallback card for ' + id + ' shows ' + best.time,
+    publicHtml.indexOf('>' + best.time + '<span class="time-pb-badge">') !== -1);
+});
+ok('no superseded 400 free time survives in the markup',
+  publicHtml.split('4:11.47').filter(function (chunk, i) { return i > 0; }).length <= 2);
+
+// ---------- the charts and the split panel ----------
+const chartsSrc = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'charts.js'), 'utf8');
+ok('the chart data is no longer typed into the page', publicHtml.indexOf('splitsData') === -1);
+ok('nor are the chart series', !/const data400|const data800/.test(publicHtml));
+ok('the Junior Trials line is read from standards.js', /cutFor\('can-jr-trials'/.test(chartsSrc));
+ok('the page loads standards.js so that line can be drawn',
+  /<script src="standards\.js"><\/script>/.test(publicHtml));
+ok('and loads charts.js before live-profile.js',
+  publicHtml.indexOf('<script src="charts.js">') <
+  publicHtml.indexOf('<script src="live-profile.js">'));
+ok('the chart headline is an empty node the code fills',
+  /id="chart400-line"[^>]*><\/div>/.test(publicHtml));
+
+const Ch = (function () {
+  const vmC = require('vm');
+  const scope = { window: {}, document: { addEventListener: function () {} }, console: console };
+  scope.window.Swim = S;
+  scope.window.Standards = require('./public/standards.js');
+  scope.globalThis = scope;
+  vmC.createContext(scope);
+  vmC.runInContext(chartsSrc, scope, { filename: 'charts.js' });
+  return scope.window.Charts;
+})();
+
+const ser400 = Ch.seriesFor(seedResults, '400-free-LCM');
+ok('the 400 series is built from the stored swims', ser400.length >= 4);
+check('and ends on the stored best', ser400[ser400.length - 1].time, seedBests['400-free-LCM'].time);
+ok('the series runs oldest to newest', ser400[0].x < ser400[ser400.length - 1].x);
+const pb = Ch.pbLine(ser400);
+ok('the personal-best line never goes back up',
+  pb.every(function (p, i) { return i === 0 || p.y <= pb[i - 1].y; }));
+ok('the headline names the stored best, not a superseded swim',
+  Ch.headline(ser400).indexOf(seedBests['400-free-LCM'].time) !== -1);
+ok('and it does not name the old 4:11.47', Ch.headline(ser400).indexOf('4:11.47') === -1);
+check('a single swim makes no improvement claim at all', Ch.headline(ser400.slice(0, 1)), '');
+check('and no swims at all gives nothing', Ch.headline([]), '');
+
+// Splits are transcribed from one race, so each set records WHICH race. That
+// is what lets the panel say "these are from his 4:11.47, his best is now
+// 4:10.86" instead of presenting an old swim as the current best.
+Object.keys(Ch.SPLITS).forEach(function (id) {
+  const rec = Ch.SPLITS[id];
+  ok(id + ' splits name the swim they came from', Boolean(rec.time && rec.date && rec.meet));
+  check(id + ' has one split per 50 of the race',
+    rec.splits.length, Number(id.split('-')[0]) / 50);
+  ok(id + ' splits add up to the time they claim',
+    Math.abs(rec.splits.reduce(function (a, b) { return a + b; }, 0) -
+      S.parseTime(rec.time) / 100) < 0.5);
+});
+ok('a superseded split set is detectable',
+  S.parseTime(Ch.SPLITS['400-free-LCM'].time) > S.parseTime(seedBests['400-free-LCM'].time));
+ok('the panel has somewhere to say so', publicHtml.indexOf('id="splits-note"') !== -1);
+
 // ---------- what is actually deployed ----------
 // This block exists because of a live leak, not a hypothetical one.
 //

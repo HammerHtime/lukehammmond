@@ -38,6 +38,8 @@
     var yards = C ? C.yardBests(S, results) : {};
     heroEyebrow();
     heroStats(bests);
+    heroBadge(bests);
+    if (window.Charts) window.Charts.renderProgression(results);
     timeCards(results, bests);
     rankingLines(bests);
     compTable(results, bests);
@@ -129,6 +131,10 @@
           esc(best.meet || 'Meet not recorded') + '</div>' +
         '<div class="back-standard">' + esc(courseLabel) + ' \u00b7 ' + esc(when) + '</div>';
 
+      var splits = window.Charts && window.Charts.hasSplits(id)
+        ? '<button type="button" class="splits-open" data-splits="' + esc(id) + '">View splits ↗</button>'
+        : '';
+
       return '<div class="time-card" onclick="flipCard(this)">' +
         '<span class="flip-hint">tap to flip ↩</span>' +
         '<div class="time-card-inner">' +
@@ -142,7 +148,7 @@
                 ' in Canada</span>' : '') +
             '</div>' +
             '<div class="time-course">' + esc(courseLabel) + ' · ' + esc(when) + '</div>' +
-            progress +
+            progress + splits +
           '</div>' +
           '<div class="time-card-back">' + back +
             '<div class="back-flip-hint">tap to flip back ↩</div>' +
@@ -151,6 +157,48 @@
     }).join('');
 
     if (cards) node.innerHTML = cards;
+
+    // Wired here rather than with an inline onclick, so the page carries no
+    // executable markup and a strict content policy stays possible.
+    Array.prototype.forEach.call(node.querySelectorAll('[data-splits]'), function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();          // the card itself flips on click
+        window.Charts.openSplits(b.getAttribute('data-splits'), bests, b);
+      });
+    });
+  }
+
+  // The hero badge read "Ranked Top 5 in Canada · 4 Distance Events", typed in,
+  // so it would have kept saying 4 events after a fifth ranking was added and
+  // kept saying Top 5 if a rank slipped to 7. Both halves are counted now.
+  function heroBadge(bests) {
+    var node = el('hero-badge-claim');
+    if (!node) return;
+
+    var held = Object.keys(rankings)
+      .filter(function (id) { return bests[id]; })
+      .map(function (id) { return { rank: rankings[id].rank, distance: bests[id].distance }; })
+      .filter(function (r) { return Number.isFinite(r.rank); });
+
+    if (!held.length) { node.textContent = ''; node.parentNode.style.display = 'none'; return; }
+
+    // The bracket has to hold for EVERY event the badge counts, so it comes off
+    // the WORST rank, not the best. A coach reads "Top 5 in Canada, 4 events" as
+    // all four being inside the top five. Taking the best rank would have read
+    // "Top 3, 4 events" off a single #2 while a #5 sat in the same four, which
+    // is the sentence saying more than the numbers under it.
+    var worst = Math.max.apply(null, held.map(function (r) { return r.rank; }));
+    var bracket = [3, 5, 10, 20].filter(function (b) { return worst <= b; })[0] || worst;
+
+    // 400 and up is a distance event. Saying "distance events" when the count
+    // includes a 200 is the kind of small overclaim a coach notices.
+    var distance = held.filter(function (r) { return r.distance >= 400; }).length;
+    var label = distance === held.length
+      ? (held.length === 1 ? 'Distance Event' : 'Distance Events')
+      : (held.length === 1 ? 'Event' : 'Events');
+
+    node.textContent = 'Ranked Top ' + bracket + ' in Canada · ' + held.length + ' ' + label;
+    node.parentNode.style.display = '';
   }
 
   // The Best Times section carried its rankings as a sentence typed by hand.

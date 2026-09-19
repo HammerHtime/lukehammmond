@@ -33,12 +33,27 @@ function check(name, actual, expected) {
 
 // The script tags each page carries, in order. Keep these in step with the
 // pages, which is what the last test in this file checks.
-const PUBLIC = ['swim.js', 'swimmer.js', 'convert.js', 'photos.js', 'recruiting.js'];
+const PUBLIC = ['swim.js', 'swimmer.js', 'convert.js', 'photos.js', 'recruiting.js',
+  'standards.js', 'charts.js'];
 const ADMIN = ['swim.js', 'swimmer.js', 'convert.js', 'school-utils.js', 'roster.js', 'eligibility.js', 'photos.js', 'standards.js', 'board.js', 'recruiting.js'];
 
 // One shared global, no `module`, exactly as a browser presents it.
 function loadLikeABrowser(files) {
-  const sandbox = { console: console, fetch: function () {}, Date: Date, Math: Math, JSON: JSON };
+  // A browser always has a document, and a module is entitled to touch it at
+  // load time. The sandbox did not have one, so charts.js threw here while
+  // working perfectly in a real browser, ie, the test was failing the code for
+  // the test's own omission. This is the smallest document that behaves.
+  const sandbox = {
+    console: console, fetch: function () {}, Date: Date, Math: Math, JSON: JSON,
+    document: {
+      addEventListener: function () {},
+      removeEventListener: function () {},
+      getElementById: function () { return null; },
+      querySelectorAll: function () { return []; },
+      querySelector: function () { return null; },
+      documentElement: { classList: { add: function () {} } }
+    }
+  };
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
   const context = vm.createContext(sandbox);
