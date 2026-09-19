@@ -79,8 +79,12 @@
     node.style.display = html ? '' : 'none';
   }
 
-  // The flip cards, rebuilt with the same classes so the existing CSS and the
-  // existing flipCard handler keep working untouched.
+  // The flip cards, rebuilt with the same classes so the existing CSS keeps
+  // working untouched. They used to carry onclick="flipCard(this)" and lean on
+  // a function in index.html. That function sat inside the block holding the
+  // photo uploader and the theme editor, so removing that block took the flip
+  // with it and every card silently stopped turning over. They wire themselves
+  // now, which is also what makes them reachable from a keyboard.
   function timeCards(results, bests) {
     var node = el('times-grid');
     if (!node) return;
@@ -136,7 +140,9 @@
         ? '<button type="button" class="splits-open" data-splits="' + esc(id) + '">View splits ↗</button>'
         : '';
 
-      return '<div class="time-card" onclick="flipCard(this)">' +
+      return '<div class="time-card" tabindex="0" role="button" ' +
+        'aria-label="' + esc(best.distance) + ' metre ' + esc(S.STROKE_LABEL[best.stroke]) +
+        ', ' + esc(best.time) + '. Activate to see where it was swum.">' +
         '<span class="flip-hint">tap to flip ↩</span>' +
         '<div class="time-card-inner">' +
           '<div class="time-card-front">' +
@@ -161,6 +167,17 @@
 
     // Wired here rather than with an inline onclick, so the page carries no
     // executable markup and a strict content policy stays possible.
+    // Flipping, by click or by keyboard. It was an inline onclick on a div, so
+    // the back of the card, ie, the meet and the date, could not be reached
+    // without a mouse.
+    Array.prototype.forEach.call(node.querySelectorAll('.time-card'), function (card) {
+      function flip() { card.classList.toggle('flipped'); }
+      card.addEventListener('click', flip);
+      card.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
+      });
+    });
+
     Array.prototype.forEach.call(node.querySelectorAll('[data-splits]'), function (b) {
       b.addEventListener('click', function (e) {
         e.stopPropagation();          // the card itself flips on click

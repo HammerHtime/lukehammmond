@@ -3,7 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Luke — Swimmer</title>
+<title>Luke Hammond, distance freestyle, class of 2029</title>
+<meta name="description" content="Distance freestyle swimmer, class of 2029, Mississauga Aquatic Club. Best times, Canadian rankings and short course yards equivalents for college coaches.">
+<link rel="canonical" href="https://lukehammond.netlify.app/">
+
+<!-- The link preview. This address goes into coach emails, so it should not
+     paste as a bare URL with no title and no picture. -->
+<meta property="og:type" content="profile">
+<meta property="og:site_name" content="Luke Hammond, swimming">
+<meta property="og:title" content="Luke Hammond, distance freestyle, class of 2029">
+<meta property="og:description" content="Best times, Canadian rankings and short course yards equivalents. Mississauga Aquatic Club.">
+<meta property="og:url" content="https://lukehammond.netlify.app/">
+<meta property="og:image" content="https://lukehammond.netlify.app/uploads/DSC_6192.jpg">
+<meta property="og:image:alt" content="Luke Hammond racing freestyle">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050d1a">
+
+<!-- An inline SVG favicon, ie, no extra file to keep in step and nothing to
+     404. A lane rope and a waterline. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23050d1a'/%3E%3Cpath d='M3 19c3-3 5-3 8 0s5 3 8 0 5-3 8 0' stroke='%2300d4ff' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M3 25c3-3 5-3 8 0s5 3 8 0 5-3 8 0' stroke='%2300d4ff' stroke-width='2' fill='none' stroke-linecap='round' opacity='.55'/%3E%3Ccircle cx='21' cy='10' r='3.2' fill='%23e8b84b'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet">
 <script>document.documentElement.classList.add('js');</script>
@@ -930,7 +948,7 @@
     <li><a href="#milestones">Milestones</a></li>
     <li><a href="#recruit" style="color:var(--aqua);">Recruit</a></li>
   </ul>
-  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu" aria-expanded="false" aria-controls="nav-overlay">
     <span></span><span></span><span></span>
   </button>
 </nav>
@@ -1480,13 +1498,23 @@ const navOverlay = document.getElementById('nav-overlay');
 hamburger.addEventListener('click', () => {
   hamburger.classList.toggle('open');
   navOverlay.classList.toggle('open');
-  document.body.style.overflow = navOverlay.classList.contains('open') ? 'hidden' : '';
+  const open = navOverlay.classList.contains('open');
+  document.body.style.overflow = open ? 'hidden' : '';
+  // Said out loud, so a screen reader knows whether the menu is open. The
+  // button was toggling a class and announcing nothing.
+  hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
 });
 function closeNav() {
   hamburger.classList.remove('open');
   navOverlay.classList.remove('open');
+  hamburger.setAttribute('aria-expanded', 'false');
   document.body.style.overflow = '';
+  hamburger.focus();
 }
+// Escape closes it, the way every other overlay on this page does.
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && navOverlay.classList.contains('open')) closeNav();
+});
 
 // ── Ripple canvas ──
 const canvas = document.getElementById('ripple-canvas');
@@ -1554,9 +1582,38 @@ function drawWater() {
   }
 
   time += 0.015;
-  requestAnimationFrame(drawWater);
+  // The loop asks for the next frame only while it is meant to be running.
+  // Checking here rather than at the call site is what makes a single still
+  // frame possible at all: an earlier attempt cancelled the handle AFTER
+  // drawWater had already queued the next one, so it kept running.
+  if (waterRunning) waterFrame = requestAnimationFrame(drawWater);
 }
-drawWater();
+
+// The hero is decoration, and decoration is the first thing that should yield.
+// It used to run flat out for as long as the tab existed, including while the
+// tab sat in the background, which on a phone is somebody's battery.
+let waterFrame = null;
+let waterRunning = false;
+const stillWater = Boolean(window.matchMedia
+  && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+function startWater() {
+  if (stillWater || waterRunning) return;
+  waterRunning = true;
+  waterFrame = requestAnimationFrame(drawWater);
+}
+function stopWater() {
+  waterRunning = false;
+  if (waterFrame !== null) cancelAnimationFrame(waterFrame);
+  waterFrame = null;
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) stopWater(); else startWater();
+});
+
+// Reduced motion gets one frame, so the hero is still rather than empty.
+if (stillWater) { try { drawWater(); } catch (err) { /* decoration never breaks the page */ } }
+else startWater();
 
 // ── Scroll reveal ──
 const revealEls = document.querySelectorAll('.reveal');

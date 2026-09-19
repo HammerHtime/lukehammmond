@@ -1399,6 +1399,73 @@ ok('a superseded split set is detectable',
   S.parseTime(Ch.SPLITS['400-free-LCM'].time) > S.parseTime(seedBests['400-free-LCM'].time));
 ok('the panel has somewhere to say so', publicHtml.indexOf('id="splits-note"') !== -1);
 
+// ---------- what a coach sees before they open it ----------
+// This address goes into recruiting emails. Pasted into Outlook, Gmail or a
+// phone it used to preview as a bare URL with no title and no picture, which
+// reads like something nobody maintains.
+ok('the page has a real title', /<title>Luke Hammond, distance freestyle/.test(publicHtml));
+ok('and a description', /<meta name="description" content="Distance freestyle/.test(publicHtml));
+['og:title', 'og:description', 'og:image', 'og:url', 'og:type'].forEach(function (tag) {
+  ok('the link preview carries ' + tag, publicHtml.indexOf('property="' + tag + '"') !== -1);
+});
+ok('the preview image is one that exists',
+  require('fs').existsSync(require('path').join(__dirname, 'public', 'uploads', 'DSC_6192.jpg')));
+ok('and it has alt text', publicHtml.indexOf('og:image:alt') !== -1);
+// Inline, so there is no extra file to keep in step and nothing to 404.
+ok('there is a favicon', /<link rel="icon" href="data:image\/svg\+xml/.test(publicHtml));
+
+// ---------- motion and keyboards ----------
+// The hero ran flat out for as long as the tab existed, background included.
+ok('the hero stops when the tab is hidden', /visibilitychange/.test(publicHtml));
+ok('and never starts under reduced motion',
+  /matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches/.test(publicHtml));
+// The loop asks for the next frame only while it is meant to be running. An
+// earlier attempt cancelled the handle AFTER drawWater had queued the next one,
+// so it carried on regardless.
+ok('the loop checks before queueing the next frame',
+  /if \(waterRunning\) waterFrame = requestAnimationFrame\(drawWater\);/.test(publicHtml));
+
+ok('the menu says whether it is open', /aria-expanded="false" aria-controls="nav-overlay"/.test(publicHtml));
+ok('and updates that when it opens', /hamburger\.setAttribute\('aria-expanded'/.test(publicHtml));
+ok('Escape closes it', /e\.key === 'Escape' && navOverlay\.classList\.contains\('open'\)/.test(publicHtml));
+
+// The flip cards carried onclick="flipCard(this)" and leaned on a function in
+// index.html. That function sat inside the block holding the photo uploader and
+// the theme editor, so removing that block took the flip with it and every card
+// silently stopped turning over. This check is the one that would have caught
+// it: the cards wire themselves and name no function that might not be there.
+ok('no card calls a function by name from its markup',
+  liveJs.indexOf('<div class="time-card" onclick') === -1);
+ok('the cards wire their own flip', /card\.addEventListener\('click', flip\)/.test(liveJs));
+ok('and turn over from a keyboard', /e\.key === 'Enter' \|\| e\.key === ' '/.test(liveJs));
+ok('each card is focusable', /tabindex="0" role="button"/.test(liveJs));
+ok('and says what it is', /aria-label="' \+ esc\(best\.distance\)/.test(liveJs));
+// Every inline handler left in the markup must point at something that exists.
+(publicHtml.match(/on\w+="(\w+)\(/g) || []).forEach(function (hit) {
+  const fn = hit.replace(/^on\w+="/, '').replace(/\($/, '');
+  ok('the inline handler ' + fn + ' has a function behind it',
+    new RegExp('function ' + fn + '\\b').test(publicHtml));
+});
+
+// ---------- the headers ----------
+const tomlSrc = require('fs').readFileSync(require('path').join(__dirname, 'netlify.toml'), 'utf8');
+ok('HTTPS is pinned', /Strict-Transport-Security/.test(tomlSrc));
+ok('the camera and microphone are refused', /camera=\(\), microphone=\(\)/.test(tomlSrc));
+ok('there is a content policy', /Content-Security-Policy/.test(tomlSrc));
+ok('it names the only hosts that may serve script',
+  /script-src 'self' 'unsafe-inline' https:\/\/cdn\.jsdelivr\.net https:\/\/cdnjs\.cloudflare\.com/.test(tomlSrc));
+ok('plugins are refused outright', /object-src 'none'/.test(tomlSrc));
+ok('and the base URL cannot be rewritten', /base-uri 'self'/.test(tomlSrc));
+// Every external script the pages load has to be allowed, or the page breaks
+// in production while every test here still passes.
+[publicHtml, require('fs').readFileSync(require('path').join(__dirname, 'public', 'onepager.html'), 'utf8')]
+  .forEach(function (page) {
+    (page.match(/<script src="https:\/\/([^/"]+)/g) || []).forEach(function (hit) {
+      const host = hit.replace('<script src="https://', '');
+      ok('the policy allows ' + host, tomlSrc.indexOf(host) !== -1);
+    });
+  });
+
 // ---------- the school-specific coach view ----------
 // A coach who follows the link in their own email opens the page with their
 // own programme's comparison at the top. The numbers come from the server,

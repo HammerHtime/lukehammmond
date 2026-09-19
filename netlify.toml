@@ -26,6 +26,17 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "SAMEORIGIN"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    # Nothing on this site needs a camera, a microphone or a location, so it
+    # says so rather than leaving the question open.
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+    # The honest version. 'unsafe-inline' is still needed because the page
+    # carries inline style and script blocks, so this is not the full defence a
+    # nonce would give. What it does do is name the only hosts that may serve
+    # script, style, font or image to this site, so an injected tag pointing
+    # somewhere else does not load. object-src and base-uri close the two
+    # classic ways around that.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
 
 [[headers]]
   for = "/admin.html"
