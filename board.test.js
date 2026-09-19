@@ -4,14 +4,14 @@
 // The board is the engine. If a change here alters a verdict, that is an
 // engine change, and it needs a reason written down before the numbers move.
 
-const S = require('./swim.js');
-const C = require('./convert.js');
-const St = require('./standards.js');
+const S = require('./public/swim.js');
+const C = require('./public/convert.js');
+const St = require('./public/standards.js');
 const Sc = require('./schools.js');
-const B = require('./board.js');
-const R = require('./recruiting.js');
-const { SWIMMER, SEED_RESULTS } = require('./swimmer.js');
-const Ro = require('./roster.js');
+const B = require('./public/board.js');
+const R = require('./public/recruiting.js');
+const { SWIMMER, SEED_RESULTS } = require('./public/swimmer.js');
+const Ro = require('./public/roster.js');
 
 let passed = 0;
 let failed = 0;
@@ -267,7 +267,7 @@ const fnSrc0 = require('fs').readFileSync(
 ok('the researched list can be asked for', /searchParams\.get\('seed'\) === '1'/.test(fnSrc0));
 ok('and it is the seed, not the store', /json\(\{ schools: lib\.seedSchools\(\), seed: true \}\)/.test(fnSrc0));
 
-const adminSrc0 = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
+const adminSrc0 = require('fs').readFileSync(require('path').join(__dirname, 'public', 'admin.html'), 'utf8');
 ok('the page asks on load', /fetch\('\/api\/schools\?seed=1'/.test(adminSrc0));
 ok('and offers rather than forces', adminSrc0.indexOf('Bring them onto the board') !== -1);
 // Merge, never replace: a school removed on purpose stays removed, and an
@@ -293,7 +293,7 @@ check('nothing is lost', topped.schools.length, inUse.length + 26);
 // Adding was easy and removing did not exist, so a school added by mistake was
 // there forever. Two clicks, because there is no undo and the list took a lot
 // of gathering.
-const adminSrc2 = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
+const adminSrc2 = require('fs').readFileSync(require('path').join(__dirname, 'public', 'admin.html'), 'utf8');
 ok('every row carries a remove button', /data-drop="' \+ esc\(s\.id\)/.test(adminSrc2));
 ok('the first click only arms it', /b\.classList\.contains\('sure'\)/.test(adminSrc2));
 ok('and names what would go', /school\.name \+ '\?'/.test(adminSrc2));
@@ -338,7 +338,7 @@ ok('and does not reseed an emptied list', fnSrc.indexOf('stored && stored.length
 // A red edge and a maple leaf, and not for decoration. U SPORTS puts no
 // calendar on contact, so these 26 are the only schools on the board he can
 // write to today. Every American one is silent until June 2027.
-const adminMarkup = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
+const adminMarkup = require('fs').readFileSync(require('path').join(__dirname, 'public', 'admin.html'), 'utf8');
 ok('the card takes a Canadian class', /class="school' \+ \(canada \? ' canada' : ''\)/.test(adminMarkup));
 ok('which draws a red left edge', /\.school\.canada\{border-left:4px solid var\(--leaf\)/.test(adminMarkup));
 ok('the leaf is inline SVG, not an emoji', adminMarkup.indexOf('<svg class="leaf"') !== -1);
@@ -412,7 +412,7 @@ check('while the board still shows what was recorded', tierOf('fairfield'), 'You
 
 // No page shows the raw key any more.
 ['admin.html', 'index.html'].forEach(function (f) {
-  const src = require('fs').readFileSync(require('path').join(__dirname, f), 'utf8');
+  const src = require('fs').readFileSync(require('path').join(__dirname, 'public', f), 'utf8');
   ok(f + ' never prints a bare tier key', !/>\s*P[123]\s*</.test(src));
 });
 
@@ -478,7 +478,7 @@ check('an estimate with no source still admits it is one',
   B.convertedNote({ mineEstimated: true }), 'Converted, not a time you have swum.');
 
 // The page has to actually print it, ie, on the rung and once under the event.
-const adminSrc = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
+const adminSrc = require('fs').readFileSync(require('path').join(__dirname, 'public', 'admin.html'), 'utf8');
 ok('the rung says converted', /You\' \+ \(c\.mineEstimated \? \', converted\'/.test(adminSrc));
 ok('and the note is rendered', adminSrc.indexOf('B.convertedNote(c)') !== -1);
 
@@ -710,7 +710,7 @@ check('and the portal check is openly not done yet', SWIMMER.school.ncaaPortalCh
 check('the club is current', SWIMMER.club, 'Mississauga Aquatic Club');
 check('and the former one is recorded, not erased', SWIMMER.formerClub, 'Lakeshore Swim Club');
 ['index.html', 'live-profile.js', 'recruiting.js'].forEach(function (f) {
-  const src = require('fs').readFileSync(require('path').join(__dirname, f), 'utf8');
+  const src = require('fs').readFileSync(require('path').join(__dirname, 'public', f), 'utf8');
   ok(f + ' names no former club', src.indexOf('Lakeshore') === -1);
 });
 
@@ -772,7 +772,7 @@ ok('a real ladder outranks a lone time', tied.every(function (x, i, a) {
 check('nothing hidden means nothing to find back',
   B.bestFits(S, yards, schools, schools, 5).missing, 0);
 
-const fitSrc = require('fs').readFileSync(require('path').join(__dirname, 'admin.html'), 'utf8');
+const fitSrc = require('fs').readFileSync(require('path').join(__dirname, 'public', 'admin.html'), 'utf8');
 ok('the button sits at the top of the schools list', fitSrc.indexOf('id="findFits"') !== -1);
 ok('it searches the researched list, not just the board',
   /bestFits\(S, C\.boardBests\(S, results\), schools, seedList/.test(fitSrc));
@@ -812,7 +812,7 @@ check('no school on the board fails the rule',
 // Putting a national ranking on an event IS the statement that it matters, so
 // the ranking now carries the card. Clear the box and the card goes with it.
 const liveSrc = require('fs').readFileSync(
-  require('path').join(__dirname, 'live-profile.js'), 'utf8');
+  require('path').join(__dirname, 'public', 'live-profile.js'), 'utf8');
 ok('the primary events always show', /var shown = \(SWIMMER\.primary \|\| \[\]\)/.test(liveSrc));
 ok('and anything ranked follows them', /Object\.keys\(rankings\)\s*\n\s*\.filter/.test(liveSrc));
 ok('best ranking first', /\.sort\(function \(a, b\) \{ return a\.rank - b\.rank; \}\)/.test(liveSrc));
@@ -832,7 +832,7 @@ ok('and the grid never reads them off the list entry', gridBlock.indexOf('esc(p.
 // The 2022 milestone described his CURRENT training load, ie, six days a week
 // and fifteen hours, as though he had walked in doing it. He started on two
 // days a week and three to four hours.
-const pageSrc = require('fs').readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
+const pageSrc = require('fs').readFileSync(require('path').join(__dirname, 'public', 'index.html'), 'utf8');
 ok('the 2022 entry says what he actually started on',
   /Started competitive swimming in the spring of 2022, two days a week, three to four hours\./.test(pageSrc));
 ok('and no longer claims fifteen hours from day one',
@@ -855,7 +855,7 @@ check('and the club is in Mississauga', SWIMMER.clubCity, 'Mississauga');
 ok('they are not the same town', SWIMMER.city !== SWIMMER.clubCity);
 
 const profileSrc = require('fs').readFileSync(
-  require('path').join(__dirname, 'live-profile.js'), 'utf8');
+  require('path').join(__dirname, 'public', 'live-profile.js'), 'utf8');
 ok('the contact card uses the club\u2019s town', /coach\.clubCity \|\| SWIMMER\.clubCity/.test(profileSrc));
 ok('and never the swimmer\u2019s', profileSrc.indexOf("SWIMMER.city") === -1);
 // The province is read, not typed, so a move does not leave a stale "ON".
@@ -896,7 +896,7 @@ ok('and names them once one is set', withCoach.body.indexOf('My coach, A New Coa
 // The old name must not survive anywhere, including the hand-written markup,
 // which is where two of the four copies were.
 ['swimmer.js', 'index.html', 'live-profile.js', 'recruiting.js'].forEach(function (f) {
-  const src = require('fs').readFileSync(require('path').join(__dirname, f), 'utf8');
+  const src = require('fs').readFileSync(require('path').join(__dirname, 'public', f), 'utf8');
   ok(f + ' carries no former coach name', src.indexOf('Vowles') === -1);
 });
 // And the rule still holds when it is cleared again, which it will be.
@@ -1090,11 +1090,75 @@ check('a nonsense address is refused', Sc.normaliseSchool({ name: 'A', division:
 check('a school with no division is refused', Sc.normaliseSchool({ name: 'A' }).ok, false);
 check('verified is false without an address', Sc.normaliseSchool({ name: 'A', division: 'D1', verified: true }).school.verified, false);
 
+// ---------- what is actually deployed ----------
+// This block exists because of a live leak, not a hypothetical one.
+//
+// The publish root used to be the whole repository, guarded by a redirect per
+// file that had to stay private. Netlify serves files case-insensitively and
+// matches redirects case-sensitively, so the guard could be walked around by
+// changing one letter. On 19 September 2026 the deployed site returned
+// /schools.JS in full, ie, ninety coach email addresses and every benchmark,
+// while /schools.js correctly returned 404. /claude.md and /Board.test.js went
+// the same way.
+//
+// The fix is an allowlist: only public/ is deployed. These checks assert the
+// shape of that folder, because a blocklist cannot be tested for the file
+// nobody remembered to add to it, and an allowlist can.
+const fsP = require('fs');
+const pathP = require('path');
+const PUBLIC_DIR = pathP.join(__dirname, 'public');
+const deployed = fsP.readdirSync(PUBLIC_DIR);
+
+check('the publish root is public/, not the repository',
+  /publish\s*=\s*"public"/.test(fsP.readFileSync(pathP.join(__dirname, 'netlify.toml'), 'utf8')), true);
+
+// The school file carries every coach address on the board. It is the single
+// most damaging file in the repository and it must not be deployable.
+ok('schools.js is not in the deployed folder', deployed.indexOf('schools.js') === -1);
+ok('and it still exists at the root, where the functions read it',
+  fsP.existsSync(pathP.join(__dirname, 'schools.js')));
+
+// Nothing that is not the website goes out.
+['board.test.js', 'browser.test.js', 'CLAUDE.md', 'README.md', 'package.json', 'docs',
+  'node_modules', 'netlify', '.git'].forEach(function (name) {
+  ok(name + ' is not deployed', deployed.indexOf(name) === -1);
+});
+
+// Nothing private can hide in the deployed folder either. Anything that is not
+// a page, a script or a photo has no business being served.
+deployed.forEach(function (name) {
+  ok('public/' + name + ' is a page, a script or the photo folder',
+    /\.(html|js|css)$/.test(name) || name === 'uploads');
+});
+ok('no test file slipped into the deployed folder',
+  deployed.filter(function (n) { return /\.test\.js$/.test(n); }).length === 0);
+ok('and no markdown notes did either',
+  deployed.filter(function (n) { return /\.md$/i.test(n); }).length === 0);
+
+// Every script each page asks for has to be inside the publish folder, or the
+// page loads a 404 in production and the suite never notices.
+['index.html', 'admin.html'].forEach(function (page) {
+  const html = fsP.readFileSync(pathP.join(PUBLIC_DIR, page), 'utf8');
+  const srcs = (html.match(/src="([^"]+\.js)"/g) || [])
+    .map(function (s) { return s.slice(5, -1); })
+    .filter(function (s) { return s.indexOf('//') === -1; });
+  ok(page + ' asks for at least one local script', srcs.length > 0);
+  srcs.forEach(function (s) {
+    ok(page + ' can actually load ' + s, fsP.existsSync(pathP.join(PUBLIC_DIR, s)));
+  });
+});
+
+// The old redirect blocklist is gone. Leaving it would suggest it still works.
+const toml = fsP.readFileSync(pathP.join(__dirname, 'netlify.toml'), 'utf8');
+ok('no per-file blocklist remains to be trusted', toml.indexOf('/schools.js') === -1);
+ok('the security headers survived the move', toml.indexOf('X-Content-Type-Options') !== -1);
+ok('and admin.html is still kept out of search results', toml.indexOf('noindex') !== -1);
+
 // ---------- Ontario eligibility ----------
 // Sourced to the NCAA Ontario country sheet dated September 2026, not to a
 // recruiting service. These are the rules that quietly cost an Ontario swimmer
 // a year or a grade point.
-const El = require('./eligibility.js');
+const El = require('./public/eligibility.js');
 
 // The two courses a swimmer reaches for, and Luke's own stated academic
 // interest, are both worth nothing. This is the most expensive line in the file.
@@ -1210,10 +1274,10 @@ check('a missing birth date yields nothing', El.ageClock(null, null, 2029), null
 // the age year for eligibility. The day and month are not the site's business
 // and are not the repo's either, ie, ageClock takes them as arguments and
 // nothing ever passes them.
-const eligSource = require('fs').readFileSync(require('path').join(__dirname, 'eligibility.js'), 'utf8');
+const eligSource = require('fs').readFileSync(require('path').join(__dirname, 'public', 'eligibility.js'), 'utf8');
 ok('no full date of birth is written down anywhere',
   !/1[0-9] September 2011|2011-09-|September 14|14 September/.test(eligSource));
-const pageSource = require('fs').readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
+const pageSource = require('fs').readFileSync(require('path').join(__dirname, 'public', 'index.html'), 'utf8');
 ok('the public page carries a birth year and no more',
   /Year of Birth/i.test(pageSource) && !/date of birth/i.test(pageSource));
 ok('and nothing on it is a full date',
@@ -1321,11 +1385,11 @@ ok('none is made yet', usProgress.every(function (p) { return p.gap.made === fal
 // four ranked events does not exist to a Canadian coach, and the file has to
 // say so rather than quietly omitting it.
 check('no men\u2019s 800 is claimed', usports.cuts['800-free-SCM'], undefined);
-const stdSource = require('fs').readFileSync(require('path').join(__dirname, 'standards.js'), 'utf8');
+const stdSource = require('fs').readFileSync(require('path').join(__dirname, 'public', 'standards.js'), 'utf8');
 ok('and the reason is written down', /NO men\u2019s 800|NO men's 800/.test(stdSource));
 
 // ---------- the photo library ----------
-const Ph = require('./photos.js');
+const Ph = require('./public/photos.js');
 
 function photo(id, day, main) {
   const made = Ph.normalisePhoto({ id: id, type: 'image/jpeg', bytes: 100000, addedOn: day, main: main });
@@ -1498,7 +1562,7 @@ check('kinesiology still counts for nothing', El.checkCourse('PSK4U').approved, 
 check('and so does exercise science', El.checkCourse('PSE4U').approved, false);
 
 // ---------- rankings, editable and clearable ----------
-const SD = require('./swimmer.js');
+const SD = require('./public/swimmer.js');
 check('the seed carries four rankings', Object.keys(SD.seedRankings()).length, 4);
 check('nothing saved yet falls back to the seed', Object.keys(SD.rankingsFrom(null)).length, 4);
 
@@ -1519,14 +1583,14 @@ check('a missing event has no ranking', SD.rankFor(SD.seedRankings(), '100-fly-L
 // exists because that line was crossed once: the data file was left public
 // after the coach contacts were added to it, and the whole board went out on
 // the first deploy. A grep is a blunt instrument and that is the point.
-const utilsSource = require('fs').readFileSync(require('path').join(__dirname, 'school-utils.js'), 'utf8');
+const utilsSource = require('fs').readFileSync(require('path').join(__dirname, 'public', 'school-utils.js'), 'utf8');
 ok('the public file carries no email address', !/@[a-z0-9.-]+\.(edu|com|org)/i.test(utilsSource));
 ok('the public file names no school',
   !/\b(Gannon|Canisius|Bonaventure|Bucknell|Fairfield|Niagara|Marist|Ithaca|Clarkson|Hamilton|Iona|Loyola|Manhattan)\b/i.test(utilsSource));
 ok('the public file carries no benchmark time', !/\d:\d\d\.\d\d/.test(utilsSource));
 ok('the public file carries no priority', !/'P[123]'/.test(utilsSource));
-ok('but it still exports the importer', typeof require('./school-utils.js').parsePaste === 'function');
-ok('and the merge rules', typeof require('./school-utils.js').mergeSchools === 'function');
+ok('but it still exports the importer', typeof require('./public/school-utils.js').parsePaste === 'function');
+ok('and the merge rules', typeof require('./public/school-utils.js').mergeSchools === 'function');
 
 // ---------- school logos ----------
 const gannon = schools.filter(function (s) { return s.id === 'gannon'; })[0];

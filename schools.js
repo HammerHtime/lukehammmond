@@ -35,7 +35,7 @@
 // Anything with verified:false has NOT had its contact confirmed. The back end
 // will not send to it. Fill it with the importer, from the school's own site.
 
-const utils = require('./school-utils.js');
+const utils = require('./public/school-utils.js');
 const AID = utils.AID;
 const CONTACT_FIELDS = utils.CONTACT_FIELDS;
 const aidFor = utils.aidFor;

@@ -7,7 +7,7 @@
 // split means reading the gallery never loads a single image byte.
 
 import { store, readJson, writeJson, isAdmin, json, denied, needsSetup } from './lib/store.js';
-import lib from '../../photos.js';
+import lib from '../../public/photos.js';
 
 const INDEX = 'photo-index';
 

@@ -1,48 +1,24 @@
 [build]
-  publish = "."
+  publish = "public"
   functions = "netlify/functions"
 
-# The back end, the project's own notes, and the test file are not the website.
-# The publish root is the whole folder, so anything not explicitly hidden is
-# served to anyone who guesses the path.
-[[redirects]]
-  from = "/docs/*"
-  to = "/404.html"
-  status = 404
-  force = true
-
-[[redirects]]
-  from = "/CLAUDE.md"
-  to = "/404.html"
-  status = 404
-  force = true
-
-[[redirects]]
-  from = "/package.json"
-  to = "/404.html"
-  status = 404
-  force = true
-
-[[redirects]]
-  from = "/board.test.js"
-  to = "/404.html"
-  status = 404
-  force = true
-
-# schools.js carries seventeen coach email addresses, the conference
-# benchmarks, and Luke's recorded priority for every programme. It is served
-# to nobody. The admin screen gets that data from /api/schools, behind the key.
+# There is no blocklist any more, and that is the point.
 #
-# This was briefly wrong and worth remembering. The file originally held no
-# contacts, so leaving it public looked harmless and was. Then the contacts
-# were added to it and the reasoning was never revisited, ie, the whole board
-# was public on the first deploy. The pure functions the browser actually needs
-# now live in school-utils.js, which holds no data at all.
-[[redirects]]
-  from = "/schools.js"
-  to = "/404.html"
-  status = 404
-  force = true
+# The publish root used to be the whole repository, with a redirect per file
+# that had to stay out of it. That design failed in production. Netlify serves
+# files case-insensitively but matches redirects case-sensitively, so every
+# entry on the list could be walked around by changing one letter. On
+# 19 September 2026 https://lukehammond.netlify.app/schools.JS returned the
+# whole school file, ie, 100 KB holding ninety coach email addresses, every
+# conference benchmark and Luke's recorded priority for all sixty-four
+# programmes. /claude.md, /CLAUDE.MD and /Board.test.js served the same way.
+# The file the old comment promised was "served to nobody" was served to anyone
+# who pressed shift.
+#
+# Now only public/ is deployed. schools.js, the tests, the docs and the project
+# notes sit outside it and cannot be reached by any spelling. A new file is
+# private unless it is deliberately put in public/, which is the safe default,
+# ie, forgetting to add something to a list can no longer leak it.
 
 [[headers]]
   for = "/*"

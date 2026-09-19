@@ -43,7 +43,7 @@ function loadLikeABrowser(files) {
   sandbox.globalThis = sandbox;
   const context = vm.createContext(sandbox);
   files.forEach(function (file) {
-    const source = fs.readFileSync(path.join(__dirname, file), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, 'public', file), 'utf8');
     vm.runInContext(source, context, { filename: file });
   });
   return sandbox;
@@ -107,7 +107,7 @@ if (adminScope) {
 // redeclaration error.
 const unwrapped = [];
 ADMIN.concat(PUBLIC).filter(function (f, i, all) { return all.indexOf(f) === i; }).forEach(function (file) {
-  const source = fs.readFileSync(path.join(__dirname, file), 'utf8');
+  const source = fs.readFileSync(path.join(__dirname, 'public', file), 'utf8');
   const firstCode = source.split('\n').filter(function (line) {
     return line.trim() && !line.trim().startsWith('//');
   })[0] || '';
@@ -125,22 +125,22 @@ check('every front end file is wrapped in its own scope', unwrapped, []);
 // in swimmer.js rather than the one edited in the back end, so changing a
 // ranking moved the intro sentence and nothing else. Both now go through
 // rankFor, and nothing in the page code may read a rank any other way.
-const profileSource = fs.readFileSync(path.join(__dirname, 'live-profile.js'), 'utf8');
+const profileSource = fs.readFileSync(path.join(__dirname, 'public', 'live-profile.js'), 'utf8');
 ok('the page never reads a hardcoded rank', !/\bp\.rank\b/.test(profileSource));
 check('every rank on the page comes from the stored map',
   (profileSource.match(/rankFor\(rankings,/g) || []).length >= 2, true);
 ok('the card badge says which country', /in Canada/.test(profileSource));
 ok('the hero box says it is a ranking', /Ranked in Canada/.test(profileSource));
-ok('the page never calls a ranking a place', !/>Place</.test(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8')));
+ok('the page never calls a ranking a place', !/>Place</.test(fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8')));
 
-const recruitSource = fs.readFileSync(path.join(__dirname, 'recruiting.js'), 'utf8');
+const recruitSource = fs.readFileSync(path.join(__dirname, 'public', 'recruiting.js'), 'utf8');
 // The email says "#2 in Canada for my age", which is a ranking stated as one
 // without the word. What it must never do is imply a finishing place.
 ok('the coach email states a ranking, not a placing', /in Canada for my age/.test(recruitSource));
 
 // ---------- the pages load what this file claims they load ----------
 function tagsIn(page) {
-  const html = fs.readFileSync(path.join(__dirname, page), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, 'public', page), 'utf8');
   const found = [];
   const re = /<script src="([^"]+)"><\/script>/g;
   let m;
