@@ -213,7 +213,7 @@
     // put "400-free-LCM undefined" on screen.
     var parts = eventId.split('-');
     el('splits-title').textContent =
-      parts[0] + 'm ' + S.STROKE_LABEL[parts[1]] + ' — ' + d.time;
+      parts[0] + 'm ' + S.STROKE_LABEL[parts[1]] + ' \u00b7 ' + d.time;
     var note = el('splits-note');
     if (note) {
       note.textContent = newer

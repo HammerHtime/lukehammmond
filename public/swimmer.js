@@ -67,10 +67,22 @@ const SWIMMER = {
     'Ranked inside the top five in Canada for age across four distance freestyle events.'
   ],
 
-  // One line, in his voice, for the coach email. Written out rather than
-  // assembled from fields, because a sentence assembled from fields reads like
-  // one.
-  training: 'I train six days a week, about fifteen hours in the water.',
+  // The hours, not a sentence about the hours.
+  //
+  // It used to be one written-out line, and there was a SECOND hand-typed copy
+  // on the public page saying the same thing in the third person. The two had
+  // to be kept in step by hand and were not: both still claimed fifteen hours
+  // in the water and six days a week after Andrew corrected the figure.
+  //
+  // Numbers here, sentences built from them, so there is one place to change.
+  // Confirmed with Andrew 24 September 2026. Days per week is deliberately not
+  // recorded: he gave the hours and not the days, and this app does not invent
+  // the difference.
+  training: {
+    poolHours: 13,
+    gymHours: 4,
+    recorded: '2026-09-24'
+  },
 
   interests: ['History', 'Kinesiology', 'Open water swimming', 'Strength training'],
 

@@ -9,7 +9,7 @@ them.
 Read CLAUDE.md before changing anything. Read docs/STATUS.md for what is done
 and what is blocked.
 
-    npm run check    lint, then 1296 checks
+    npm run check    lint, then 1324 checks
 
 ## How the board works
 

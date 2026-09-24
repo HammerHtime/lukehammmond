@@ -10,6 +10,58 @@ Newest first.
 
 ---
 
+## 24 September 2026, the training hours, and a rule the code was breaking
+
+**Tested end to end?** Yes. All three pages and the email were rendered and read.
+
+### Closed: the unverified training claim
+
+Andrew confirmed the figures: **thirteen hours a week in the pool, four in the
+weight room.** The old claim of "six days a week, about fifteen hours in the
+water" is gone from everywhere.
+
+He gave the hours and not the days, so no claim is made about days per week.
+This app does not fill in the gap.
+
+### What the fix turned up
+
+There were **two** copies of that claim, not one. `swimmer.js` held a
+first-person sentence for the email and `index.html` held a hand-typed
+third-person one for the public page. They had to be kept in step by hand and
+they were not: both still said fifteen hours after the correction.
+
+Now the hours are stored as numbers in one place and both sentences are built
+from them. There is nothing left to keep in step.
+
+### Fixed: the project was breaking its own writing rule
+
+CLAUDE.md says no em dashes or en dashes in anything a person reads. There were
+**twenty** across the public page, the back end and the live code.
+
+Worse, the first test written for this passed while five of them were rendering
+on the live page. It looked for the dash character, and those five were written
+as the escape `\u2014`, which is the same thing to a browser and invisible to a
+regex looking for the glyph. The test checks both spellings now, and the moment
+it did it found three more in the back end that had been sitting there.
+
+Every dash is now a word or the punctuation the sentence actually wanted. A
+screen reader announces "none on file" rather than silence.
+
+### Proven, not asserted
+
+Rendered and read, rather than inferred from the source:
+
+| | dashes | training line |
+|---|---|---|
+| Public page, iPhone width | 0 | thirteen hours, plus four |
+| One pager | 0 | not shown on it |
+| Back end | 0 | not shown on it |
+| The email itself | 0 | thirteen hours, plus four |
+
+No console errors on any of them. 1,294 checks green.
+
+---
+
 ## 24 September 2026, the coach email
 
 **Tested end to end?** As far as this app can go. Read the first item.

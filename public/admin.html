@@ -1115,7 +1115,7 @@
         '<div style="flex:1;min-width:0"><strong style="font-size:14px">' + esc(bests[id].name) +
         ' ' + esc(bests[id].course) + '</strong>' +
         '<div class="conf">' + esc(bests[id].time) + '</div></div>' +
-        '<input data-rank="' + esc(id) + '" inputmode="numeric" placeholder="\u2014" ' +
+        '<input data-rank="' + esc(id) + '" inputmode="numeric" placeholder="none" ' +
         'value="' + (held ? esc(held.rank) : '') + '" style="width:84px;text-align:center">' +
         '</div>';
     }
@@ -1599,13 +1599,13 @@
         '<td><div style="display:flex;gap:9px;align-items:center">' + badge(s) +
           '<div><strong>' + esc(s.name) + '</strong><div class="conf">' + esc(s.division) +
           (s.conference ? ', ' + esc(s.conference) : '') + '</div></div></div></td>' +
-        '<td>' + esc(s.coach || '\u2014') + '</td>' +
+        '<td>' + esc(s.coach || 'none on file') + '</td>' +
         '<td>' + (s.email ? esc(s.email) : '<span class="conf">not found</span>') + '</td>' +
         '<td>' + (s.verified
           ? '<span class="p P1">yes</span>' + (s.verifiedOn ? '<div class="conf">' + esc(s.verifiedOn) + '</div>' : '')
           : '<span class="p none">no</span>') + '</td>' +
         '<td class="wrap-cell">' + (s.staffUrl
-          ? '<a href="' + esc(safeUrl(s.staffUrl)) + '" target="_blank" rel="noopener">directory</a>' : '\u2014') + '</td>' +
+          ? '<a href="' + esc(safeUrl(s.staffUrl)) + '" target="_blank" rel="noopener">directory</a>' : 'none') + '</td>' +
         '<td><button class="drop" data-drop="' + esc(s.id) + '">remove</button></td>' +
         '</tr>';
     }).join('');

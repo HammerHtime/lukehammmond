@@ -287,8 +287,11 @@ function draftEmail(input) {
     lines.push('');
   }
 
-  if (swimmer.training) {
-    lines.push(swimmer.training + ' I like the distance events and I like the training ' +
+  // Built from the stored hours rather than a written-out sentence, so it cannot
+  // drift from the figure on the public page the way it did.
+  const trained = trainingLine(swimmer, 'first');
+  if (trained) {
+    lines.push(trained + ' I like the distance events and I like the training ' +
       'that goes with them.');
     lines.push('');
   }
@@ -391,6 +394,28 @@ function eventsSentence(ranked) {
 
 // The improvement paragraph, from the two events with a real curve behind them.
 // Only claims "every season" when that is literally true of the data.
+// Thirteen reads better than 13 in a sentence a fifteen year old is supposed to
+// have written. Only the range this is ever used for.
+const TRAIN_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
+  'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen',
+  'seventeen', 'eighteen', 'nineteen', 'twenty'];
+
+function inWords(n) {
+  return Number.isInteger(n) && n >= 0 && n < TRAIN_WORDS.length ? TRAIN_WORDS[n] : String(n);
+}
+
+// `person` is 'first' for the coach email, in Luke's voice, or 'third' for the
+// public page, which talks about him. Same numbers either way.
+function trainingLine(swimmer, person) {
+  const t = swimmer && swimmer.training;
+  if (!t || !t.poolHours) return '';
+  const third = person === 'third';
+  const line = (third ? 'He trains ' : 'I train ') + inWords(t.poolHours) +
+    ' hours a week in the pool' +
+    (t.gymHours ? ', plus ' + inWords(t.gymHours) + ' in the weight room' : '') + '.';
+  return line;
+}
+
 function progressParagraph(swim, results, ranked) {
   const lead = ranked[0];
   if (!lead) return '';
@@ -511,6 +536,8 @@ function listOut(items) {
 
 const api = {
   CONTACT_RULES: CONTACT_RULES,
+  inWords: inWords,
+  trainingLine: trainingLine,
   replyDateFor: replyDateFor,
   inPersonDateFor: inPersonDateFor,
   contactWindow: contactWindow,

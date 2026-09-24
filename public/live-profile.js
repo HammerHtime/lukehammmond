@@ -39,6 +39,7 @@
     heroEyebrow();
     heroStats(bests);
     heroBadge(bests);
+    trainingLine();
     if (window.Charts) window.Charts.renderProgression(results);
     schoolPanel();
     timeCards(results, bests);
@@ -186,6 +187,20 @@
     });
   }
 
+  // The training line. It was typed into index.html in the third person while
+  // swimmer.js carried its own first-person copy for the email, and the two had
+  // to be kept in step by hand. They were not: both still said fifteen hours in
+  // the water and six days a week after the figure was corrected. One source
+  // now, two voices.
+  function trainingLine() {
+    var node = el('about-training');
+    if (!node) return;
+    var line = R && R.trainingLine ? R.trainingLine(SWIMMER, 'third') : '';
+    node.textContent = line;
+    // An empty sentence should not leave a stray full stop or a gap.
+    if (node.parentNode) node.parentNode.style.display = line ? '' : 'none';
+  }
+
   // The hero badge read "Ranked Top 5 in Canada · 4 Distance Events", typed in,
   // so it would have kept saying 4 events after a fifth ranking was added and
   // kept saying Top 5 if a rank slipped to 7. Both halves are counted now.
@@ -259,7 +274,7 @@
     var rows = S.recentResults(results, 14).map(function (r) {
       return '<tr>' +
         '<td>' + esc(friendlyMonth(r.date)) + '</td>' +
-        '<td class="meet-name">' + esc(r.meet || '—') + '</td>' +
+        '<td class="meet-name">' + esc(r.meet || 'Not recorded') + '</td>' +
         '<td>' + esc(r.distance) + 'm ' + esc(S.STROKE_LABEL[r.stroke]) + '</td>' +
         '<td>' + esc(r.time) + '</td>' +
         '<td><span class="place-badge place-other">' + esc(r.course) + '</span></td>' +
@@ -394,7 +409,7 @@
               'font-size:0.95rem;">' + esc(s.time) + '</span>' +
               '<span style="font-variant-numeric:tabular-nums;font-size:0.78rem;color:' +
               (s.droppedBy ? 'var(--gold)' : 'var(--muted)') + ';min-width:62px;text-align:right;">' +
-              (s.droppedBy ? esc(S.formatGap(s.droppedBy)) : '\u2014') + '</span></div>';
+              (s.droppedBy ? esc(S.formatGap(s.droppedBy)) : 'first') + '</span></div>';
           }).join('') +
           '<div style="margin-top:0.9rem;font-size:0.8rem;color:var(--white);">' +
           '<strong style="color:var(--gold);">' + esc(S.formatGap(c.totalDrop)) + '</strong> in ' +

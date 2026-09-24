@@ -867,11 +867,11 @@ ok('and the grid never reads them off the list entry', gridBlock.indexOf('esc(p.
 const pageSrc = require('fs').readFileSync(require('path').join(__dirname, 'public', 'index.html'), 'utf8');
 ok('the 2022 entry says what he actually started on',
   /Started competitive swimming in the spring of 2022, two days a week, three to four hours\./.test(pageSrc));
-ok('and no longer claims fifteen hours from day one',
+ok('and no longer claims his current load from day one',
   pageSrc.indexOf('spring of 2022 \u2014 6 days a week') === -1);
 // His current load is still stated, in the present tense, where it belongs.
 ok('the about section still carries the real load now',
-  /trains 6 days a week and spends over 15 hours/.test(pageSrc));
+  /id="about-training"><\/span>/.test(pageSrc));
 
 // ---------- the club is in a different town to the swimmer ----------
 // He LIVES in Etobicoke and TRAINS in Mississauga. The public contact card was
@@ -897,8 +897,11 @@ ok('the province comes from the data', /', ' \+ SWIMMER\.province/.test(profileS
 // glyph rather than punctuation, so it stays.
 const cardLine = /var card = el\('contact-club'\);[\s\S]*?\n    \}/.exec(profileSrc)[0];
 ok('no em dash on the contact card', cardLine.indexOf('\u2014') === -1);
-check('and only one is left in the file, as a placeholder',
-  (profileSrc.match(/\u2014/g) || []).length, 1);
+// The last one was a table cell meaning "no value". It now says "Not recorded",
+// which obeys the rule and reads better than a dash a screen reader announces
+// as nothing at all.
+ok('a missing meet name is words, not a dash',
+  profileSrc.indexOf("r.meet || 'Not recorded'") !== -1);
 
 // The email had this fixed already and must stay fixed.
 ok('the email still keeps the club out of the wrong town',
@@ -1072,7 +1075,7 @@ ok('the second event follows it',
 
 // Training, academics and the two links.
 ok('the training load is his own sentence',
-  voice.body.indexOf('I train six days a week, about fifteen hours in the water.') !== -1);
+  voice.body.indexOf('I train thirteen hours a week in the pool, plus four in the weight room.') !== -1);
 ok('the GPA is read from the profile',
   voice.body.indexOf('3.5 GPA on a 4.0 scale') !== -1);
 ok('and the field of study reads as a choice',
@@ -1268,6 +1271,81 @@ Object.keys(Dash.KIND_SUMMARY).forEach(function (kind) {
   ok(kind + ' has a plural summary', /^(have|are|can|were)\b/.test(Dash.KIND_SUMMARY[kind]));
 });
 check('an unknown kind still says something', Dash.summaryFor('nope'), 'need a look');
+
+// ---------- the writing conventions are not optional ----------
+// CLAUDE.md: "No em dashes and no en dashes" in anything a user sees. Fifteen
+// had accumulated in the hand-written copy. They are also a mild tell that a
+// machine did the writing, which the humanizer skill flags by name, and this is
+// a page whose whole job is to sound like a fifteen year old.
+const dashFiles = ['index.html', 'admin.html', 'onepager.html', 'charts.js',
+  'live-profile.js', 'recruiting.js', 'dashboard.js', 'onepager.js', 'swimmer.js'];
+dashFiles.forEach(function (f) {
+  const src = require('fs').readFileSync(
+    require('path').join(__dirname, 'public', f), 'utf8');
+  // Both spellings. The character itself, and the JavaScript escape for it.
+  // A check for the glyph alone let five escaped ones through, and they were
+  // rendering on the live page while this test reported the file clean.
+  const literal = (src.match(/[—–]/g) || []).length;
+  const escaped = (src.match(/\\u201[34]/g) || []).length;
+  check(f + ' carries no em or en dash', literal + escaped, 0);
+});
+// eligibility.js is the one exception and it is deliberate: the en dash sits
+// inside a character class that PARSES separators people type, ie, it is input
+// handling and never reaches a screen.
+const eligDash = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'eligibility.js'), 'utf8');
+ok('the only dash left is in a parser, not in prose',
+  eligDash.split('\n').filter(function (line) {
+    return /[—–]/.test(line);
+  }).every(function (line) { return line.indexOf('split(/[') !== -1; }));
+
+// ---------- the training load ----------
+// It was a written-out sentence in swimmer.js, with a SECOND hand-typed copy on
+// the public page saying the same thing in the third person. They had to be kept
+// in step by hand and were not: both still said fifteen hours in the water and
+// six days a week after Andrew corrected the figure on 24 September 2026.
+//
+// Numbers stored once, sentences built from them, so that cannot happen again.
+check('the hours are stored as numbers', typeof SWIMMER.training, 'object');
+check('pool hours', SWIMMER.training.poolHours, 13);
+check('weight room hours', SWIMMER.training.gymHours, 4);
+ok('and the day it was confirmed is recorded', SWIMMER.training.recorded === '2026-09-24');
+// He gave the hours and not the days, so the days are not recorded and not said.
+ok('no claim is made about days per week',
+  JSON.stringify(SWIMMER.training).indexOf('days') === -1);
+
+check('his voice, for the email',
+  R.trainingLine(SWIMMER, 'first'),
+  'I train thirteen hours a week in the pool, plus four in the weight room.');
+check('and the third person, for the page',
+  R.trainingLine(SWIMMER, 'third'),
+  'He trains thirteen hours a week in the pool, plus four in the weight room.');
+// Written as words, because a fifteen year old writing to a coach does not put
+// digits in the middle of a sentence.
+ok('the numbers are words, not digits', !/\d/.test(R.trainingLine(SWIMMER, 'first')));
+check('thirteen', R.inWords(13), 'thirteen');
+check('four', R.inWords(4), 'four');
+check('anything past the list falls back to the digit', R.inWords(40), '40');
+
+// Silence rather than a half sentence when a figure is missing.
+check('no weight room, no clause',
+  R.trainingLine({ training: { poolHours: 13 } }, 'first'),
+  'I train thirteen hours a week in the pool.');
+check('no hours at all, nothing said', R.trainingLine({ training: {} }, 'first'), '');
+check('and nothing said for no training record', R.trainingLine({}, 'first'), '');
+
+// The public page carries no copy of its own any more.
+const pageForTraining = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'index.html'), 'utf8');
+const liveForTraining = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'live-profile.js'), 'utf8');
+ok('the page holds an empty slot, not a typed claim',
+  /id="about-training"><\/span>/.test(pageForTraining));
+ok('and nothing on it still says fifteen hours',
+  pageForTraining.indexOf('15 hours') === -1 && pageForTraining.indexOf('fifteen hours') === -1);
+ok('nor six days a week', !/6 days a week|six days a week/.test(pageForTraining));
+ok('the page fills it from the same builder the email uses',
+  /R\.trainingLine\(SWIMMER, 'third'\)/.test(liveForTraining));
 
 // ---------- the email as the coach receives it ----------
 // Under the standing rule in CLAUDE.md, the output is the deliverable, not the
