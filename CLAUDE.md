@@ -26,7 +26,7 @@ is a prompt to look again, ie, it is the feature.
 - Scoring, bands, conversion factors and benchmarks are not, without a reason
   written down first.
 - After ANY change, run the tests. They must stay green:
-    npm test          1264 checks
+    npm test          1296 checks
     npm run lint      confirms every js file parses, functions included
     npm run check     lint then test, run this before pushing
 
@@ -118,6 +118,30 @@ So:
   the week you are trying to send thirty emails is not.
 - Anything with a lead time, ie, NCAA Eligibility Center registration, tests,
   transcripts, gets done on its own schedule, not in the spring rush.
+
+## How work gets finished here, standing rule from 24 September 2026
+Andrew is not the test department. Every change and every feature is finished by
+Claude, end to end, before it is handed over. Finished means all five of these,
+not the first one:
+
+1. **Build it.**
+2. **Audit it.** Read the diff back adversarially. What breaks it? What happens
+   with no data, bad data, a missing field, the longest possible input? Fix what
+   that turns up before anyone sees it.
+3. **Run it and produce the actual output.** Not "the tests pass". Generate the
+   real email, render the real page, click the real button. A test that does not
+   produce the artefact has not tested the artefact.
+4. **Judge the output as the person receiving it.** If it is an email: does it
+   read on a phone, is the subject readable in a phone's inbox list, is the
+   wording something a fifteen-year-old would actually write? Run the humanizer
+   skill over anything a human reads. Fix the wording, the layout and the font
+   without being asked. Claude owns the output, not just the code.
+5. **If it did not work, log it.** docs/AUDIT-LOG.md, with what failed, why, and
+   the fix. Never a silent "done".
+
+The point: Andrew should not be sending himself test emails, reading them,
+sending them back, and doing that twenty times. If something cannot be tested
+end to end, say so plainly in the audit log rather than implying it was.
 
 ## What this app does not do, decided 24 September 2026
 It does not watch anyone.

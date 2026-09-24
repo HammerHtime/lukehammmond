@@ -216,6 +216,10 @@ function draftEmail(input) {
 
   const warnings = [];
   if (!school || !school.email) warnings.push('No coach email on file for this school.');
+  if (!(input.results || []).length) {
+    warnings.push('No swims on record, so this email would carry no times at all. ' +
+      'That is the one thing a coach opens it for.');
+  }
   if (!profileUrl) warnings.push('No profile link set, so the coach has nowhere to go.');
   // The single most useful warning in the app. A coach who cannot tell why you
   // wrote to HIM deletes it, and no template can supply that.
@@ -242,11 +246,8 @@ function draftEmail(input) {
     'train with the ' + swimmer.club + '.');
   lines.push('');
 
-  lines.push('I’m reaching out because I’ve been learning more about ' + named +
-    ' and your swim program. I’m very interested in finding a university where I can ' +
-    'continue developing as a swimmer while also being part of a strong academic and team ' +
-    'environment, and ' + named + ' is a school I wanted to introduce myself to early in ' +
-    'the process.');
+  lines.push('I’ve been looking at ' + named + ' and I wanted to introduce myself early, ' +
+    'while I still have three seasons to go.');
   lines.push('');
 
   // Why THIS programme, in one sentence the coach can tell was written for him.
@@ -262,15 +263,21 @@ function draftEmail(input) {
     lines.push('');
   }
 
-  lines.push('My primary events are ' + eventsSentence(ranked) +
-    '. Some of my current best times are:');
-  lines.push('');
-  ranked.forEach(function (best) {
-    const rank = rankings[best.event];
-    lines.push(best.name + ' ' + best.course + ': ' + best.time +
-      (rank ? ', #' + rank.rank + ' in Canada for my age' : ''));
-  });
-  lines.push('');
+  // Guarded. With no swims on record this printed "My primary events are ."
+  // followed by a promise of times and then nothing, ie, an email offering a
+  // list that was not there. It cannot happen on the real board, which always
+  // has times, and that is exactly why it would have gone unnoticed.
+  if (ranked.length) {
+    lines.push('My primary events are ' + eventsSentence(ranked) +
+      '. Some of my current best times are:');
+    lines.push('');
+    ranked.forEach(function (best) {
+      const rank = rankings[best.event];
+      lines.push(best.name + ' ' + best.course + ': ' + best.time +
+        (rank ? ', #' + rank.rank + ' in Canada for my age' : ''));
+    });
+    lines.push('');
+  }
 
   // The curve. Its own paragraph, because it is the argument. A minute and ten
   // seconds off a 400 free in three years says more than the 4:10 does.
@@ -281,22 +288,18 @@ function draftEmail(input) {
   }
 
   if (swimmer.training) {
-    lines.push(swimmer.training + ' I enjoy the distance events and the training that comes ' +
-      'with them, and I’m looking for a university program where I can continue to ' +
-      'develop and contribute to the team.');
+    lines.push(swimmer.training + ' I like the distance events and I like the training ' +
+      'that goes with them.');
     lines.push('');
   }
 
   if (swimmer.academics && swimmer.academics.gpa) {
     // The school itself, not only the swimming. Every coach interviewed said
     // academic strength is what lets them stretch a small pot of money further.
-    lines.push('Academics are also very important to me. I currently have a ' +
-      swimmer.academics.gpa + ' GPA on a ' + swimmer.academics.gpaScale +
-      ' scale and I’m particularly interested in studying ' +
+    lines.push('School matters to me too. I have a ' + swimmer.academics.gpa +
+      ' GPA on a ' + swimmer.academics.gpaScale + ' scale and I want to study ' +
       (swimmer.academics.interestsShort || listOut(swimmer.academics.interests).toLowerCase()) +
-      '. Finding the right combination of academics, athletics and university experience ' +
-      'will be a big part of my decision' +
-      (school && school.academicNote ? ', and ' + school.academicNote : '') + '.');
+      (school && school.academicNote ? '. ' + school.academicNote : '') + '.');
     lines.push('');
   }
 
@@ -305,31 +308,36 @@ function draftEmail(input) {
   // by Andrew's decision on 24 September 2026: this is a tool for Luke to see
   // where he fits, not a marketing instrument pointed at coaches.
   const link = profileUrl;
-  lines.push('I’ve put together a swimmer profile that includes my current times and ' +
-    'will continue to update automatically as I compete:');
+  lines.push('My times are all here, and the page updates itself as I race:');
   lines.push('');
   lines.push(link);
   lines.push('');
 
   if (swimmer.swimcloud) {
-    lines.push('My SwimCloud profile is also available here:');
+    lines.push('SwimCloud:');
     lines.push('');
     lines.push(swimmer.swimcloud);
     lines.push('');
   }
 
   if (swimmer.coach) {
-    lines.push('My coach, ' + swimmer.coach + ', would also be happy to speak with you about ' +
-      'my swimming, training and development.');
+    lines.push('My coach is ' + swimmer.coach + '. He is happy to talk to you about me.');
     lines.push('');
   }
 
-  lines.push('I know I’m still early in the recruiting process, but I wanted to introduce ' +
-    'myself and let you know that I’m genuinely interested in learning more about ' +
-    named + ' and your program.');
-  lines.push('');
-  lines.push('Thank you for taking the time to read my email. I hope I’ll have the ' +
-    'opportunity to connect with you as I continue through the recruiting process.');
+  const division = String((school && school.division) || 'D1').toUpperCase();
+  const window = contactWindow(CONTACT_RULES[division] ? division : 'D1', swimmer.classOf, today);
+
+  // A coach who cannot legally answer should not be left feeling rude, and Luke
+  // should not read the silence as a no. The old draft said this unconditionally
+  // in the words "I know I'm still early in the recruiting process", which was
+  // wrong for the forty programmes that CAN answer today, ie, it told a
+  // U SPORTS coach not to bother replying. It is said only where it is true
+  // now, and without quoting the rule back at a man who wrote it.
+  lines.push(window && !window.open
+    ? 'Thanks for reading. I know you probably can’t write back yet, so I’m not ' +
+      'expecting a reply. I’ll keep sending updates as my times come down.'
+    : 'Thanks for reading. I’ll keep sending updates as my times come down.');
   lines.push('');
 
   lines.push(swimmer.name);
@@ -338,11 +346,14 @@ function draftEmail(input) {
   lines.push(swimmer.city + ', ' + swimmer.province + ', Canada');
   if (swimmer.contact && swimmer.contact.email) lines.push(swimmer.contact.email);
 
-  const division = String((school && school.division) || 'D1').toUpperCase();
-  const window = contactWindow(CONTACT_RULES[division] ? division : 'D1', swimmer.classOf, today);
-
-  const subject = swimmer.name + ' · ' + swimmer.classOf + ' distance free · ' +
-    (ranked[0] ? ranked[0].name + ' ' + ranked[0].time : 'Canada');
+  // A phone shows roughly the first 35 to 40 characters of a subject in the
+  // list. The old one was 52 and read "Luke Hammond, 2029 distance free, 40..."
+  // on an iPhone, ie, it truncated exactly where the number was, which is the
+  // only part a coach scans for. The time comes first now and the whole thing
+  // fits.
+  const subject = (ranked[0]
+    ? ranked[0].name + ' ' + ranked[0].time + ' \u00b7 ' + swimmer.name
+    : swimmer.name) + ' \u00b7 ' + swimmer.classOf;
 
   return {
     to: (school && school.email) || '',
@@ -386,10 +397,11 @@ function progressParagraph(swim, results, ranked) {
   const curve = swim.progression(results, lead.distance, lead.stroke, lead.course);
   if (!curve || curve.seasons.length < 2) return '';
 
-  let text = 'One of the things I’m most proud of is the progress I’ve made over the ' +
-    'past few seasons. In ' + curve.seasons[0].season + ', my ' + spoken(lead) + ' was ' +
-    curve.seasons[0].time + '. I’ve since brought that down to ' + curve.current.time +
-    (curve.everySeason ? ' and have continued to improve each season' : '') + '.';
+  // The numbers are the argument. They do not need a sentence in front of them
+  // saying how proud he is of them, which is what this used to open with.
+  let text = 'In ' + curve.seasons[0].season + ' my ' + spoken(lead) + ' was ' +
+    curve.seasons[0].time + '. It is ' + curve.current.time + ' now' +
+    (curve.everySeason ? ', and it has come down every season' : '') + '.';
 
   // A second event improving the same way is what turns one good curve into a
   // swimmer. Only said when it is true.
@@ -397,8 +409,8 @@ function progressParagraph(swim, results, ranked) {
   if (other) {
     const otherCurve = swim.progression(results, other.distance, other.stroke, other.course);
     if (otherCurve && otherCurve.everySeason && otherCurve.seasons.length > 1) {
-      text += ' My ' + spoken(other) + ' has followed a similar path, improving from ' +
-        otherCurve.seasons[0].time + ' to ' + otherCurve.current.time + '.';
+      text += ' My ' + spoken(other) + ' has gone from ' +
+        otherCurve.seasons[0].time + ' to ' + otherCurve.current.time + ' in the same time.';
     }
   }
   return text;

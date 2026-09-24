@@ -1530,6 +1530,13 @@
       '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
       '<a class="minor" style="text-decoration:none" href="' + esc(mailto) + '">Open in your email</a>' +
       '<button class="minor" data-copydraft="' + esc(schoolId) + '">Copy the text</button>' +
+      // Outlook's protocol handler truncates a mailto at about 2048 characters
+      // and Apple Mail does not. Rather than guess which one is open, say when
+      // the draft is long enough for it to matter.
+      (mailto.length > 2000
+        ? '<span class="conf" style="flex-basis:100%">This draft is long enough that ' +
+          'Outlook may cut it short. Copy the text instead if the draft opens half finished.</span>'
+        : '') +
       '<button class="minor" data-closedraft="' + esc(schoolId) + '">Close</button>' +
       '</div></div>';
 

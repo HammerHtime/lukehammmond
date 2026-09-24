@@ -923,7 +923,7 @@ const withCoach = R.draftEmail({
   results: results, today: '2026-09-18', profileUrl: 'https://example.org',
   school: { id: 'x', name: 'X', coach: 'A Coach', email: 'c@x.edu', division: 'D1' }
 });
-ok('and names them once one is set', withCoach.body.indexOf('My coach, A New Coach,') !== -1);
+ok('and names them once one is set', withCoach.body.indexOf('My coach is A New Coach.') !== -1);
 
 // The old name must not survive anywhere, including the hand-written markup,
 // which is where two of the four copies were.
@@ -956,7 +956,16 @@ ok('and nothing that identifies who is clicking it', draft.body.indexOf('?c=') =
 ok('the letter does not quote the NCAA calendar at him',
   draft.body.indexOf('15 June 2027') === -1);
 ok('but it says he is not expecting a reply yet',
-  /still early in the recruiting process/.test(draft.body));
+  /I\u2019m not expecting a reply/.test(draft.body));
+// Said only to the twenty-four programmes that cannot answer. Saying it to the
+// forty that can would be telling a U SPORTS coach not to bother writing back.
+const openDraft = R.draftEmail({
+  swim: S, swimmer: SWIMMER, school: { id: 'u', name: 'U', division: 'USPORTS', email: 'a@b.ca' },
+  results: results, today: '2026-09-24', profileUrl: 'https://x.ca', rankings: {}
+});
+ok('and never says it to a programme that can reply today',
+  openDraft.body.indexOf('not expecting a reply') === -1);
+ok('though it still thanks them', openDraft.body.indexOf('Thanks for reading.') !== -1);
 check('and the date is still returned for the screen', draft.window.replyDate, '2027-06-15');
 // A school with a contact but no personal note still warns, deliberately. The
 // thing that gets an email deleted is that it could have gone to two hundred
@@ -1017,11 +1026,10 @@ const voice = R.draftEmail({
 // Two earlier rules are overruled by his draft, and both were his to overrule.
 // He is fifteen, writing to an adult he has never met. Polite beats clever.
 ok('it introduces himself', voice.body.indexOf('My name is Luke Hammond') !== -1);
-ok('and thanks them for reading',
-  voice.body.indexOf('Thank you for taking the time to read my email') !== -1);
+ok('and thanks them for reading', voice.body.indexOf('Thanks for reading.') !== -1);
 ok('it says the class year in words', voice.body.indexOf('I\u2019m a Class of 2029 swimmer') !== -1);
 ok('it names the club with the article', voice.body.indexOf('train with the Mississauga Aquatic Club') !== -1);
-ok('it names the school in the opening', voice.body.indexOf('learning more about X University') !== -1);
+ok('it names the school in the opening', voice.body.indexOf('looking at X University') !== -1);
 
 // The Junior Trials gap stays off. A US coach carries his own standards.
 ok('no Junior Trials gap', voice.body.indexOf('Junior Trials') === -1);
@@ -1055,12 +1063,12 @@ ok('and the ones not saved are gone', noRanks.body.indexOf('800 Free LCM: 8:43.4
 
 // The improvement curve is the argument. It came from the data, so it stays
 // true when he swims again.
-ok('the curve is in the letter', voice.body.indexOf('In 2023, my 400 free was 5:20.53') !== -1);
-ok('and says where it got to', voice.body.indexOf('brought that down to 4:10.86') !== -1);
+ok('the curve is in the letter', voice.body.indexOf('In 2023 my 400 free was 5:20.53') !== -1);
+ok('and says where it got to', voice.body.indexOf('It is 4:10.86 now') !== -1);
 ok('claiming every season only when true',
-  voice.body.indexOf('have continued to improve each season') !== -1);
+  voice.body.indexOf('it has come down every season') !== -1);
 ok('the second event follows it',
-  voice.body.indexOf('My 400 IM has followed a similar path, improving from 6:01.58 to 4:41.07') !== -1);
+  voice.body.indexOf('My 400 IM has gone from 6:01.58 to 4:41.07 in the same time.') !== -1);
 
 // Training, academics and the two links.
 ok('the training load is his own sentence',
@@ -1068,13 +1076,13 @@ ok('the training load is his own sentence',
 ok('the GPA is read from the profile',
   voice.body.indexOf('3.5 GPA on a 4.0 scale') !== -1);
 ok('and the field of study reads as a choice',
-  voice.body.indexOf('studying history or exercise science') !== -1);
+  voice.body.indexOf('I want to study history or exercise science') !== -1);
 ok('the profile link is the plain address',
   voice.body.indexOf('https://example.org') !== -1 && voice.body.indexOf('?c=') === -1);
 ok('and SwimCloud is offered as well',
   voice.body.indexOf('https://www.swimcloud.com/swimmer/3306753/') !== -1);
 ok('the club coach is offered by name',
-  voice.body.indexOf('My coach, Aris Bousoulegkas, would also be happy to speak with you') !== -1);
+  voice.body.indexOf('My coach is Aris Bousoulegkas. He is happy to talk to you about me.') !== -1);
 
 // The sign off, four lines, in his order.
 const tail = voice.body.trim().split('\n').slice(-4);
@@ -1260,6 +1268,75 @@ Object.keys(Dash.KIND_SUMMARY).forEach(function (kind) {
   ok(kind + ' has a plural summary', /^(have|are|can|were)\b/.test(Dash.KIND_SUMMARY[kind]));
 });
 check('an unknown kind still says something', Dash.summaryFor('nope'), 'need a look');
+
+// ---------- the email as the coach receives it ----------
+// Under the standing rule in CLAUDE.md, the output is the deliverable, not the
+// code that makes it. These check the artefact.
+const mailDraft = R.draftEmail({
+  swim: S, swimmer: SWIMMER, results: results, today: '2026-09-24',
+  profileUrl: 'https://lukehammond.netlify.app', rankings: require('./public/swimmer.js').seedRankings(),
+  school: { id: 'f', name: 'Fairfield University', coach: 'Jill Lichter',
+    email: 'jlichter@fairfield.edu', division: 'D1' }
+});
+
+// A phone inbox shows roughly the first 35 to 40 characters. The old subject was
+// 52 and truncated to "Luke Hammond, 2029 distance free, 40...", cutting the
+// number, which is the only part a coach scans a list for.
+ok('the subject fits a phone inbox line', mailDraft.subject.length <= 40);
+ok('and leads with the time', /^\d+ \w+ \d/.test(mailDraft.subject));
+ok('the name is still in it', mailDraft.subject.indexOf('Luke Hammond') !== -1);
+ok('and the class year', mailDraft.subject.indexOf('2029') !== -1);
+
+// Length. Not a style preference: a coach with three hundred of these reads the
+// short one. 2,625 characters was ten paragraphs and roughly three phone
+// screens of scrolling before the times appeared.
+ok('the email is under 1,900 characters', mailDraft.body.length < 1900);
+ok('and under 320 words', mailDraft.body.split(/\s+/).length < 320);
+
+// Plain text, so every paragraph has to be its own block for a mail client to
+// wrap it. One long run with no blank lines is what turns an email into a wall.
+const paras = mailDraft.body.split('\n\n');
+ok('it is written in paragraphs a client can wrap', paras.length >= 8);
+ok('and every line is either prose or a link, never a wall',
+  mailDraft.body.split('\n').every(function (line) {
+    return line.length < 400;
+  }));
+// A URL cannot be wrapped, so it gets its own line rather than sitting inside a
+// sentence where it would push the paragraph sideways on a narrow screen.
+['https://lukehammond.netlify.app', SWIMMER.swimcloud].forEach(function (url) {
+  ok(url.slice(0, 28) + ' sits on its own line',
+    mailDraft.body.split('\n').indexOf(url) !== -1);
+});
+
+// The tells the humanizer pass removed. Each of these was in the draft before
+// 24 September and each is the kind of phrase that tells a coach a machine
+// wrote it, which is the one thing this email cannot afford to say.
+['I’m reaching out because', 'strong academic and team environment',
+  'One of the things I’m most proud of', 'has followed a similar path',
+  'Finding the right combination', 'Thank you for taking the time to read my email',
+  'genuinely interested in learning more', 'opportunity to connect with you']
+  .forEach(function (tell) {
+    ok('no longer says "' + tell.slice(0, 32) + '"', mailDraft.body.indexOf(tell) === -1);
+  });
+
+// Every number still has to be the one on file. Shorter is only better if it is
+// still true.
+check('the headline time is his', mailDraft.body.indexOf('400 Free LCM: 4:10.86') !== -1, true);
+['8:43.49', '16:59.80', '1:59.75', '4:41.07', '5:20.53', '6:01.58', '3.5']
+  .forEach(function (n) { ok(n + ' survived the rewrite', mailDraft.body.indexOf(n) !== -1); });
+ok('and the club is named correctly', mailDraft.body.indexOf('Mississauga Aquatic Club') !== -1);
+
+// Guarded. With no swims this printed "My primary events are ." followed by a
+// promise of times and then nothing. It cannot happen on the real board, which
+// is exactly why it would have sat there unnoticed.
+const emptyDraft = R.draftEmail({
+  swim: S, swimmer: SWIMMER, results: [], today: '2026-09-24', profileUrl: 'https://x.ca',
+  rankings: {}, school: { id: 'x', name: 'X', email: 'a@b.ca', division: 'D1' }
+});
+ok('an email with no times promises none', emptyDraft.body.indexOf('My primary events are .') === -1);
+ok('nor offers a list that is not there', emptyDraft.body.indexOf('best times are:') === -1);
+ok('and says why it would be useless',
+  emptyDraft.warnings.some(function (w) { return w.indexOf('No swims on record') === 0; }));
 
 // ---------- who have we written to ----------
 // Tracking our OWN outreach, which is the opposite of what came out on
