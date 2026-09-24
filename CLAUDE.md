@@ -26,7 +26,7 @@ is a prompt to look again, ie, it is the feature.
 - Scoring, bands, conversion factors and benchmarks are not, without a reason
   written down first.
 - After ANY change, run the tests. They must stay green:
-    npm test          1260 checks
+    npm test          1243 checks
     npm run lint      confirms every js file parses, functions included
     npm run check     lint then test, run this before pushing
 
@@ -118,6 +118,22 @@ So:
   the week you are trying to send thirty emails is not.
 - Anything with a lead time, ie, NCAA Eligibility Center registration, tests,
   transcripts, gets done on its own schedule, not in the spring rush.
+
+## What this app does not do, decided 24 September 2026
+It does not watch anyone.
+
+It had grown a visit counter, per-school open counts and site-wide traffic
+totals. Andrew removed all of it: this is a tool for Luke to see where he fits
+and what his options are, not a product and not a marketing instrument pointed
+at coaches. A recruiting profile that quietly reports who read it is not
+something to hand a coach.
+
+So there is no analytics endpoint, the page makes no POST of any kind, it writes
+nothing to browser storage, and the link in an email carries no identifying tag.
+board.test.js asserts each of those, so it cannot creep back.
+
+Tracking OUR OWN outreach is a different thing and is wanted, ie, who we wrote
+to and when. That lives in the pipeline on each school card.
 
 ## The dates that matter
 Luke is class of 2029, ie, Grade 10 now. Under NCAA Division I rules a coach

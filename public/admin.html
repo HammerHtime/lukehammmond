@@ -160,10 +160,6 @@
     color: var(--ink-faint); font-weight: 700; }
   .dash-tile-value { font-size: 22px; font-weight: 640; margin-top: 2px; }
   .dash-tile-sub { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
-  .dash-traffic { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px;
-    padding: 10px 0 6px; border-top: 1px solid var(--line-soft);
-    border-bottom: 1px solid var(--line-soft); margin-bottom: 12px; }
-  .dash-traffic strong { font-size: 16px; font-weight: 700; }
   .dash-pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
   .dash-pill { font-size: 12.5px; padding: 4px 10px; border-radius: 999px;
     border: 1px solid var(--line); background: var(--card); }
@@ -278,7 +274,6 @@
        only useful once that question has one. -->
   <div class="card dash" id="dashCard"><div class="pad">
     <div id="dashTimes"></div>
-    <div id="dashTraffic"></div>
     <div id="dashCounts"></div>
     <div id="dashAttention"></div>
   </div></div>
@@ -472,8 +467,6 @@
   var key = '';
   var results = [];
   var schools = [];
-  var visits = {};
-  var traffic = null;
   var today = new Date().toISOString().slice(0, 10);
 
   function api(path, options) {
@@ -520,22 +513,17 @@
     Promise.all([
       fetch('/api/results').then(function (r) { return r.json(); }).catch(function () { return {}; }),
       api('/api/schools').catch(function () { return { schools: [] }; }),
-      // /api/visits has existed since the visit counter shipped and nothing
-      // has ever read it, ie, the data was collected and never shown.
-      api('/api/visits').catch(function () { return { visits: {}, traffic: null }; }),
       fetch('/api/profile').then(function (r) { return r.json(); }).catch(function () { return {}; }),
       fetch('/api/photos').then(function (r) { return r.json(); }).catch(function () { return {}; })
     ]).then(function (both) {
       var raw = both[0] && Array.isArray(both[0].results) && both[0].results.length ? both[0].results : SEED;
       results = clean(raw);
       schools = both[1].schools || [];
-      visits = (both[2] && both[2].visits) || {};
-      traffic = (both[2] && both[2].traffic) || null;
-      if (both[3] && both[3].profile) {
-        rankings = window.SwimmerData.rankingsFrom(both[3].profile);
-        coach = both[3].profile.coach || {};
+      if (both[2] && both[2].profile) {
+        rankings = window.SwimmerData.rankingsFrom(both[2].profile);
+        coach = both[2].profile.coach || {};
       }
-      photos = (both[4] && both[4].photos) || [];
+      photos = (both[3] && both[3].photos) || [];
       buildPickers();
       renderAll();
       checkTopUp();
@@ -604,7 +592,6 @@
     // ---- the picture ----
     var ctx = {
       today: today,
-      visits: visits,
       windowFor: function (division) { return R.contactWindow(division, SWIMMER.classOf, today); },
       tierLabel: function (p) { var t = B.tierFor(p, true); return t ? t.label : null; }
     };
@@ -619,27 +606,11 @@
     // The split that matters most and was invisible until today. Forty of the
     // sixty-four programmes can legally be written to and can legally write
     // back. The app used to say nobody could until June 2027.
-    // How busy the site has been. Kept apart from the school pills on purpose:
-    // those say which programmes opened a link you sent, this says whether
-    // anybody is reading the page at all.
-    var t = D.trafficReport(traffic, today, 30);
-    el('dashTraffic').innerHTML = t
-      ? '<div class="dash-traffic">' +
-          '<span><strong>' + t.views + '</strong> page views since ' +
-            esc(friendlyDay(t.first)) + '</span>' +
-          '<span><strong>' + t.sessions + '</strong> sessions</span>' +
-          '<span><strong>' + t.recentViews + '</strong> views in the last 30 days</span>' +
-          (t.todayViews ? '<span><strong>' + t.todayViews + '</strong> today</span>' : '') +
-        '</div><p class="hint" style="margin:4px 0 0">' + esc(t.note) + '</p>'
-      : '<p class="hint" style="margin:0 0 4px">No page views recorded yet. ' +
-        'Counting starts the first time anyone opens the public page.</p>';
-
     el('dashCounts').innerHTML =
       '<div class="dash-pills">' +
         pill(c.schools, 'on the board') +
         pill(c.openNow, 'can be emailed today', 'good') +
         pill(c.waiting, 'wait for 15 June 2027', 'mute') +
-        pill(c.viewedRecently, 'opened the profile', c.viewedRecently ? 'good' : '') +
         pill(c.disagreeing, 'engine disagrees', c.disagreeing ? 'warn' : '') +
         pill(c.staleContacts + c.noContact, 'contacts to check', (c.staleContacts + c.noContact) ? 'warn' : '') +
         pill(c.staleBenchmarks + c.noBenchmarks, 'benchmarks to check', (c.staleBenchmarks + c.noBenchmarks) ? 'warn' : '') +
@@ -689,14 +660,6 @@
         }).join('') + more + '</ul>'
       : '<p class="hint" style="margin:14px 0 0">Nothing outstanding. Every school on the board ' +
         'has a verified contact, current benchmarks and a settled priority.</p>';
-  }
-
-  function friendlyDay(iso) {
-    if (!iso) return 'the start';
-    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
-      'August', 'September', 'October', 'November', 'December'];
-    var p = String(iso).split('-');
-    return p.length === 3 ? Number(p[2]) + ' ' + months[Number(p[1]) - 1] + ' ' + p[0] : iso;
   }
 
   function friendlyToday() {
@@ -1311,7 +1274,6 @@
     var stage = D.stageOf(school);
     var age = D.ageReport(school, today);
     var win = R.contactWindow(school.division, SWIMMER.classOf, today);
-    var visit = visits[school.id];
 
     var options = D.STAGES.map(function (st) {
       return '<option value="' + esc(st.key) + '"' +
@@ -1339,11 +1301,6 @@
     if ((school.benchmarks || []).length && age.benchmarkStale) {
       facts.push('<span class="fact warn">benchmarks ' + (age.benchmarkDays === null
         ? 'undated' : esc(age.benchmarkDays) + 'd old') + '</span>');
-    }
-    if (visit && visit.count) {
-      var opens = D.openCount(visit);
-      facts.push('<span class="fact pool">' + esc(opens.n) + ' profile ' +
-        esc(opens.word) + (opens.n === 1 ? '' : 's') + ', last ' + esc(visit.last) + '</span>');
     }
 
     return '<div class="pipeline">' +

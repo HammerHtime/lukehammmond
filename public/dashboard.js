@@ -21,7 +21,6 @@
     { key: 'researching', label: 'Researching', note: 'On the board, nothing sent yet.' },
     { key: 'ready', label: 'Ready to contact', note: 'Contact verified, benchmarks in, waiting on the send.' },
     { key: 'contacted', label: 'Contacted', note: 'An email has gone.' },
-    { key: 'viewed', label: 'Opened the profile', note: 'The link was followed.' },
     { key: 'replied', label: 'Replied', note: 'A coach wrote back.' },
     { key: 'call', label: 'Call booked', note: 'A conversation is arranged.' },
     { key: 'visit', label: 'Visit or camp', note: 'He has been on their deck.' },
@@ -40,6 +39,7 @@
     if (STAGE_INDEX[raw] !== undefined) return raw;
     var guess = STAGES.filter(function (s) { return s.label.toLowerCase() === raw; })[0];
     if (guess) return guess.key;
+    if (raw.indexOf('view') !== -1 || raw.indexOf('open') !== -1) return 'contacted';
     if (raw.indexOf('repl') !== -1) return 'replied';
     if (raw.indexOf('sent') !== -1 || raw.indexOf('contact') !== -1) return 'contacted';
     if (raw.indexOf('visit') !== -1 || raw.indexOf('camp') !== -1) return 'visit';
@@ -91,7 +91,6 @@
   // today, NCAA Division II coaches may reply now" was borrowing one school's
   // division and implying it of thirty-six.
   var KIND_SUMMARY = {
-    viewed: 'have opened the profile recently',
     'follow-up': 'were emailed with no reply recorded',
     'can-send': 'can be emailed today and have not been',
     disagrees: 'are read differently by the engine',
@@ -106,56 +105,6 @@
 
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
-  // A reload is not a second reader. Where a session count exists it is the
-  // honest number, ie, "3 visits" should not mean somebody pressed refresh
-  // twice. Records written before sessions were counted have no such figure,
-  // so those fall back to the raw opens and say which they are.
-  function openCount(visit) {
-    if (!visit) return { n: 0, word: 'visit', exact: false };
-    if (Number.isFinite(visit.sessions) && visit.sessions > 0) {
-      return { n: visit.sessions, word: 'visit', exact: true };
-    }
-    return { n: visit.count || 0, word: 'open', exact: false };
-  }
-
-  // ---- how busy the site has been ----
-  // Separate from the per-school counts, and it answers a different question.
-  // The school counts say which programmes opened a link you sent. This says
-  // whether anybody is reading the page at all, including everyone who arrived
-  // without a label on their link and is invisible to the other number.
-  function trafficReport(traffic, today, days) {
-    if (!traffic || !traffic.views) return null;
-    var span = days || 30;
-    var recent = { views: 0, sessions: 0, days: 0 };
-    Object.keys(traffic.days || {}).forEach(function (day) {
-      var ago = daysBetween(day, today);
-      if (ago === null || ago < 0 || ago >= span) return;
-      recent.views += traffic.days[day].views || 0;
-      recent.sessions += traffic.days[day].sessions || 0;
-      recent.days += 1;
-    });
-
-    var todayCount = (traffic.days || {})[today] || { views: 0, sessions: 0 };
-    return {
-      views: traffic.views,
-      sessions: traffic.sessions,
-      first: traffic.first || null,
-      last: traffic.last || null,
-      span: span,
-      recentViews: recent.views,
-      recentSessions: recent.sessions,
-      activeDays: recent.days,
-      todayViews: todayCount.views || 0,
-      todaySessions: todayCount.sessions || 0,
-      pages: traffic.pages || {},
-      // Said out loud on the screen, because a number with an unstated
-      // definition is the thing people quietly misread.
-      note: 'Counted by a script on the page, so most crawlers never reach it ' +
-        'and anyone blocking scripts is invisible. Read it as a floor. A session ' +
-        'is one browser tab, not one person.'
-    };
-  }
-
   // ---- what needs attention ----
   // Lower `rank` sorts first. The ordering is deliberate: a coach who has been
   // on the page is the rarest and most perishable signal on the board, and a
@@ -167,27 +116,14 @@
     var window = ctx.windowFor(school.division);
     var stage = stageOf(school);
     var age = ageReport(school, today);
-    var visit = (ctx.visits || {})[school.id];
 
     function add(rank, kind, text) { out.push({ rank: rank, kind: kind, school: school, text: text }); }
 
-    if (visit && visit.last) {
-      var since = daysBetween(visit.last, today);
-      if (since !== null && since <= 14) {
-        // Sessions where we have them, raw opens where we do not. Sessions only
-        // started being recorded today, so anything counted before that has no
-        // session figure and the older number is all there is.
-        var opens = openCount(visit);
-        add(1, 'viewed', 'Opened the profile ' +
-          (since === 0 ? 'today' : since === 1 ? 'yesterday' : since + ' days ago') +
-          (opens.n > 1 ? ', ' + plural(opens.n, opens.word, opens.word + 's') + ' in total' : '') + '.');
-      }
-    }
 
     if (stage === 'contacted') {
       var waited = daysBetween(school.lastContact, today);
       if (waited !== null && waited >= 10) {
-        add(2, 'follow-up', 'Emailed ' + plural(waited, 'day', 'days') + ' ago, no reply recorded.');
+        add(1, 'follow-up', 'Emailed ' + plural(waited, 'day', 'days') + ' ago, no reply recorded.');
       }
     }
 
@@ -232,7 +168,7 @@
       openNow: 0, waiting: 0,
       byStage: {}, byDivision: {}, byFit: {},
       staleContacts: 0, staleBenchmarks: 0, noContact: 0, noBenchmarks: 0,
-      disagreeing: 0, viewedRecently: 0
+      disagreeing: 0
     };
     STAGES.forEach(function (s) { counts.byStage[s.key] = 0; });
 
@@ -243,8 +179,7 @@
       var window = ctx.windowFor(school.division);
       var stage = stageOf(school);
       var age = ageReport(school, ctx.today);
-      var visit = (ctx.visits || {})[school.id];
-
+  
       if (window && window.open) counts.openNow += 1; else counts.waiting += 1;
       counts.byStage[stage] = (counts.byStage[stage] || 0) + 1;
       counts.byDivision[school.division] = (counts.byDivision[school.division] || 0) + 1;
@@ -253,7 +188,6 @@
       if (!(school.benchmarks || []).length) counts.noBenchmarks += 1;
       else if (age.benchmarkStale) counts.staleBenchmarks += 1;
       if (row.disagrees) counts.disagreeing += 1;
-      if (visit && visit.last && daysBetween(visit.last, ctx.today) <= 14) counts.viewedRecently += 1;
 
       attention = attention.concat(attentionFor(row, ctx));
     });
@@ -275,8 +209,6 @@
     stageLabel: stageLabel,
     daysBetween: daysBetween,
     ageReport: ageReport,
-    trafficReport: trafficReport,
-    openCount: openCount,
     attentionFor: attentionFor,
     summarise: summarise
   };

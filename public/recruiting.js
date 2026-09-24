@@ -300,10 +300,11 @@ function draftEmail(input) {
     lines.push('');
   }
 
-  // The link carries the school's own code, so a click can be told apart later.
-  const link = profileUrl + (school && school.id
-    ? (profileUrl.indexOf('?') === -1 ? '?' : '&') + 'c=' + encodeURIComponent(school.id)
-    : '');
+  // A plain link. It used to carry the school's own code so that a click could
+  // be told apart later, which was the tracking half of this app. That is gone,
+  // by Andrew's decision on 24 September 2026: this is a tool for Luke to see
+  // where he fits, not a marketing instrument pointed at coaches.
+  const link = profileUrl;
   lines.push('I’ve put together a swimmer profile that includes my current times and ' +
     'will continue to update automatically as I compete:');
   lines.push('');

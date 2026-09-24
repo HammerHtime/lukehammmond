@@ -946,7 +946,9 @@ ok('the email greets the coach by name', draft.body.indexOf('Hi Coach Smith') ==
 // than the form letter it replaced.
 ok('the email names the school', draft.body.indexOf('Canisius University') !== -1);
 ok('the email carries the 400 free', draft.body.indexOf('4:10.86') !== -1);
-ok('the email carries the profile link', draft.body.indexOf('https://example.org?c=canisius') !== -1);
+ok('the email carries the profile link', draft.body.indexOf('https://example.org') !== -1);
+// The link used to carry ?c=<school> so a click could be told apart later.
+ok('and nothing that identifies who is clicking it', draft.body.indexOf('?c=') === -1);
 // The NCAA date came out of the letter. Andrew's draft says the same thing in
 // a fifteen year old's words, ie, "I know I'm still early in the recruiting
 // process", and the hard date is still on the screen beside the draft where it
@@ -1067,8 +1069,8 @@ ok('the GPA is read from the profile',
   voice.body.indexOf('3.5 GPA on a 4.0 scale') !== -1);
 ok('and the field of study reads as a choice',
   voice.body.indexOf('studying history or exercise science') !== -1);
-ok('the profile link carries the school code',
-  voice.body.indexOf('https://example.org?c=x') !== -1);
+ok('the profile link is the plain address',
+  voice.body.indexOf('https://example.org') !== -1 && voice.body.indexOf('?c=') === -1);
 ok('and SwimCloud is offered as well',
   voice.body.indexOf('https://www.swimcloud.com/swimmer/3306753/') !== -1);
 ok('the club coach is offered by name',
@@ -1132,8 +1134,13 @@ const Dash = require('./public/dashboard.js');
 // The pipeline. `status` has always been free text defaulting to "Not
 // contacted", shown as a tag and settable from nowhere, so every school read
 // "Not contacted" forever. Old values map rather than being thrown away.
+// "Opened the profile" used to sit between contacted and replied. The visit
+// counter moved a school onto it. With no counter nothing can set it, so it is
+// gone rather than left as a rung nobody can reach honestly.
 check('the pipeline runs in order', Dash.STAGES.map(function (s) { return s.key; }),
-  ['researching', 'ready', 'contacted', 'viewed', 'replied', 'call', 'visit', 'closed']);
+  ['researching', 'ready', 'contacted', 'replied', 'call', 'visit', 'closed']);
+check('an old "viewed" status falls back to contacted',
+  Dash.stageOf({ status: 'viewed' }), 'contacted');
 check('an empty status starts at the beginning', Dash.stageOf({ status: '' }), 'researching');
 check('so does the old default', Dash.stageOf({ status: 'Not contacted' }), 'researching');
 check('a label maps back to its key', Dash.stageOf({ status: 'Ready to contact' }), 'ready');
@@ -1207,22 +1214,18 @@ const staged = Object.keys(picture.counts.byStage)
   .reduce(function (n, k) { return n + picture.counts.byStage[k]; }, 0);
 check('every school sits on exactly one rung', staged, dashSchools.length);
 
-// Attention items. Ranked so the rarest, most perishable signal is first.
+// Attention items. The queue used to open with "a coach opened your page",
+// which was the most perishable signal on the board and is no longer collected.
+// Passing the old shape must now change nothing at all.
 const withVisit = Object.assign({}, dashCtx, {
   visits: { fairfield: { count: 3, first: '2026-09-12', last: '2026-09-18', days: {} } }
 });
 const visited = Dash.summarise(dashRows, withVisit);
-check('a coach on the page is counted', visited.counts.viewedRecently, 1);
-check('and is the first thing on the list', visited.attention[0].kind, 'viewed');
-ok('naming the school', visited.attention[0].school.id === 'fairfield');
-// No session figure on this record, so it reports raw opens and says "opens"
-// rather than claiming three separate readers.
-ok('and how many times', visited.attention[0].text.indexOf('3 opens') !== -1);
-
-// A visit from a year ago is not news.
-const stale = Dash.summarise(dashRows, Object.assign({}, dashCtx, {
-  visits: { fairfield: { count: 3, first: '2025-01-01', last: '2025-01-02', days: {} } } }));
-check('an old visit is not reported as activity', stale.counts.viewedRecently, 0);
+check('visit data is ignored even if something hands it over',
+  visited.attention.length, picture.attention.length);
+ok('and no item claims a coach was watching',
+  !visited.attention.some(function (a) { return a.kind === 'viewed'; }));
+check('nothing counts recent readers', visited.counts.viewedRecently, undefined);
 
 // Contacted and unanswered becomes a follow-up, but only after a fair wait.
 function withStatus(id, patch) {
@@ -1258,95 +1261,60 @@ Object.keys(Dash.KIND_SUMMARY).forEach(function (kind) {
 });
 check('an unknown kind still says something', Dash.summaryFor('nope'), 'need a look');
 
-// ---------- how busy the site is ----------
-// Two different questions sharing one logger. The per-school counts say which
-// programmes opened a link you sent. The traffic totals say whether anybody is
-// reading the page at all, which the school counts cannot answer because they
-// only ever saw visits carrying ?c=.
-const visitFn = require('fs').readFileSync(
-  require('path').join(__dirname, 'netlify', 'functions', 'visit.js'), 'utf8');
+// ---------- the app does not watch anyone ----------
+// Removed on 24 September 2026, on Andrew's instruction. The app had grown a
+// visit counter, per-school open counts and site-wide traffic totals. None of
+// it served the thing this is for, which is Luke seeing where he fits and what
+// his options are. It was product machinery on a family tool, and a recruiting
+// profile that quietly reports who read it is not something to hand a coach.
+//
+// These checks exist so it does not come back by accident.
+const fsTrack = require('fs'), pathTrack = require('path');
+const fnDir = pathTrack.join(__dirname, 'netlify', 'functions');
 
-// It used to return early when there was no school, so every untagged visit
-// was thrown away, ie, anyone who typed the address or was forwarded the link
-// without its label did not exist as far as the site was concerned.
-ok('a visit with no school is still counted',
-  visitFn.indexOf('await writeJson(TRAFFIC, traffic)') <
-  visitFn.indexOf("if (!school || !/^[a-z0-9-]+$/i.test(school)) return json({ ok: true })"));
-ok('the totals are kept apart from the school counts', /const TRAFFIC = 'traffic'/.test(visitFn));
-ok('and both come back in one read',
-  /visits: await readJson\('visits', \{\}\)/.test(
-    require('fs').readFileSync(require('path').join(__dirname, 'netlify', 'functions', 'visits.js'), 'utf8')));
+ok('there is no endpoint that records a visit',
+  !fsTrack.existsSync(pathTrack.join(fnDir, 'visit.js')));
+ok('and none that reads visits back',
+  !fsTrack.existsSync(pathTrack.join(fnDir, 'visits.js')));
+check('no server function mentions a visit at all',
+  fsTrack.readdirSync(fnDir).filter(function (f) {
+    return f.endsWith('.js') &&
+      /visit|traffic|pageview/i.test(fsTrack.readFileSync(pathTrack.join(fnDir, f), 'utf8'));
+  }), []);
 
-// Still nothing that identifies a person. This is the line that must not move.
-// Checked against the CODE rather than the prose, since the comment above it
-// names these fields precisely to say they are not read.
-const visitCode = visitFn.split('\n').filter(function (line) {
-  return line.trim().indexOf('//') !== 0;
-}).join('\n').toLowerCase();
-['request.headers', 'x-forwarded-for', 'user-agent', 'cookie', 'referer', 'connection-ip']
-  .forEach(function (field) {
-    ok('the counter never reads ' + field, visitCode.indexOf(field) === -1);
-  });
-ok('the reading endpoint is still private',
-  /if \(!isAdmin\(request\)\) return denied\(\)/.test(
-    require('fs').readFileSync(require('path').join(__dirname, 'netlify', 'functions', 'visits.js'), 'utf8')));
+const profileJs = fsTrack.readFileSync(
+  pathTrack.join(__dirname, 'public', 'live-profile.js'), 'utf8');
+ok('the public page reports nothing when it loads', profileJs.indexOf('/api/visit') === -1);
+ok('and has no logger left to call', profileJs.indexOf('logVisit') === -1);
+// The only POST the page could make was the visit count, so there should be
+// none left at all. Everything else it does is a read.
+ok('the public page makes no POST of any kind', !/method: 'POST'/.test(profileJs));
+ok('and stores nothing in the browser either', !/sessionStorage|localStorage/.test(profileJs));
 
-// The page side. A session flag that dies with the tab, so a reload is not a
-// second reader. No cookie behind it, which is why it is a session count and
-// never a people count.
-const profileJs = require('fs').readFileSync(
-  require('path').join(__dirname, 'public', 'live-profile.js'), 'utf8');
-ok('every visit is sent, labelled or not', profileJs.indexOf("school: from || ''") !== -1);
-ok('the tab is asked whether it has been here', /sessionStorage\.getItem\('seen'\)/.test(profileJs));
-ok('and blocked storage counts every view as a session',
-  /catch \(e\) \{ \/\* no storage, so treat it as a fresh session \*\/ \}/.test(profileJs));
-ok('a failed count never breaks the page', /a failed count must never break the page/.test(profileJs));
+// The email link used to carry ?c=<school> so a click could be told apart.
+const recruitSrc = fsTrack.readFileSync(
+  pathTrack.join(__dirname, 'public', 'recruiting.js'), 'utf8');
+ok('the email link carries no identifying tag', recruitSrc.indexOf("'c=' + encodeURIComponent") === -1);
+// The two real drafts built further up already assert the link comes out plain,
+// so this block only has to prove the tagging code is gone.
 
-// The report.
-const traffic = {
-  views: 412, sessions: 266, first: '2026-07-02', last: '2026-09-19',
-  days: {
-    '2026-09-19': { views: 9, sessions: 6 },
-    '2026-09-18': { views: 22, sessions: 14 },
-    '2026-06-01': { views: 99, sessions: 80 }
-  },
-  pages: { '/': 380, '/onepager.html': 32 }
-};
-const rep = Dash.trafficReport(traffic, '2026-09-19', 30);
-check('the all-time total is reported', rep.views, 412);
-check('and sessions beside it', rep.sessions, 266);
-check('the window only counts days inside it', rep.recentViews, 31);
-check('and the days it actually saw', rep.activeDays, 2);
-check('today is called out', rep.todayViews, 9);
-check('a day outside the window is excluded', rep.recentViews < traffic.views, true);
-// A number with an unstated definition is the thing people quietly misread.
-ok('the report says what it is not counting', rep.note.indexOf('Read it as a floor') !== -1);
-ok('and that a session is a tab, not a person', rep.note.indexOf('not one person') !== -1);
-check('nothing recorded yet reports nothing', Dash.trafficReport(null, '2026-09-19', 30), null);
-check('and neither does an empty record', Dash.trafficReport({ views: 0 }, '2026-09-19', 30), null);
+const dashSrc = fsTrack.readFileSync(
+  pathTrack.join(__dirname, 'public', 'dashboard.js'), 'utf8');
+ok('the dashboard cannot report traffic', typeof Dash.trafficReport === 'undefined');
+ok('nor count opens', typeof Dash.openCount === 'undefined');
+ok('and has no "opened the profile" rung to put a school on', !/Opened the profile/.test(dashSrc));
+ok('nor an item that claims one was watching', dashSrc.indexOf("add(1, 'viewed'") === -1);
 
-// A reload is not a second reader.
-check('a session count is preferred where it exists',
-  Dash.openCount({ count: 5, sessions: 2 }), { n: 2, word: 'visit', exact: true });
-// Sessions only started being recorded today, so older records have none and
-// must say which number they are showing rather than overstating it.
-check('an older record falls back to raw opens and says so',
-  Dash.openCount({ count: 5 }), { n: 5, word: 'open', exact: false });
-check('no record reads as nothing', Dash.openCount(null).n, 0);
-
-const adminForTraffic = require('fs').readFileSync(
-  require('path').join(__dirname, 'public', 'admin.html'), 'utf8');
-ok('the back end shows the traffic', adminForTraffic.indexOf('id="dashTraffic"') !== -1);
-ok('and asks for it when it loads', /traffic = \(both\[2\] && both\[2\]\.traffic\)/.test(adminForTraffic));
-ok('with an honest line when there is nothing yet',
-  adminForTraffic.indexOf('No page views recorded yet') !== -1);
+const adminTrack = fsTrack.readFileSync(
+  pathTrack.join(__dirname, 'public', 'admin.html'), 'utf8');
+ok('the back end asks for no visit data', adminTrack.indexOf('/api/visits') === -1);
+ok('and shows none', adminTrack.indexOf('dashTraffic') === -1);
+ok('no card counts profile visits', !/profile visit/i.test(adminTrack));
 
 // ---------- the back end shows what it collects ----------
 // /api/visits shipped with the visit counter and nothing ever read it.
 const adminSrcDash = require('fs').readFileSync(
   require('path').join(__dirname, 'public', 'admin.html'), 'utf8');
-ok('the back end now reads the visit data it collects',
-  adminSrcDash.indexOf("api('/api/visits')") !== -1);
 ok('the dashboard renders before anything else', /renderAll\(\)\s*\{\s*\n\s*renderDashboard\(\);/.test(adminSrcDash));
 ok('the dashboard card sits above Add a swim',
   adminSrcDash.indexOf('id="dashCard"') < adminSrcDash.indexOf('<h2>Add a swim</h2>'));
@@ -1677,7 +1645,7 @@ check('a real one is kept', good.school.staffUrl, 'https://y.edu/staff');
 // And on the way OUT, at every render point, because records written before
 // this existed are still in the store.
 ok('the back end filters every link it renders',
-  (adminForTraffic.match(/esc\(safeUrl\(/g) || []).length >= 4);
+  (adminSrcDash.match(/esc\(safeUrl\(/g) || []).length >= 4);
 ok('and the coach endpoint filters the one link it serves',
   /sourceUrl: utils\.safeUrl\(c\.sourceUrl\)/.test(coachFn));
 
