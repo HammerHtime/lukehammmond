@@ -183,6 +183,35 @@
   .dash-item-text { font-size: 13px; color: var(--ink-faint); }
   @media (max-width: 560px) { .dash-item-school { min-width: 0; width: 100%; } }
 
+  /* Reached out. The one thing worth seeing from across the room on a board of
+     sixty-four, so it colours the whole tile and not a badge in the corner.
+     Deliberately not the left edge: that belongs to the Canadian marker, and
+     two meanings on one stripe is how a board stops being readable. */
+  .school.reached{background:var(--good-wash);border-color:var(--good)}
+  .school.reached .school-name{color:var(--good)}
+  /* Closed sits back rather than disappearing. It is still a school you looked
+     at, and knowing you already ruled it out is worth as much as the green. */
+  .school.closed{opacity:.55}
+  .school.closed .school-name{text-decoration:line-through;text-decoration-thickness:1px}
+
+  .reached-box{display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+    font-size:13px;font-weight:600;padding:5px 11px 5px 9px;border-radius:999px;
+    border:1px solid var(--line);background:var(--card);user-select:none;margin:0}
+  .reached-box:hover{border-color:var(--good)}
+  .reached-box.on{border-color:var(--good);color:var(--good);background:var(--card)}
+  /* Drawn rather than left native. The page styles every `input` like a text
+     field, which flattened the tick to an empty rounded box: the checkbox was
+     genuinely checked and looked identical to an unchecked one. */
+  .reached-box input{appearance:none;-webkit-appearance:none;width:16px;height:16px;
+    margin:0;flex:none;border:1.5px solid var(--line);border-radius:4px;padding:0;
+    background:var(--card);cursor:pointer;position:relative;transition:background .12s,border-color .12s}
+  .reached-box input:checked{background:var(--good);border-color:var(--good)}
+  .reached-box input:checked::after{content:"";position:absolute;left:4.5px;top:1px;
+    width:4px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .reached-box input:focus-visible{outline:2px solid var(--pool);outline-offset:2px}
+  .reached-when{font-weight:400;color:var(--ink-faint);font-size:12px}
+  .reached-box.on .reached-when{color:var(--good)}
+
   .school.canada{border-left:4px solid var(--leaf);padding-left:15px}
   .leaf{width:15px;height:15px;flex:none;vertical-align:-2px;color:var(--leaf)}
   .school-where .leaf{margin-right:5px}
@@ -609,6 +638,7 @@
     el('dashCounts').innerHTML =
       '<div class="dash-pills">' +
         pill(c.schools, 'on the board') +
+        pill(c.reached, 'reached out', c.reached ? 'good' : '') +
         pill(c.openNow, 'can be emailed today', 'good') +
         pill(c.waiting, 'wait for 15 June 2027', 'mute') +
         pill(c.disagreeing, 'engine disagrees', c.disagreeing ? 'warn' : '') +
@@ -660,6 +690,14 @@
         }).join('') + more + '</ul>'
       : '<p class="hint" style="margin:14px 0 0">Nothing outstanding. Every school on the board ' +
         'has a verified contact, current benchmarks and a settled priority.</p>';
+  }
+
+  function friendlyDate(iso) {
+    if (!iso) return '';
+    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+      'August', 'September', 'October', 'November', 'December'];
+    var p = String(iso).split('-');
+    return p.length === 3 ? Number(p[2]) + ' ' + months[Number(p[1]) - 1] : iso;
   }
 
   function friendlyToday() {
@@ -1303,7 +1341,19 @@
         ? 'undated' : esc(age.benchmarkDays) + 'd old') + '</span>');
     }
 
+    // One tick, the whole answer to "have we done this one yet". The dropdown
+    // underneath is for the finer states, but the question asked across
+    // sixty-four cards is this one, so it gets the big control.
+    var reached = D.reachedOut(school);
+    var when = reached && school.lastContact
+      ? '<span class="reached-when">' + esc(friendlyDate(school.lastContact)) + '</span>' : '';
+
     return '<div class="pipeline">' +
+      '<label class="reached-box' + (reached ? ' on' : '') + '">' +
+        '<input type="checkbox" data-reached="' + esc(school.id) + '"' +
+          (reached ? ' checked' : '') + '>' +
+        '<span>Reached out</span>' + when +
+      '</label>' +
       '<label class="sr-only" for="stage-' + esc(school.id) + '">Pipeline stage</label>' +
       '<select id="stage-' + esc(school.id) + '" data-stage="' + esc(school.id) + '">' +
         options + '</select>' +
@@ -1355,7 +1405,14 @@
       var fromEngine = !recorded && Boolean(suggested);
 
       var canada = window.Schools ? window.Schools.isCanadian(r.school) : false;
-      return '<div class="school' + (canada ? ' canada' : '') + '">' +
+      // The card says what it is, so the colour comes from the stylesheet and
+      // not from a string built in three places.
+      var stage = window.Dashboard ? window.Dashboard.stageOf(r.school) : 'researching';
+      var reached = window.Dashboard ? window.Dashboard.reachedOut(r.school) : false;
+
+      return '<div class="school' + (canada ? ' canada' : '') +
+        (reached ? ' reached' : '') + (stage === 'closed' ? ' closed' : '') +
+        '" data-stage="' + esc(stage) + '">' +
         '<div class="school-head">' + badge(r.school) +
           '<div style="min-width:0;flex:1">' +
             '<div class="school-name">' + esc(r.school.name) + '</div>' +
@@ -1417,8 +1474,17 @@
       b.addEventListener('click', function () { draftFor(b.dataset.email); });
     });
 
-    Array.prototype.forEach.call(el('boardTable').querySelectorAll('[data-stage]'), function (sel) {
+    Array.prototype.forEach.call(el('boardTable').querySelectorAll('select[data-stage]'), function (sel) {
       sel.addEventListener('change', function () { setStage(sel.dataset.stage, sel.value); });
+    });
+
+    Array.prototype.forEach.call(el('boardTable').querySelectorAll('[data-reached]'), function (box) {
+      box.addEventListener('change', function () {
+        // Ticking it means Contacted, which stamps today's date on its own.
+        // Unticking puts it back to the start, which is what an accidental
+        // tick needs, and clears the date with it.
+        setStage(box.dataset.reached, box.checked ? 'contacted' : 'researching');
+      });
     });
 
     Array.prototype.forEach.call(el('boardTable').querySelectorAll('[data-coachlink]'), function (b) {

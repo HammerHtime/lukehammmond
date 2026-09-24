@@ -53,6 +53,14 @@
     return 'researching';
   }
 
+  // Has this programme been written to yet? The one thing Andrew wants to see
+  // at a glance across sixty-four cards, ie, who have we done and who is left.
+  // Everything from Contacted onward counts, because you cannot have had a
+  // reply from somebody you never wrote to.
+  var REACHED = ['contacted', 'replied', 'call', 'visit'];
+
+  function reachedOut(school) { return REACHED.indexOf(stageOf(school)) !== -1; }
+
   function stageLabel(key) {
     var s = STAGES[STAGE_INDEX[key]];
     return s ? s.label : key;
@@ -168,7 +176,7 @@
       openNow: 0, waiting: 0,
       byStage: {}, byDivision: {}, byFit: {},
       staleContacts: 0, staleBenchmarks: 0, noContact: 0, noBenchmarks: 0,
-      disagreeing: 0
+      disagreeing: 0, reached: 0
     };
     STAGES.forEach(function (s) { counts.byStage[s.key] = 0; });
 
@@ -188,6 +196,7 @@
       if (!(school.benchmarks || []).length) counts.noBenchmarks += 1;
       else if (age.benchmarkStale) counts.staleBenchmarks += 1;
       if (row.disagrees) counts.disagreeing += 1;
+      if (reachedOut(school)) counts.reached += 1;
 
       attention = attention.concat(attentionFor(row, ctx));
     });
@@ -205,6 +214,8 @@
     BENCHMARK_STALE_DAYS: BENCHMARK_STALE_DAYS,
     KIND_SUMMARY: KIND_SUMMARY,
     summaryFor: summaryFor,
+    REACHED: REACHED,
+    reachedOut: reachedOut,
     stageOf: stageOf,
     stageLabel: stageLabel,
     daysBetween: daysBetween,

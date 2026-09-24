@@ -26,7 +26,7 @@ is a prompt to look again, ie, it is the feature.
 - Scoring, bands, conversion factors and benchmarks are not, without a reason
   written down first.
 - After ANY change, run the tests. They must stay green:
-    npm test          1243 checks
+    npm test          1264 checks
     npm run lint      confirms every js file parses, functions included
     npm run check     lint then test, run this before pushing
 

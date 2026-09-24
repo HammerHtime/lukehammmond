@@ -1261,6 +1261,58 @@ Object.keys(Dash.KIND_SUMMARY).forEach(function (kind) {
 });
 check('an unknown kind still says something', Dash.summaryFor('nope'), 'need a look');
 
+// ---------- who have we written to ----------
+// Tracking our OWN outreach, which is the opposite of what came out on
+// 24 September. That watched coaches. This records what Andrew did, which is
+// the thing he actually needs across sixty-four cards: who is done, who is left.
+check('everything from contacted onward counts as reached',
+  Dash.REACHED, ['contacted', 'replied', 'call', 'visit']);
+ok('a school nobody has written to is not reached', Dash.reachedOut({ status: '' }) === false);
+ok('nor one that is merely ready to contact', Dash.reachedOut({ status: 'ready' }) === false);
+ok('a contacted school is', Dash.reachedOut({ status: 'contacted' }));
+// You cannot have had a reply from somebody you never wrote to, so the later
+// rungs count without needing to be ticked separately.
+ok('and so is one that replied', Dash.reachedOut({ status: 'replied' }));
+ok('and one that got as far as a visit', Dash.reachedOut({ status: 'visit' }));
+// Closed gets its own faded treatment rather than the green, because the
+// question the green answers is "who is still live".
+ok('a closed school is not shown as live', Dash.reachedOut({ status: 'closed' }) === false);
+
+const reachedRows = dashRows.map(function (row) {
+  return row.school.id === 'fairfield'
+    ? Object.assign({}, row, { school: Object.assign({}, row.school, { status: 'contacted' }) })
+    : row;
+});
+check('the dashboard counts them', Dash.summarise(reachedRows, dashCtx).counts.reached, 1);
+check('and counts none when none have been written to',
+  Dash.summarise(dashRows, dashCtx).counts.reached, 0);
+
+// The card and the control.
+const adminReach = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'admin.html'), 'utf8');
+ok('each card carries its own stage', adminReach.indexOf('data-stage="\' + esc(stage)') !== -1);
+ok('and is marked when it has been reached', /\(reached \? ' reached' : ''\)/.test(adminReach));
+ok('each card has a tick box', adminReach.indexOf('data-reached=') !== -1);
+ok('ticking it means contacted', /box\.checked \? 'contacted' : 'researching'/.test(adminReach));
+// Which stamps the date on its own, so the follow-up counter starts without
+// anybody typing today's date.
+ok('and the date is stamped by setStage, not typed',
+  /stage === 'contacted' && !sc\.lastContact\) copy\.lastContact = today/.test(adminReach));
+ok('unticking clears the date too', /if \(stage === 'researching'\) copy\.lastContact = ''/.test(adminReach));
+ok('the whole tile is coloured, not a corner badge', /\.school\.reached\{background:var\(--good-wash\)/.test(adminReach));
+// The left edge already means Canadian. Two meanings on one stripe is how a
+// board of sixty-four stops being readable.
+ok('and the colour stays off the left edge, which is the Canadian marker',
+  /\.school\.canada\{border-left:4px solid var\(--leaf\)/.test(adminReach) &&
+  !/\.school\.reached\{[^}]*border-left/.test(adminReach));
+ok('closed sits back rather than vanishing', /\.school\.closed\{opacity:/.test(adminReach));
+// The page styles every `input` like a text field, which flattened the tick to
+// an empty rounded box, ie, a checked box looked exactly like an unchecked one.
+ok('the tick is drawn rather than left native',
+  /\.reached-box input\{appearance:none/.test(adminReach));
+ok('and shows a mark when checked', /\.reached-box input:checked::after/.test(adminReach));
+ok('the count is on the dashboard', /pill\(c\.reached, 'reached out'/.test(adminReach));
+
 // ---------- the app does not watch anyone ----------
 // Removed on 24 September 2026, on Andrew's instruction. The app had grown a
 // visit counter, per-school open counts and site-wide traffic totals. None of
