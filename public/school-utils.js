@@ -102,6 +102,34 @@ function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || '').trim());
 }
 
+// A link that is safe to put in an href.
+//
+// esc() escapes the characters that would break OUT of an attribute, which is
+// why every href on both pages is already wrapped in it. What esc() does not
+// do is care what the URL says once it is safely inside the quotes, so
+// javascript:alert(1) survives it intact and runs on click.
+//
+// Nothing here is typed by a stranger, so this is not a live hole. It matters
+// because school records arrive through parsePaste from pages on the open web,
+// and because a benchmark's sourceUrl is served to a coach through the school
+// panel, ie, it would run in THEIR browser, not ours. An allowlist of schemes
+// costs nothing and removes the whole class.
+const SAFE_SCHEMES = ['http:', 'https:', 'mailto:'];
+
+function safeUrl(value) {
+  const raw = String(value === null || value === undefined ? '' : value).trim();
+  if (!raw) return '';
+  // A bare domain, ie, no scheme at all, is the common way these are pasted.
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : 'https://' + raw;
+  let url;
+  try {
+    url = new URL(withScheme);
+  } catch (err) {
+    return '';
+  }
+  return SAFE_SCHEMES.indexOf(url.protocol.toLowerCase()) === -1 ? '' : url.href;
+}
+
 function normaliseSchool(raw) {
   const input = raw || {};
   const name = String(input.name || '').trim();
@@ -133,7 +161,7 @@ function normaliseSchool(raw) {
       coach: String(input.coach || '').trim(),
       coachTitle: String(input.coachTitle || '').trim(),
       email: email,
-      staffUrl: String(input.staffUrl || '').trim(),
+      staffUrl: safeUrl(input.staffUrl),
       verified: verified,
       verifiedOn: verified ? (String(input.verifiedOn || '').trim() || today()) : '',
       priority: String(input.priority || '').trim().toUpperCase() || '',
@@ -148,7 +176,7 @@ function normaliseSchool(raw) {
       coachReply: String(input.coachReply || '').trim(),
       questionnaire: String(input.questionnaire || '').trim(),
       nextAction: String(input.nextAction || '').trim(),
-      sourceUrl: String(input.sourceUrl || '').trim(),
+      sourceUrl: safeUrl(input.sourceUrl),
       note: String(input.note || '').trim(),
       notes: String(input.notes || '').trim()
     }
@@ -285,6 +313,8 @@ const api = {
   initialsFor: initialsFor,
   isSendable: isSendable,
   isEmail: isEmail,
+  SAFE_SCHEMES: SAFE_SCHEMES,
+  safeUrl: safeUrl,
   normaliseSchool: normaliseSchool,
   parsePaste: parsePaste,
   mergeSchools: mergeSchools,

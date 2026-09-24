@@ -1638,6 +1638,82 @@ ok('and offers a per-school link to copy', adminSrcDash.indexOf('data-coachlink=
 ok('which is minted on the server, not in the page',
   /api\('\/api\/coach\?link=1&c='/.test(adminSrcDash));
 
+// ---------- links are filtered, not just escaped ----------
+// esc() stops a value breaking OUT of an attribute, which is why every href on
+// both pages is wrapped in it. What esc() does not do is care what the URL says
+// once it is safely inside the quotes, so javascript:alert(1) passes through it
+// unchanged and runs on click.
+//
+// Not a live hole, because nothing here is typed by a stranger. It matters
+// because school records arrive through parsePaste from pages on the open web,
+// and because a benchmark's sourceUrl is served to a COACH through the school
+// panel, ie, it would run in their browser and not ours.
+const U = require('./public/school-utils.js');
+check('an ordinary link survives', U.safeUrl('https://fairfield.edu/staff'), 'https://fairfield.edu/staff');
+check('a bare domain gets https, which is how these are pasted',
+  U.safeUrl('fairfield.edu/staff'), 'https://fairfield.edu/staff');
+check('mailto is allowed', U.safeUrl('mailto:coach@fairfield.edu'), 'mailto:coach@fairfield.edu');
+['javascript:alert(1)', 'JaVaScRiPt:alert(1)', 'java\tscript:alert(1)',
+  'data:text/html,<script>alert(1)</script>', 'vbscript:msgbox(1)', 'file:///etc/passwd']
+  .forEach(function (bad) {
+    check('refused: ' + bad.slice(0, 22), U.safeUrl(bad), '');
+  });
+check('nothing in, nothing out', U.safeUrl(''), '');
+check('and rubbish is refused', U.safeUrl('not a url at all'), '');
+check('so is undefined', U.safeUrl(undefined), '');
+
+// Filtered on the way IN, so a bad link never reaches storage.
+const dodgy = U.normaliseSchool({
+  id: 'x', name: 'X', division: 'D1',
+  staffUrl: 'javascript:alert(1)', sourceUrl: 'javascript:alert(1)'
+});
+check('a bad staff link is dropped when the record is saved', dodgy.school.staffUrl, '');
+check('and so is a bad source link', dodgy.school.sourceUrl, '');
+const good = U.normaliseSchool({
+  id: 'y', name: 'Y', division: 'D1', staffUrl: 'https://y.edu/staff'
+});
+check('a real one is kept', good.school.staffUrl, 'https://y.edu/staff');
+
+// And on the way OUT, at every render point, because records written before
+// this existed are still in the store.
+ok('the back end filters every link it renders',
+  (adminForTraffic.match(/esc\(safeUrl\(/g) || []).length >= 4);
+ok('and the coach endpoint filters the one link it serves',
+  /sourceUrl: utils\.safeUrl\(c\.sourceUrl\)/.test(coachFn));
+
+// ---------- the page does not ship pictures nobody can see ----------
+// The shipped photos are 2200px wide and were displayed in tiles no wider than
+// about 600 CSS pixels, ie, the page was downloading 2.2 MB of detail that was
+// thrown away on arrival.
+const fsP2 = require('fs'), pathP2 = require('path');
+const uploads = pathP2.join(__dirname, 'public', 'uploads');
+['DSC_5777', 'DSC_6192', 'IMG_2200', 'IMG_2202', 'IMG_3574'].forEach(function (stem) {
+  ok(stem + ' has a small WebP for the page', fsP2.existsSync(pathP2.join(uploads, stem + '-900.webp')));
+  ok(stem + ' has a full WebP for the lightbox', fsP2.existsSync(pathP2.join(uploads, stem + '.webp')));
+});
+const small = ['DSC_5777', 'DSC_6192', 'IMG_2200', 'IMG_2202', 'IMG_3574']
+  .reduce(function (n, stem) { return n + fsP2.statSync(pathP2.join(uploads, stem + '-900.webp')).size; }, 0);
+ok('the whole gallery is now under 400 KB', small < 400 * 1024);
+check('every shipped photo is offered as WebP first',
+  (publicHtml.match(/<source srcset="uploads\/[\w.-]+\.webp" type="image\/webp">/g) || []).length, 5);
+check('with the original as the fallback',
+  (publicHtml.match(/<img class="slot-photo" src="uploads\/[\w.]+\.(jpg|jpeg)"/g) || []).length, 5);
+ok('the full-size file is only fetched when the lightbox opens',
+  /img\.dataset\.full \|\| img\.currentSrc/.test(publicHtml));
+ok('and the photos are lazy', (publicHtml.match(/loading="lazy"/g) || []).length >= 5);
+
+// The live gallery carried a "+" overlay meaning "upload here". It outlived the
+// photo uploader, whose CSS went with it, so on any visit where live photos
+// existed it rendered as a stray plus sign.
+ok('no upload overlay survives in the live gallery', liveJs.indexOf('gallery-overlay') === -1);
+ok('nor in the markup', publicHtml.indexOf('gallery-overlay') === -1);
+
+// ---------- the suite runs itself ----------
+ok('there is a workflow', fsP2.existsSync(pathP2.join(__dirname, '.github', 'workflows', 'check.yml')));
+const wf = fsP2.readFileSync(pathP2.join(__dirname, '.github', 'workflows', 'check.yml'), 'utf8');
+ok('it runs the whole check', /run: npm run check/.test(wf));
+ok('on push and on pull request', /push:/.test(wf) && /pull_request:/.test(wf));
+
 // ---------- what is actually deployed ----------
 // This block exists because of a live leak, not a hypothetical one.
 //

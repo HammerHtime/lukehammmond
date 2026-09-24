@@ -1006,7 +1006,7 @@
   <div class="about-grid reveal">
     <div class="about-photo-wrap">
       <div class="about-photo" data-slot="about-photo">
-        <img class="slot-photo" src="uploads/IMG_2202.jpeg" alt="Luke with gold medal">
+        <picture><source srcset="uploads/IMG_2202-900.webp" type="image/webp"><img class="slot-photo" src="uploads/IMG_2202.jpeg" data-full="uploads/IMG_2202.webp" alt="Luke with gold medal" loading="lazy" decoding="async"></picture>
       </div>
       <div class="about-photo-accent"></div>
     </div>
@@ -1250,16 +1250,16 @@
     </div>
     <div class="gallery-grid reveal" id="gallery-grid">
       <div class="gallery-item" data-slot="gallery-0" style="grid-row: 1 / 3; min-height: 480px;">
-        <img class="slot-photo" src="uploads/DSC_6192.jpg" alt="Luke racing freestyle">
+        <picture><source srcset="uploads/DSC_6192-900.webp" type="image/webp"><img class="slot-photo" src="uploads/DSC_6192.jpg" data-full="uploads/DSC_6192.webp" alt="Luke racing freestyle" loading="lazy" decoding="async"></picture>
       </div>
       <div class="gallery-item" data-slot="gallery-1">
-        <img class="slot-photo" src="uploads/IMG_2200.jpeg" alt="Podium at Markham Pan Am Centre">
+        <picture><source srcset="uploads/IMG_2200-900.webp" type="image/webp"><img class="slot-photo" src="uploads/IMG_2200.jpeg" data-full="uploads/IMG_2200.webp" alt="Podium at Markham Pan Am Centre" loading="lazy" decoding="async"></picture>
       </div>
       <div class="gallery-item" data-slot="gallery-2">
-        <img class="slot-photo" src="uploads/DSC_5777.jpg" alt="Backstroke race">
+        <picture><source srcset="uploads/DSC_5777-900.webp" type="image/webp"><img class="slot-photo" src="uploads/DSC_5777.jpg" data-full="uploads/DSC_5777.webp" alt="Backstroke race" loading="lazy" decoding="async"></picture>
       </div>
       <div class="gallery-item" data-slot="gallery-3">
-        <img class="slot-photo" src="uploads/IMG_3574.jpeg" alt="Luke with teammate">
+        <picture><source srcset="uploads/IMG_3574-900.webp" type="image/webp"><img class="slot-photo" src="uploads/IMG_3574.jpeg" data-full="uploads/IMG_3574.webp" alt="Luke with teammate" loading="lazy" decoding="async"></picture>
       </div>
       
       
@@ -1479,12 +1479,14 @@ document.addEventListener('keydown', e => {
 
 // Every photo on the page opens it, by click or by keyboard.
 document.querySelectorAll('img.slot-photo').forEach(img => {
-  const frame = img.parentElement;
+  // The image may now sit inside a <picture>, so the clickable frame is the
+  // tile that holds the layout, not the immediate parent.
+  const frame = img.closest('.gallery-item, .about-photo') || img.parentElement;
   frame.tabIndex = 0;
   frame.setAttribute('role', 'button');
   frame.setAttribute('aria-label', 'Enlarge photo' + (img.alt ? ': ' + img.alt : ''));
   frame.style.cursor = 'zoom-in';
-  const open = () => openLightbox(img.currentSrc || img.src, img.alt, frame);
+  const open = () => openLightbox(img.dataset.full || img.currentSrc || img.src, img.alt, frame);
   frame.addEventListener('click', open);
   frame.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }

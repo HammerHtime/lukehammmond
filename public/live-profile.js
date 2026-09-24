@@ -511,10 +511,12 @@
       grid.innerHTML = list.map(function (photo, index) {
         // The first tile is the tall one, the way the hand-built layout had it.
         var lead = index === 0 ? ' style="grid-row: 1 / 3; min-height: 480px;"' : '';
+        // No overlay element here. It carried a "+" meaning "upload here" and
+        // it outlived the photo uploader, whose CSS went with it, so on any
+        // visit where live photos existed it rendered as a stray plus sign.
         return '<div class="gallery-item has-photo"' + lead + '>' +
           '<img class="slot-photo" src="' + esc(P.urlFor(photo)) + '" alt="' +
           esc(photo.caption || 'Luke Hammond swimming') + '" loading="lazy">' +
-          '<div class="gallery-overlay"><span class="gallery-overlay-icon">\uff0b</span></div>' +
           '</div>';
       }).join('');
     }

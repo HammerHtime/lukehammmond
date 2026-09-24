@@ -25,6 +25,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { readJson, isAdmin, json, denied, needsSetup } from './lib/store.js';
 import schoolsLib from '../../schools.js';
+import utils from '../../public/school-utils.js';
 import S from '../../public/swim.js';
 import C from '../../public/convert.js';
 import B from '../../public/board.js';
@@ -89,7 +90,9 @@ function publicComparison(row) {
         theirs: c.theirs || '',
         basis: c.basisLabel || '',
         context: c.context || '',
-        sourceUrl: c.sourceUrl || '',
+        // Filtered, not just escaped. This link is rendered in a COACH's
+        // browser, so a javascript: URL here would run on their machine.
+        sourceUrl: utils.safeUrl(c.sourceUrl),
         ahead: Boolean(c.ahead),
         inside: Boolean(c.inside),
         line: lineFor(c)

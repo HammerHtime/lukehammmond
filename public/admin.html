@@ -1154,6 +1154,13 @@
   // ---------- the board ----------
   // The school's mark. onerror swaps in initials, so a logo that fails to load
   // leaves a tidy monogram rather than a broken image icon.
+  // Every link the back end renders goes through this. esc() stops a value
+  // breaking out of the attribute; it does nothing about what the URL says
+  // once it is safely inside the quotes, so javascript:alert(1) survives it.
+  function safeUrl(v) {
+    return window.Schools && window.Schools.safeUrl ? window.Schools.safeUrl(v) : '';
+  }
+
   function badge(school) {
     var url = window.Schools ? window.Schools.logoFor(school) : '';
     var initials = window.Schools ? window.Schools.initialsFor(school) : '';
@@ -1208,7 +1215,7 @@
         '<p class="cmp-basis">Their ' + esc(c.basisLabel) + ' swam ' + esc(c.theirs) + '. ' +
         (c.ahead ? 'He is quicker.' : 'He is ' + esc(c.gapText.replace('+', '')) + ' behind that.') +
         ' Only one time on file here, so there is no squad to rank him in yet.' +
-        (c.sourceUrl ? ' <a href="' + esc(c.sourceUrl) + '" target="_blank" rel="noopener">source</a>' : '') +
+        (c.sourceUrl ? ' <a href="' + esc(safeUrl(c.sourceUrl)) + '" target="_blank" rel="noopener">source</a>' : '') +
         '</p>' + convLine + confLine + '</div>';
     }
 
@@ -1235,7 +1242,7 @@
       '<p class="cmp-basis" style="margin-top:6px;opacity:.8">Their middle swimmer is ' +
         esc(place.median) + '. ' + esc(c.basisLabel) +
         (c.context ? ', ' + esc(c.context) : '') +
-        (c.sourceUrl ? ' <a href="' + esc(c.sourceUrl) + '" target="_blank" rel="noopener">source</a>' : '') +
+        (c.sourceUrl ? ' <a href="' + esc(safeUrl(c.sourceUrl)) + '" target="_blank" rel="noopener">source</a>' : '') +
       '</p>' + convLine + confLine + '</div>';
   }
 
@@ -1432,7 +1439,7 @@
             : '<span class="conf">No coach address on file, so there is nobody to write to yet.</span>') +
           '<button class="minor" data-coachlink="' + esc(r.school.id) + '">Copy their link</button>' +
           (r.school.staffUrl
-            ? '<a class="minor" style="text-decoration:none" href="' + esc(r.school.staffUrl) +
+            ? '<a class="minor" style="text-decoration:none" href="' + esc(safeUrl(r.school.staffUrl)) +
               '" target="_blank" rel="noopener">Staff page</a>' : '') +
           // Bottom right. Pushed to the far edge by the auto margin, which puts
           // the one destructive control as far from Email as the row allows.
@@ -1568,7 +1575,7 @@
           ? '<span class="p P1">yes</span>' + (s.verifiedOn ? '<div class="conf">' + esc(s.verifiedOn) + '</div>' : '')
           : '<span class="p none">no</span>') + '</td>' +
         '<td class="wrap-cell">' + (s.staffUrl
-          ? '<a href="' + esc(s.staffUrl) + '" target="_blank" rel="noopener">directory</a>' : '\u2014') + '</td>' +
+          ? '<a href="' + esc(safeUrl(s.staffUrl)) + '" target="_blank" rel="noopener">directory</a>' : '\u2014') + '</td>' +
         '<td><button class="drop" data-drop="' + esc(s.id) + '">remove</button></td>' +
         '</tr>';
     }).join('');
