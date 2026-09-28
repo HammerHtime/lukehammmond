@@ -1963,11 +1963,21 @@ ok('and it still exists at the root, where the functions read it',
 });
 
 // Nothing private can hide in the deployed folder either. Anything that is not
-// a page, a script or a photo has no business being served.
+// a page, a script, a photo or a typeface has no business being served.
 deployed.forEach(function (name) {
-  ok('public/' + name + ' is a page, a script or the photo folder',
-    /\.(html|js|css)$/.test(name) || name === 'uploads');
+  ok('public/' + name + ' is a page, a script, the photo folder or the font folder',
+    /\.(html|js|css)$/.test(name) || name === 'uploads' || name === 'fonts');
 });
+
+// The typefaces are self-hosted so that no third party is told which coach
+// opened the page. The folder holds font binaries and nothing else.
+if (deployed.indexOf('fonts') !== -1) {
+  const fontFiles = fsP.readdirSync(pathP.join(PUBLIC_DIR, 'fonts'));
+  ok('the font folder is not empty', fontFiles.length > 0);
+  fontFiles.forEach(function (name) {
+    ok('public/fonts/' + name + ' is a font binary', /\.woff2$/.test(name));
+  });
+}
 ok('no test file slipped into the deployed folder',
   deployed.filter(function (n) { return /\.test\.js$/.test(n); }).length === 0);
 ok('and no markdown notes did either',
@@ -1975,7 +1985,7 @@ ok('and no markdown notes did either',
 
 // Every script each page asks for has to be inside the publish folder, or the
 // page loads a 404 in production and the suite never notices.
-['index.html', 'admin.html'].forEach(function (page) {
+['index.html', 'admin.html', 'v2.html'].forEach(function (page) {
   const html = fsP.readFileSync(pathP.join(PUBLIC_DIR, page), 'utf8');
   const srcs = (html.match(/src="([^"]+\.js)"/g) || [])
     .map(function (s) { return s.slice(5, -1); })

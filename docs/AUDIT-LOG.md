@@ -10,6 +10,77 @@ Newest first.
 
 ---
 
+## 28 September 2026, a second front page, built and rendered before it moves
+
+**Nothing has replaced the live page.** `public/v2.html` is a separate file at
+`/v2.html`. `index.html` is untouched. This entry is the audit of the new one.
+
+### What it is
+
+Andrew asked for a front page that stands out rather than looking like every
+other swimmer profile. Those are all built the same way, ie, a hero photo, a big
+name, a story. Luke's content is not a story. It is evidence, so the new page is
+built like a timing console: dense, aligned, monospaced numerals, hairlines
+instead of cards, and two accent colours with one job each. Gold is only ever
+Luke's own number. Aqua is only ever structure and labels.
+
+The hero leads with 4:10.86, not with his name. The name is underneath.
+
+Every number on it is read from the same modules the live page reads. Nothing is
+typed into the page.
+
+### Tested end to end
+
+Rendered in a real browser at 1440px and at 390px, with the real fonts, and read
+back:
+
+- No console errors beyond `/api/results`, which has no key in this container.
+- No horizontal overflow at either width.
+- The hero fits the first screen at both, ie, 748px of 900 on desktop, 685px of
+  844 on a phone.
+- The improvement curve draws itself when it is scrolled to, and is fully drawn
+  and readable with reduced motion turned on.
+- All four nav links land below the sticky bar rather than under it.
+- Both buttons sit on one line and pass contrast.
+- No em dashes and no en dashes in the rendered text.
+
+### What I found and fixed while testing it
+
+1. **An en dash in the yards column.** The house rule bans it, and in a column
+   of times it read as a minus sign. Medley events have no accepted yard
+   conversion, so those cells are now empty and the lede says why.
+2. **The column header said "Since 2023".** The number is each event's total
+   drop, and most of those events did not start in 2023. It now says "Dropped".
+3. **"Off the Junior Trials cut" meant the opposite of "off the 400 free."** One
+   was time taken away, the other time still to find. Now "Taken off the 400
+   free" and "Still to find".
+4. **The curve was unreadable on a phone.** One drawing scaled down shrank every
+   label with it. A narrow screen now gets its own, taller geometry.
+5. **The hero ran past the fold on a phone**, because a portrait crop of a
+   landscape action shot is very tall. It goes wide on small screens.
+6. **The nav went completely blank on a phone.** It now keeps the one link a
+   coach actually wants, ie, Contact.
+7. **Anchor links landed under the sticky bar.** Fixed with a scroll margin.
+8. **A value label sat on top of the Junior Trials line.** It now moves under
+   its dot when it would collide.
+9. **The fonts came from Google.** They are now served from this site. A coach
+   opening the page should not have a third party told about it, and a font on
+   someone else's URL can go missing. Adds 220 KB to the deploy, of which about
+   120 KB is actually fetched.
+
+### Still open, for Andrew
+
+- **The photos.** Andrew said he is replacing them. The hero uses the freestyle
+  race shot and the About section uses the backstroke one. Both slot into the
+  same markup, so new files drop straight in.
+- **The page needs JavaScript.** With scripts off it renders the headings and
+  nothing else, ie, no times. Same as the live page. Worth fixing only if a
+  coach is ever likely to browse with scripts off, which is unlikely.
+- **Nothing has been swapped.** Look at `/v2.html` beside `/` and say whether it
+  replaces the front page, or whether pieces of it get folded into the current
+  one instead.
+
+
 ## 28 September 2026, the charts were eating the page
 
 **Found by finally looking at the site with the real charting library running.**
