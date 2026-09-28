@@ -10,6 +10,45 @@ Newest first.
 
 ---
 
+## 28 September 2026, the charts were eating the page
+
+**Found by finally looking at the site with the real charting library running.**
+
+### What was wrong
+
+Both progression charts had grown to about **6,500 pixels tall**. The page was
+**16,621px instead of 10,273**, ie, roughly six extra screens of empty dark blue
+between the charts and the rest of the page. It had been live for nine days.
+
+charts.js runs Chart.js with `maintainAspectRatio: false`, which tells it to
+size the canvas to fill its container. The container was a grid cell with no
+height of its own, so it took its height FROM the canvas. Canvas grows, cell
+grows, canvas grows.
+
+Fixed: each canvas now sits in a `.chart-box` with a real height, 240px on
+desktop and 200px on a phone. Page is back to 10,286px and the charts render
+properly.
+
+### Why I did not catch it, which matters more than the bug
+
+**Every browser check I have run in this project stubbed Chart.js out.** This
+sandbox cannot reach the CDN, so I replaced the library with a fake constructor
+that does nothing. So "verified in a real browser" was true and close to
+worthless for anything chart-shaped: the code that does the work was never the
+code that ran.
+
+I have downloaded the real library and now serve it locally in the check. The
+suite also gained a static guard, ie, a canvas that sizes itself to its
+container must have a container with a fixed height, so the pairing cannot come
+apart again.
+
+**The general lesson: a stub is a place where verification stops.** If a
+dependency has to be faked to run a check, the check does not cover whatever
+that dependency does, and that needs saying out loud rather than being folded
+into "verified".
+
+---
+
 ## 24 September 2026, the training hours, and a rule the code was breaking
 
 **Tested end to end?** Yes. All three pages and the email were rendered and read.

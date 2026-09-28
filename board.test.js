@@ -1272,6 +1272,45 @@ Object.keys(Dash.KIND_SUMMARY).forEach(function (kind) {
 });
 check('an unknown kind still says something', Dash.summaryFor('nope'), 'need a look');
 
+// ---------- a chart cannot eat the page ----------
+// This was live for nine days and I did not see it.
+//
+// charts.js runs Chart.js with maintainAspectRatio false, which means the canvas
+// sizes itself to fill its container. The container was a grid cell with no
+// height of its own, so it took its height FROM the canvas. Canvas grows, cell
+// grows, canvas grows. On the deployed page each chart had reached about 6,500
+// pixels tall and the page was 16,621px instead of 10,273.
+//
+// Every browser check I ran stubbed Chart.js with a constructor that does
+// nothing, because this sandbox cannot reach the CDN. So "verified in a real
+// browser" was true and useless: the real library was never the thing running.
+// The lesson is in docs/AUDIT-LOG.md. This is the guard.
+const chartHtml = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'index.html'), 'utf8');
+const chartSrc = require('fs').readFileSync(
+  require('path').join(__dirname, 'public', 'charts.js'), 'utf8');
+
+// The pairing that matters: a canvas that sizes itself to its container MUST
+// have a container whose height does not come from the canvas.
+ok('the charts let their container decide the size',
+  /maintainAspectRatio: false/.test(chartSrc));
+const boxes = (chartHtml.match(/<div class="chart-box"><canvas id="chart\d+"><\/canvas><\/div>/g) || []);
+check('so every chart canvas sits in a box', boxes.length, 2);
+ok('no chart canvas is left loose in the grid',
+  !/<canvas id="chart\d+"(?![^>]*)><\/canvas>\s*<\/div>\s*<\/div>/.test(
+    chartHtml.replace(/<div class="chart-box">/g, '')));
+// The box needs a real height, or it is the old bug with an extra div in it.
+const boxCss = /\.chart-box \{([^}]*)\}/.exec(chartHtml);
+ok('the box exists in the stylesheet', Boolean(boxCss));
+ok('and gives a height in pixels', /height:\s*\d+px/.test(boxCss[1]));
+ok('and is positioned, which is what Chart.js measures against',
+  /position:\s*relative/.test(boxCss[1]));
+ok('with a smaller one on a phone', /\.chart-box \{ height: \d+px; \}/.test(chartHtml));
+// The old height attribute did nothing once responsive sizing took over, and
+// leaving it would suggest it was holding the size.
+ok('no canvas carries a height attribute that does nothing',
+  !/<canvas id="chart\d+" height=/.test(chartHtml));
+
 // ---------- the writing conventions are not optional ----------
 // CLAUDE.md: "No em dashes and no en dashes" in anything a user sees. Fifteen
 // had accumulated in the hand-written copy. They are also a mild tell that a

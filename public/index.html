@@ -845,6 +845,21 @@
   }
 
   /* ── GRID HELPERS ── */
+  /* The box that holds a chart, and the reason it has to exist.
+     Chart.js runs with maintainAspectRatio false, so it sizes its canvas to
+     fill whatever contains it. The container was a grid cell with no height of
+     its own, so it took its height FROM the canvas, and the two fed each other:
+     canvas grows, cell grows, canvas grows. On the deployed page each chart had
+     reached about 6,500 pixels tall and the page was 16,621px instead of
+     10,273. A fixed height here stops the loop, and position:relative is what
+     Chart.js measures against. */
+  .chart-box {
+    position: relative;
+    height: 240px;
+    width: 100%;
+  }
+  @media (max-width: 640px) { .chart-box { height: 200px; } }
+
   .perf-charts-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1105,12 +1120,12 @@
       <div style="background:var(--card-bg); border:1px solid rgba(255,255,255,0.07); border-radius:4px; padding:1.5rem;">
         <div style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--aqua); margin-bottom:0.5rem; font-weight:500;">400m Freestyle</div>
         <div id="chart400-line" style="font-size:0.75rem; color:var(--muted); margin-bottom:1.5rem;"></div>
-        <canvas id="chart400" height="220"></canvas>
+        <div class="chart-box"><canvas id="chart400"></canvas></div>
       </div>
       <div style="background:var(--card-bg); border:1px solid rgba(255,255,255,0.07); border-radius:4px; padding:1.5rem;">
         <div style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--aqua); margin-bottom:0.5rem; font-weight:500;">800m Freestyle</div>
         <div id="chart800-line" style="font-size:0.75rem; color:var(--muted); margin-bottom:1.5rem;"></div>
-        <canvas id="chart800" height="220"></canvas>
+        <div class="chart-box"><canvas id="chart800"></canvas></div>
       </div>
     </div>
   </div>
