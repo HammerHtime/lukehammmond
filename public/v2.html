@@ -171,6 +171,10 @@ nav a:hover, nav a:focus-visible { color:var(--paper); }
   letter-spacing:-.02em; margin:18px 0 0; line-height:1.15;
 }
 .claim-what b { color:var(--chrome); font-weight:600; }
+.claim-when {
+  font-family:var(--mono); font-size:11.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--dim); margin:10px 0 0;
+}
 .hero-who { font-size:15px; color:var(--mute); margin:14px 0 0; max-width:42ch; }
 .hero-cta { display:flex; gap:12px; margin-top:30px; flex-wrap:wrap; }
 .btn {
@@ -187,11 +191,11 @@ nav a:hover, nav a:focus-visible { color:var(--paper); }
 /* The portrait sits in the hero as evidence, not as decoration. */
 .hero-shot { position:relative; }
 .hero-shot img {
-  width:100%; aspect-ratio:4/5; object-fit:cover; object-position:center 18%;
+  width:100%; aspect-ratio:4/5; object-fit:cover; object-position:42% 50%;
   display:block; filter:grayscale(.35) contrast(1.06);
   border:1px solid var(--rule);
 }
-@media (max-width:860px){ .hero-shot img { aspect-ratio:4/3; object-position:center 30%; } }
+@media (max-width:860px){ .hero-shot img { aspect-ratio:4/3; } }
 .hero-shot figcaption {
   font-family:var(--mono); font-size:11px; color:var(--dim);
   margin-top:10px; letter-spacing:.04em;
@@ -304,6 +308,7 @@ footer { padding:38px 0 56px; }
       <p class="eyebrow" id="hero-rank"></p>
       <p class="claim" id="hero-time"></p>
       <p class="claim-what" id="hero-what"></p>
+      <p class="claim-when" id="hero-when"></p>
       <p class="hero-who" id="hero-who"></p>
       <div class="hero-cta">
         <a class="btn btn-1" href="#board">See every time</a>
@@ -312,10 +317,10 @@ footer { padding:38px 0 56px; }
     </div>
     <figure class="hero-shot" style="margin:0">
       <picture>
-        <source srcset="uploads/DSC_6192-900.webp" type="image/webp">
-        <img src="uploads/DSC_6192.jpg" alt="Luke Hammond racing freestyle" loading="eager" decoding="async">
+        <source srcset="uploads/DSC_5777-900.webp" type="image/webp">
+        <img src="uploads/DSC_5777.jpg" alt="Luke Hammond racing backstroke in a heat" loading="eager" decoding="async">
       </picture>
-      <figcaption id="shot-cap"></figcaption>
+      <figcaption>Racing backstroke.</figcaption>
     </figure>
   </div>
 </header>
@@ -359,10 +364,10 @@ footer { padding:38px 0 56px; }
         <p id="about-2"></p>
         <figure class="note-shot">
           <picture>
-            <source srcset="uploads/DSC_5777-900.webp" type="image/webp">
-            <img src="uploads/DSC_5777.jpg" alt="Luke Hammond racing backstroke" loading="lazy" decoding="async">
+            <source srcset="uploads/DSC_6192-900.webp" type="image/webp">
+            <img src="uploads/DSC_6192.jpg" alt="Luke Hammond racing freestyle" loading="lazy" decoding="async">
           </picture>
-          <figcaption>Racing backstroke. His second event behind the distance freestyle.</figcaption>
+          <figcaption>Racing freestyle, the event everything else is built around.</figcaption>
         </figure>
       </div>
       <dl class="kv" id="about-kv"></dl>

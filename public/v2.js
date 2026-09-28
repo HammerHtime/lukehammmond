@@ -37,11 +37,10 @@
       : 'Distance freestyle';
     el('hero-time').textContent = lead.time;
     el('hero-what').innerHTML = esc(lead.name) + ' <b>' + esc(lead.course) + '</b>';
+    el('hero-when').textContent = when(lead.date) + (lead.meet ? ', ' + lead.meet : '');
     el('hero-who').textContent = SWIMMER.name + '. Class of ' + SWIMMER.classOf + ', ' +
       SWIMMER.club + '. Distance freestyle, ' +
       (SWIMMER.clubCity || SWIMMER.city) + ', ' + SWIMMER.province + '.';
-    el('shot-cap').textContent = lead.name + ' ' + lead.course + ', ' + when(lead.date) +
-      (lead.meet ? '. ' + lead.meet + '.' : '.');
   }
 
   // ---- the board: dense, aligned, hairlines, no cards ----

@@ -68,11 +68,22 @@ back:
    someone else's URL can go missing. Adds 220 KB to the deploy, of which about
    120 KB is actually fetched.
 
-### Still open, for Andrew
+### Photos, changed 28 September on Andrew's word
 
-- **The photos.** Andrew said he is replacing them. The hero uses the freestyle
-  race shot and the About section uses the backstroke one. Both slot into the
-  same markup, so new files drop straight in.
+The hero is now the backstroke competition shot and the About section has the
+freestyle one. They traded places.
+
+Two things had to change with it. The hero caption used to be generated from the
+fastest time, so it would have said "400 Free LCM" under a photo of a backstroke
+race. It is now a caption about the photo, and the meet and date for that time
+moved up under the claim, where they belong. I also wrote "lane four" in that
+caption, could not tell the lane from the photo, and took it out.
+
+Of the five photos on the site only two work as a hero. The other three are a
+podium shot, a second podium shot and a deck snap. All three are shirtless, and
+two of them have other people's children in frame. Andrew is finding more.
+
+### Still open, for Andrew
 - **The page needs JavaScript.** With scripts off it renders the headings and
   nothing else, ie, no times. Same as the live page. Worth fixing only if a
   coach is ever likely to browse with scripts off, which is unlikely.
