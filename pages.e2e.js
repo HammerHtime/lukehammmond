@@ -131,6 +131,29 @@ async function page(b, url, profile, opts={}) {
     ok('results table still renders', t.rows>=10, t.rows);
     await c.close(); }
 
+  // ---------- index.html: charts under their heading, menu fits ----------
+  for (const w of [1000, 1440, 390]) {
+    const {c,pg}=await page(b,'index.html',null,{vp:{width:w,height:900}});
+    const m=await pg.evaluate(()=>{
+      const top=n=>n?Math.round(n.getBoundingClientRect().top+scrollY):null;
+      const hs=[...document.querySelectorAll('#performance h2')];
+      const logo=document.querySelector('.nav-logo').getBoundingClientRect();
+      const links=document.querySelector('.nav-links');
+      const shown=getComputedStyle(links).display!=='none';
+      const last=[...links.querySelectorAll('a')].pop().getBoundingClientRect();
+      return { perf:top(hs.find(x=>/performance over time/i.test(x.textContent))),
+        chart:top(document.getElementById('chart400')),
+        season:top(hs.find(x=>/season by season/i.test(x.textContent))),
+        gap: shown ? Math.round(links.getBoundingClientRect().left-logo.right) : null,
+        offRight: shown ? Math.round(last.right-innerWidth) : null };
+    });
+    console.log('\nindex.html at ' + w + 'px');
+    ok('charts come straight after their heading', m.perf < m.chart && m.chart < m.season, JSON.stringify(m));
+    ok('the menu does not touch the logo', m.gap===null || m.gap >= 40, m.gap);
+    ok('the menu stays on screen', m.offRight===null || m.offRight <= 0, m.offRight);
+    await c.close();
+  }
+
   // ---------- index.html with scripts off: the static copy ----------
   { const c=await b.newContext({javaScriptEnabled:false}); const pg=await c.newPage();
     await pg.goto('http://localhost:4176/index.html',{waitUntil:'load'});

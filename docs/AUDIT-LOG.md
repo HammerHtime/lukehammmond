@@ -10,6 +10,37 @@ Newest first.
 
 ---
 
+## 29 September 2026, the charts under the wrong heading, and the menu
+
+**Found by Andrew, from a screenshot of the live page.** "Performance Over
+Time" and its line about the Junior Trials dashed line were followed straight
+away by the Season by Season cards. The charts that heading describes sat
+below the cards, which at laptop width is a full screen further down. It read
+as a heading with no chart.
+
+It was built that way, not broken: the season block was placed between the
+heading and the charts. Now the charts come straight after their heading and
+the season cards follow them. Checked at 1000px, 1440px and 390px wide.
+
+**Found while rendering that section: the menu did not fit laptop windows.**
+From about 900px to 1040px wide the logo ran into ABOUT with no space between
+them, and at 920px to 960px the last link, Recruit, went off the right edge of
+the screen. An iPad held sideways is 1024px. The compact menu now starts at
+1080px and the menu button takes over below 820px. The logo has at least 70px
+of clear space at every width measured, the menu button opens and closes at
+810px, 780px and 390px, and following a link from it lands on the section.
+
+Both are covered by tests now, and I put the old order back on purpose to
+confirm the test fails on it.
+
+**Checked and left alone.** The drop under each chart title uses a true minus
+sign, not an en or em dash, so it stays. While testing, the season cards
+disappeared once at 1180px. That was this container's network dropping one of
+the site's own files, not the site. When the files load, all five cards render
+at every width.
+
+---
+
 ## 29 September 2026, the national rankings, from a named list
 
 **Andrew sent the CSCA TAG Rankings, Volume 4, September 2026.** Luke is ranked

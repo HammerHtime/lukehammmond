@@ -2463,6 +2463,26 @@ calls.forEach(function (l) {
 });
 ok('the charts are among them', calls.some(function (l) { return /safe\('charts'/.test(l); }));
 
+// ---------- the charts sit under the heading that describes them ----------
+// "Performance Over Time" and "the dashed line marks the Junior Trials
+// standard" were followed by the season-by-season cards, with the charts a
+// screen further down at laptop width. Andrew caught it on 29 September.
+const perfAt = publicHtml.indexOf('Performance Over Time');
+const gridAt = publicHtml.indexOf('perf-charts-grid"');
+const progAt = publicHtml.indexOf('id="progression"');
+ok('the chart grid comes after its heading', perfAt > -1 && gridAt > perfAt);
+ok('and the season cards come after the charts, not between', progAt > gridAt);
+
+// ---------- the menu fits the window it is shown in ----------
+// From about 900px to 1040px the logo ran into the first link, and at 920px
+// to 960px the last link went off screen. Measured in a browser, 29 September.
+const compactAt = /@media \(max-width: (\d+)px\) \{\s*nav \{ padding: 1rem 2rem; \}\s*\.nav-links \{ gap: 1\.2rem; \}/.exec(publicHtml);
+ok('the compact menu starts at 1080px or wider', compactAt && Number(compactAt[1]) >= 1080);
+const burgerAts = [];
+publicHtml.replace(/@media \(max-width: (\d+)px\) \{\s*\.nav-hamburger \{ display: flex; \}/g,
+  function (m, w) { burgerAts.push(Number(w)); });
+ok('the menu button takes over at 820px or wider', Math.max.apply(null, burgerAts.concat(0)) >= 820);
+
 // ---------- the published list, pinned to the page it came from ----------
 // CSCA TAG Rankings, Volume 4, September 2026, Boys 13-14, long course. Each
 // rank below was read off the list, and each time beside it is the time the

@@ -843,6 +843,20 @@
     .nav-hamburger { display: flex; }
     .nav-links { display: none; }
   }
+  /* Eight links and the logo do not fit a laptop window at full size. From
+     about 900px to 1040px the logo ran into ABOUT, and at 920px to 960px the
+     last link went off the right edge of the screen. Measured 29 September.
+     The compact menu now starts at 1080px, and the menu button takes over
+     below 820px, where even the compact row was down to a 10px gap. */
+  @media (max-width: 1080px) {
+    nav { padding: 1rem 2rem; }
+    .nav-links { gap: 1.2rem; }
+    .nav-links a { font-size: 0.7rem; }
+  }
+  @media (max-width: 820px) {
+    .nav-hamburger { display: flex; }
+    .nav-links { display: none; }
+  }
 
   /* ── GRID HELPERS ── */
   /* The box that holds a chart, and the reason it has to exist.
@@ -1122,8 +1136,6 @@
       <h2 class="section-title">Performance Over Time</h2>
       <p style="color:var(--muted); font-size:0.875rem; max-width:600px; line-height:1.7; margin-bottom:3rem;">Time progression in Luke's two signature events since 2023. The dashed line marks the Swim Canada Junior Trials qualifying standard.</p>
     </div>
-    <div id="progression" class="reveal"></div>
-
     <div class="reveal perf-charts-grid">
       <div style="background:var(--card-bg); border:1px solid rgba(255,255,255,0.07); border-radius:4px; padding:1.5rem;">
         <div style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--aqua); margin-bottom:0.5rem; font-weight:500;">400m Freestyle</div>
@@ -1136,6 +1148,13 @@
         <div class="chart-box"><canvas id="chart800"></canvas></div>
       </div>
     </div>
+
+    <!-- Season by season sits after the charts, not between the charts and
+         their heading. It used to sit in between, so "Performance Over Time"
+         and "the dashed line marks..." were followed by five season cards, and
+         at laptop width the charts they described landed a screen further
+         down. Andrew caught it from a screenshot on 29 September. -->
+    <div id="progression" class="reveal" style="margin-top:4.5rem;"></div>
   </div>
 </div>
 
