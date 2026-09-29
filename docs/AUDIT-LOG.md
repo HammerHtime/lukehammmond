@@ -140,8 +140,14 @@ needs Chromium.
 
 ### For Andrew
 
-1. **Open the admin page, go to National rankings, tap "Fill from the published
-   list", then tap Save.** Two taps. That replaces the four stale ranks, adds
+1. **Done 29 September.** Andrew filled from the list and saved. Read back from
+   the live back end: all ten ranks match the list, each carries its source and
+   group, and the coach details survived the save. The live front page reads
+   "Ranked Top 5 in Canada · 3 Distance Free Events", the strip reads #4, #4,
+   #5, and the footnote names the list. /v2.html leads with "#4 in Canada,
+   13-14 boys" and lists all ten with the source.
+   Original instruction: **Open the admin page, go to National rankings, tap
+   "Fill from the published list", then tap Save.** Two taps. That replaces the four stale ranks, adds
    the two missing ones, and stamps each one with its source so the public page
    can name the list. Nothing saves until you tap Save, so you can clear any box
    first if you would rather not show, say, the #46.
