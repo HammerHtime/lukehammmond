@@ -64,7 +64,10 @@ const SWIMMER = {
     'Aris Bousoulegkas. Lives in Etobicoke, Ontario. Started racing in spring 2022.',
     'Selected to the Swim Canada National ID Development Program and the Swim ' +
     'Ontario Aerobic Development Program.',
-    'Ranked inside the top five in Canada for age across four distance freestyle events.'
+    // Was "top five across four distance freestyle events". The published list
+    // has the 200 free sixth, so that sentence stopped being true.
+    'Ranked in the top five in Canada in the 400, 800 and 1500 freestyle, ' +
+    'Boys 13-14, long course, 2025-26.'
   ],
 
   // The hours, not a sentence about the hours.
@@ -95,14 +98,48 @@ const SWIMMER = {
 
   // The events he is actually recruited on. Stated, not inferred. A best-times
   // sheet has one row per event, so counting swims cannot tell you what he is.
-  // National rankings are for age, as shown on the existing profile page,
-  // recorded 18 September 2026. Confirm against Swimming Canada before quoting.
+  // Ranks are not stored here any more. They come from the published list
+  // below, so there is one copy of each number and it has a source.
   primary: [
-    { distance: 200, stroke: 'free', course: 'LCM', rank: 4, rankBasis: 'Canada, for age' },
-    { distance: 400, stroke: 'free', course: 'LCM', rank: 2, rankBasis: 'Canada, for age' },
-    { distance: 800, stroke: 'free', course: 'LCM', rank: 3, rankBasis: 'Canada, for age' },
-    { distance: 1500, stroke: 'free', course: 'LCM', rank: 5, rankBasis: 'Canada, for age' }
+    { distance: 200, stroke: 'free', course: 'LCM' },
+    { distance: 400, stroke: 'free', course: 'LCM' },
+    { distance: 800, stroke: 'free', course: 'LCM' },
+    { distance: 1500, stroke: 'free', course: 'LCM' }
   ],
+
+  // National rankings, quoted from a named list. Every number here was read off
+  // the page and checked against his own result for the same swim, ie, the
+  // same time on the same event, so each rank is for the swim on this site.
+  //
+  // This replaced four ranks copied from the old profile page on 18 September,
+  // which carried a note saying to confirm them before quoting. Three of the
+  // four were higher than the published list: 400 free #2 (list says #4),
+  // 800 free #3 (#4) and 200 free #4 (#6). The hero had been leading with the #2.
+  //
+  // The list ranks age groups, not single ages. He is in Boys 13-14 because he
+  // was 14 for the season it covers. Next season's lists put him in 15-17, and
+  // these numbers become last season's, which is why the season is recorded.
+  rankings: {
+    source: 'CSCA TAG Rankings, Volume 4, September 2026',
+    group: 'Boys 13-14',
+    course: 'LCM',
+    season: '2025-26',
+    period: '1 September 2025 to 31 August 2026',
+    depth: 50,
+    recorded: '2026-09-29',
+    ranks: {
+      '400-free-LCM': 4,
+      '800-free-LCM': 4,
+      '1500-free-LCM': 5,
+      '200-free-LCM': 6,
+      '200-back-LCM': 10,
+      '400-im-LCM': 13,
+      '100-free-LCM': 18,
+      '100-back-LCM': 33,
+      '200-im-LCM': 35,
+      '50-free-LCM': 46
+    }
+  },
 
   recognition: [
     { label: 'Swim Canada National ID Development Program', detail: 'Selected' },
@@ -321,14 +358,29 @@ const SEED_RESULTS = [
 // restore it, which is the opposite of what clearing a field means.
 //
 // Before anything has ever been saved, the seed below is used, so the page is
-// never blank on day one.
+// never blank on day one. The seed is the published list, carried with its
+// source, so a rank shown from it can always say where it came from.
+function publishedBasis() {
+  const r = SWIMMER.rankings;
+  return r ? r.group + ', ' + (r.course === 'LCM' ? 'long course' : 'short course') + ', ' + r.season : '';
+}
+
 function seedRankings() {
   const out = {};
-  (SWIMMER.primary || []).forEach(function (p) {
-    if (!p.rank) return;
-    out[p.distance + '-' + p.stroke + '-' + p.course] = { rank: p.rank, basis: p.rankBasis || '' };
+  const r = SWIMMER.rankings;
+  if (!r || !r.ranks) return out;
+  Object.keys(r.ranks).forEach(function (id) {
+    out[id] = { rank: r.ranks[id], basis: publishedBasis(), source: r.source };
   });
   return out;
+}
+
+// What the published list says for one event, or null. The back end uses this
+// to tell a rank copied from the list, which keeps its source when saved, from
+// one typed in by hand, which does not get to borrow it.
+function publishedRank(eventId) {
+  const r = SWIMMER.rankings;
+  return (r && r.ranks && r.ranks[eventId]) || null;
 }
 
 function rankingsFrom(profile) {
@@ -344,6 +396,7 @@ function rankingsFrom(profile) {
       rank: Math.round(rank),
       basis: String((entry && entry.basis) || 'Canada, for age')
     };
+    if (entry && entry.source) out[eventId].source = String(entry.source);
   });
   return out;
 }
@@ -356,6 +409,8 @@ const api = {
   SWIMMER: SWIMMER,
   SEED_RESULTS: SEED_RESULTS,
   seedRankings: seedRankings,
+  publishedRank: publishedRank,
+  publishedBasis: publishedBasis,
   rankingsFrom: rankingsFrom,
   rankFor: rankFor
 };

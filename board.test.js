@@ -1045,11 +1045,22 @@ ok('and it is in the letter',
   voice.body.indexOf('My primary events are the 400, 800 and 1500 freestyle') !== -1);
 
 // The times block, one line per event, with the ranking only where one is set.
+// Ranks from the published list name the group and the season, because by the
+// time this is sent he is in the next age group.
 ok('the 400 free is listed with its ranking',
-  voice.body.indexOf('400 Free LCM: 4:10.86, #2 in Canada for my age') !== -1);
-ok('the 800 too', voice.body.indexOf('800 Free LCM: 8:43.49, #3 in Canada for my age') !== -1);
-ok('the 1500 too', voice.body.indexOf('1500 Free LCM: 16:59.80, #5 in Canada for my age') !== -1);
-ok('the 200 too', voice.body.indexOf('200 Free LCM: 1:59.75, #4 in Canada for my age') !== -1);
+  voice.body.indexOf('400 Free LCM: 4:10.86, ranked #4 in Canada for 13-14 boys in 2025-26') !== -1);
+ok('the 800 too', voice.body.indexOf('800 Free LCM: 8:43.49, ranked #4 in Canada for 13-14 boys in 2025-26') !== -1);
+ok('the 1500 too', voice.body.indexOf('1500 Free LCM: 16:59.80, ranked #5 in Canada for 13-14 boys in 2025-26') !== -1);
+ok('the 200 too', voice.body.indexOf('200 Free LCM: 1:59.75, ranked #6 in Canada for 13-14 boys in 2025-26') !== -1);
+ok('the old #2 is gone from the letter', voice.body.indexOf('#2 in Canada') === -1);
+ok('and "last season" is not used, since it goes stale', voice.body.indexOf('last season') === -1);
+// A rank typed in by hand has no group to name and keeps the plain wording.
+const handTyped = R.draftEmail({
+  swim: S, swimmer: require('./public/swimmer.js').SWIMMER, results: results,
+  rankings: { '400-free-LCM': { rank: 3, basis: 'Canada, for age' } }
+});
+ok('a hand-typed rank reads "for my age"',
+  handTyped.body.indexOf('400 Free LCM: 4:10.86, #3 in Canada for my age') !== -1);
 // No ranking is set for the 400 IM, so none is claimed. This is the same rule
 // as the public page, ie, a blank box means no badge, never a stale one.
 ok('and the 400 IM is listed without one', voice.body.indexOf('400 IM SCM: 4:41.07\n') !== -1);
@@ -1635,11 +1646,33 @@ const seedResults = require('./public/swimmer.js').SEED_RESULTS
 const seedBests = S.personalBests(seedResults);
 const seedRanks = require('./public/swimmer.js').seedRankings();
 
-Object.keys(seedRanks).forEach(function (id) {
-  const best = seedBests[id];
-  if (!best) return;
-  ok('the fallback card for ' + id + ' shows ' + best.time,
-    publicHtml.indexOf('>' + best.time + '<span class="time-pb-badge">') !== -1);
+// Every static card must show the right time AND the right rank. It used to
+// check the time only, which is how "#2 in Canada" sat in the markup after the
+// published list said #4. The four headline events must each have a card.
+const staticCards = [];
+publicHtml.replace(/>([0-9:.]+)<span class="time-pb-badge">#(\d+) in Canada<\/span>/g,
+  function (m, time, rank) { staticCards.push({ time: time, rank: Number(rank) }); });
+ok('the no-script fallback carries cards', staticCards.length >= 4);
+staticCards.forEach(function (card) {
+  const id = Object.keys(seedBests).filter(function (k) {
+    return seedBests[k].time === card.time && seedRanks[k];
+  })[0];
+  ok('the static card for ' + card.time + ' is a ranked best on record', !!id);
+  if (id) check('and its rank matches the published list, ' + id, card.rank, seedRanks[id].rank);
+});
+(require('./public/swimmer.js').SWIMMER.primary || []).forEach(function (p) {
+  const id = S.eventId(p.distance, p.stroke, p.course);
+  ok('a headline event has a static card, ' + id,
+    !!seedBests[id] && staticCards.some(function (c) { return c.time === seedBests[id].time; }));
+});
+// The static hero strip, which is also what a link preview reads.
+const heroStatic = (publicHtml.match(/<div class="hero-stat-val">#(\d+)<\/div>\s*<div class="hero-stat-label">Ranked in Canada · (\d+)m Free · ([0-9:.]+)<\/div>/g) || []);
+check('the static hero strip has three boxes', heroStatic.length, 3);
+heroStatic.forEach(function (box) {
+  const m = /#(\d+)<\/div>\s*<div class="hero-stat-label">Ranked in Canada · (\d+)m Free · ([0-9:.]+)/.exec(box);
+  const id = m[2] + '-free-LCM';
+  check('static hero box ' + id + ' matches the published rank', Number(m[1]), seedRanks[id] && seedRanks[id].rank);
+  check('and its time matches the best on record', m[3], seedBests[id] && seedBests[id].time);
 });
 ok('no superseded 400 free time survives in the markup',
   publicHtml.split('4:11.47').filter(function (chunk, i) { return i > 0; }).length <= 2);
@@ -2411,8 +2444,63 @@ check('and so does exercise science', El.checkCourse('PSE4U').approved, false);
 
 // ---------- rankings, editable and clearable ----------
 const SD = require('./public/swimmer.js');
-check('the seed carries four rankings', Object.keys(SD.seedRankings()).length, 4);
-check('nothing saved yet falls back to the seed', Object.keys(SD.rankingsFrom(null)).length, 4);
+check('the seed carries the ten published rankings', Object.keys(SD.seedRankings()).length, 10);
+check('nothing saved yet falls back to the seed', Object.keys(SD.rankingsFrom(null)).length, 10);
+
+// ---------- one section failing cannot blank the front page ----------
+// The front page drew every section in one chain with the charts in the
+// middle. When the chart library's date add-on failed to load from its CDN,
+// the error stopped the chain, and the time cards, the rankings, the results
+// table, the yards panel and the gallery never drew. Each section now runs on
+// its own. This checks every call in render() goes through safe().
+const liveSrcR = require('fs').readFileSync(require('path').join(__dirname, 'public', 'live-profile.js'), 'utf8');
+const renderBody = (/function render\(results\) \{([\s\S]*?)\n  \}/.exec(liveSrcR) || [])[1] || '';
+const calls = renderBody.split('\n').map(function (l) { return l.trim(); })
+  .filter(function (l) { return l && !/^var /.test(l); });
+ok('render() draws at least ten sections', calls.length >= 10);
+calls.forEach(function (l) {
+  ok('each section is guarded: ' + l.slice(0, 50), /^safe\('/.test(l));
+});
+ok('the charts are among them', calls.some(function (l) { return /safe\('charts'/.test(l); }));
+
+// ---------- the published list, pinned to the page it came from ----------
+// CSCA TAG Rankings, Volume 4, September 2026, Boys 13-14, long course. Each
+// rank below was read off the list, and each time beside it is the time the
+// list printed for him. If a result on file stops matching, the rank is no
+// longer for the swim on this site and must not be shown against it.
+const PUBLISHED = {
+  '400-free-LCM': [4, '4:10.86'], '800-free-LCM': [4, '8:43.49'], '1500-free-LCM': [5, '16:59.80'],
+  '200-free-LCM': [6, '1:59.75'], '200-back-LCM': [10, '2:14.23'], '400-im-LCM': [13, '4:52.37'],
+  '100-free-LCM': [18, '55.88'], '100-back-LCM': [33, '1:04.17'], '200-im-LCM': [35, '2:19.92'],
+  '50-free-LCM': [46, '25.96']
+};
+const pubList = SD.SWIMMER.rankings;
+check('the list is named', pubList.source, 'CSCA TAG Rankings, Volume 4, September 2026');
+check('the group is recorded', pubList.group, 'Boys 13-14');
+check('the season is recorded', pubList.season, '2025-26');
+check('it carries exactly the ranks on the page', JSON.stringify(Object.keys(pubList.ranks).sort()),
+  JSON.stringify(Object.keys(PUBLISHED).sort()));
+Object.keys(PUBLISHED).forEach(function (id) {
+  check('published rank for ' + id, pubList.ranks[id], PUBLISHED[id][0]);
+  check('and the time the list printed is his best on record in that season, ' + id,
+    seedResults.filter(function (r) {
+      return r.event === id && r.date >= '2025-09-01' && r.date <= '2026-08-31';
+    }).sort(function (a, b) { return a.hundredths - b.hundredths; })[0].time, PUBLISHED[id][1]);
+});
+check('a seeded rank says where it came from', SD.seedRankings()['400-free-LCM'].source, pubList.source);
+check('and which group', SD.seedRankings()['400-free-LCM'].basis, 'Boys 13-14, long course, 2025-26');
+check('the back end can look up a published rank', SD.publishedRank('400-free-LCM'), 4);
+check('and gets nothing for an event the list does not rank', SD.publishedRank('200-fly-LCM'), null);
+ok('the primary events no longer carry a second copy of the ranks',
+  SD.SWIMMER.primary.every(function (p) { return p.rank === undefined; }));
+ok('the about line no longer claims four events in the top five',
+  SD.SWIMMER.about.join(' ').indexOf('four distance freestyle events') === -1);
+check('a saved source survives the round trip',
+  SD.rankingsFrom({ rankings: { '400-free-LCM': { rank: 4, basis: 'x', source: 'CSCA' } } })['400-free-LCM'].source,
+  'CSCA');
+check('a hand-typed rank carries no source',
+  SD.rankingsFrom({ rankings: { '400-free-LCM': { rank: 3, basis: 'Canada, for age' } } })['400-free-LCM'].source,
+  undefined);
 
 // The rule that matters. A cleared box means no ranking, not a revert to the
 // hardcoded one, otherwise clearing a stale number silently restores it.

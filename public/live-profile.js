@@ -33,23 +33,36 @@
 
   // Meet names are typed by a person into the back end, so nothing from the
   // data is ever treated as markup.
+  //
+  // Each section runs on its own. They used to run as one chain with the
+  // charts in the middle, so when the chart library's date add-on failed to
+  // load from its CDN, the error stopped the chain and everything after it
+  // never drew: the time cards, the rankings, the results table, the yards
+  // panel and the gallery. Found on 29 September when a test run hit a flaky
+  // CDN. One section failing now costs that section and nothing else.
+  function safe(name, fn) {
+    try { fn(); } catch (err) {
+      if (window.console) console.error('section "' + name + '" did not render: ' + err.message);
+    }
+  }
+
   function render(results) {
     var bests = S.personalBests(results);
     var yards = C ? C.yardBests(S, results) : {};
-    heroEyebrow();
-    heroStats(bests);
-    heroBadge(bests);
-    trainingLine();
-    if (window.Charts) window.Charts.renderProgression(results);
-    schoolPanel();
-    timeCards(results, bests);
-    rankingLines(bests);
-    compTable(results, bests);
-    clubCoach();
-    clubLines(results);
-    progression(results);
-    coachPanel(yards);
-    gallery();
+    safe('hero eyebrow', heroEyebrow);
+    safe('hero stats', function () { heroStats(bests); });
+    safe('hero badge', function () { heroBadge(bests); });
+    safe('training', trainingLine);
+    safe('charts', function () { if (window.Charts) window.Charts.renderProgression(results); });
+    safe('school panel', schoolPanel);
+    safe('time cards', function () { timeCards(results, bests); });
+    safe('rankings', function () { rankingLines(bests); });
+    safe('results table', function () { compTable(results, bests); });
+    safe('club coach', clubCoach);
+    safe('club lines', function () { clubLines(results); });
+    safe('progression', function () { progression(results); });
+    safe('yards panel', function () { coachPanel(yards); });
+    safe('gallery', gallery);
   }
 
   // Age goes stale every birthday. A graduating class never does, and it is
@@ -63,12 +76,19 @@
   function heroStats(bests) {
     var node = el('hero-stats');
     if (!node) return;
-    var html = (SWIMMER.primary || []).slice(0, 3).map(function (p) {
+    // The three best-ranked of his headline events, shown shortest first. It
+    // used to be the first three in the list, which was fine while the 200 was
+    // ranked #4. At #6 it would have led the strip and pushed the 1500, ranked
+    // #5, off it.
+    var picked = (SWIMMER.primary || []).map(function (p, i) {
       var id = S.eventId(p.distance, p.stroke, p.course);
-      var best = bests[id];
-      var rank = window.SwimmerData.rankFor(rankings, id);
-      // No ranking on file means no box, rather than a box with nothing in it.
-      if (!best || !rank) return '';
+      return { p: p, id: id, i: i, rank: window.SwimmerData.rankFor(rankings, id) };
+    }).filter(function (x) { return x.rank && bests[x.id]; })
+      .sort(function (a, b) { return a.rank.rank - b.rank.rank || a.i - b.i; })
+      .slice(0, 3)
+      .sort(function (a, b) { return a.i - b.i; });
+    var html = picked.map(function (x) {
+      var p = x.p, id = x.id, best = bests[id], rank = x.rank;
       return '<div class="hero-stat">' +
         '<div class="hero-stat-val">#' + esc(rank.rank) + '</div>' +
         '<div class="hero-stat-label">Ranked in Canada · ' + esc(p.distance) + 'm ' +
@@ -208,8 +228,15 @@
     var node = el('hero-badge-claim');
     if (!node) return;
 
+    // Distance freestyle only. The badge was written for four distance events.
+    // Counting every ranked event would make the worst of them set the bracket,
+    // so a #46 in the 50 free would turn it into "Top 46 in Canada · 10 Events",
+    // which is true and says nothing. The full list sits in the times section.
     var held = Object.keys(rankings)
-      .filter(function (id) { return bests[id]; })
+      .filter(function (id) {
+        var b = bests[id];
+        return b && b.stroke === 'free' && b.distance >= 400;
+      })
       .map(function (id) { return { rank: rankings[id].rank, distance: bests[id].distance }; })
       .filter(function (r) { return Number.isFinite(r.rank); });
 
@@ -225,10 +252,7 @@
 
     // 400 and up is a distance event. Saying "distance events" when the count
     // includes a 200 is the kind of small overclaim a coach notices.
-    var distance = held.filter(function (r) { return r.distance >= 400; }).length;
-    var label = distance === held.length
-      ? (held.length === 1 ? 'Distance Event' : 'Distance Events')
-      : (held.length === 1 ? 'Event' : 'Events');
+    var label = held.length === 1 ? 'Distance Free Event' : 'Distance Free Events';
 
     node.textContent = 'Ranked Top ' + bracket + ' in Canada · ' + held.length + ' ' + label;
     node.parentNode.style.display = '';
@@ -238,6 +262,19 @@
   // Once the badges became editable those two got out of step, ie, the sentence
   // claimed #3, #5 and #6 while the badges above it read #4, #2, #3 and #5.
   // Both now come from the same place, so they cannot disagree.
+  // One basis for the whole list when every rank shares it, which is the case
+  // whenever the ranks came from the published list. Anything mixed, or typed
+  // by hand, falls back to the plain wording rather than claiming a group.
+  function basisOf(list) {
+    var bases = Object.keys(list).map(function (id) { return list[id].basis || ''; });
+    var one = bases.length && bases.every(function (b) { return b === bases[0]; }) ? bases[0] : '';
+    return /^Boys /.test(one) ? one : 'for age';
+  }
+  function sourceOf(list) {
+    var srcs = Object.keys(list).map(function (id) { return list[id].source || ''; });
+    return srcs.length && srcs.every(function (x) { return x && x === srcs[0]; }) ? srcs[0] : '';
+  }
+
   function rankingLines(bests) {
     var intro = el('times-intro');
     if (intro) {
@@ -248,7 +285,8 @@
       }).filter(Boolean).sort(function (a, b) { return a.rank - b.rank; });
 
       intro.innerHTML = listed.length
-        ? '<span style="color:var(--aqua);">Ranked in Canada for age: ' +
+        ? '<span style="color:var(--aqua);">Ranked in Canada' +
+          (basisOf(rankings) === 'for age' ? ' for age' : ', ' + esc(basisOf(rankings))) + ': ' +
           listed.map(function (r) {
             return '#' + esc(r.rank) + ' ' + esc(r.name) + ' ' + esc(r.course);
           }).join(' \u00b7 ') + '.</span>'
@@ -261,7 +299,9 @@
     if (foot) {
       // The age was written into this line as "14-year-old males", which goes
       // wrong on his next birthday. The graduating class does not.
-      foot.textContent = '\u2605 Rankings are for age, Canada. Class of ' + SWIMMER.classOf;
+      var src = sourceOf(rankings);
+      foot.textContent = '\u2605 Rankings: ' + (src ? src + ', ' + basisOf(rankings) : 'Canada, for age') +
+        '. Class of ' + SWIMMER.classOf;
     }
   }
 

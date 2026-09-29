@@ -225,6 +225,21 @@ h2 {
 .y { font-family:var(--mono); font-size:15px; color:var(--mute); }
 .rk { font-family:var(--mono); font-size:13px; color:var(--chrome); font-weight:500; white-space:nowrap; }
 .drop { font-family:var(--mono); font-size:13px; color:var(--his); }
+
+/* ---------- ranked: the published list, in rank order ---------- */
+.ranks { margin-top:52px; }
+.ranks h3 { font-size:clamp(20px,2.4vw,26px); font-weight:700; font-stretch:112%;
+  letter-spacing:-.02em; margin:0 0 4px; }
+.rank-list { list-style:none; margin:18px 0 0; padding:0; border-top:1px solid var(--rule);
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:48px; }
+@media (max-width:760px){ .rank-list { grid-template-columns:1fr; } }
+.rank-list li { display:grid; grid-template-columns:56px minmax(0,1fr) auto; align-items:baseline;
+  gap:12px; padding:12px 0; border-bottom:1px solid var(--rule-soft); font-variant-numeric:tabular-nums; }
+.rl-rank { font-family:var(--mono); font-size:18px; font-weight:700; color:var(--chrome); }
+.rl-ev { font-weight:600; font-size:15px; }
+.rl-t { font-family:var(--mono); font-size:15px; color:var(--his); }
+.rank-src { font-family:var(--mono); font-size:11px; color:var(--dim); letter-spacing:.04em;
+  margin:14px 0 0; max-width:80ch; line-height:1.6; }
 @media (max-width:760px){
   .board .hide-sm { display:none; }
   .t { font-size:19px; }
@@ -341,6 +356,12 @@ footer { padding:38px 0 56px; }
       </thead>
       <tbody id="board-rows"></tbody>
     </table>
+
+    <div class="ranks" id="ranks">
+      <h3>Ranked in Canada in <span id="rank-count"></span></h3>
+      <ol class="rank-list" id="rank-list"></ol>
+      <p class="rank-src" id="rank-src"></p>
+    </div>
   </div>
 </section>
 

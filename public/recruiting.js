@@ -273,8 +273,7 @@ function draftEmail(input) {
     lines.push('');
     ranked.forEach(function (best) {
       const rank = rankings[best.event];
-      lines.push(best.name + ' ' + best.course + ': ' + best.time +
-        (rank ? ', #' + rank.rank + ' in Canada for my age' : ''));
+      lines.push(best.name + ' ' + best.course + ': ' + best.time + rankPhrase(rank));
     });
     lines.push('');
   }
@@ -501,13 +500,34 @@ function spoken(result) {
   return result.distance + ' ' + (result.stroke === 'im' ? 'IM' : result.stroke);
 }
 
+// Reads the published list on the swimmer, the same one the page reads. This
+// used to read ranks typed onto the primary events, which was a second copy of
+// the numbers, and the two copies are how the page came to say #2 while the
+// published list said #4.
 function seedRankingsFrom(swimmer) {
   const out = {};
-  (swimmer.primary || []).forEach(function (p) {
-    if (!p.rank) return;
-    out[p.distance + '-' + p.stroke + '-' + p.course] = { rank: p.rank };
+  const r = swimmer && swimmer.rankings;
+  if (!r || !r.ranks) return out;
+  Object.keys(r.ranks).forEach(function (id) {
+    out[id] = { rank: r.ranks[id], basis: r.group + ', ' + r.season, source: r.source };
   });
   return out;
+}
+
+// How a rank reads in a sentence Luke signs. A rank from the published list
+// names the group and the season, because by the time this is sent he is in
+// the next age group and a bare "#4 in Canada" reads as a claim about now.
+// The season is written out rather than "last season", which would go wrong
+// the year after without anyone noticing.
+function rankPhrase(rank) {
+  if (!rank) return '';
+  const basis = String(rank.basis || '');
+  const group = /^Boys (\d+-\d+)/.exec(basis);
+  const season = /(\d{4}-\d{2})$/.exec(basis) || (rank.season ? [0, rank.season] : null);
+  if (group && season) {
+    return ', ranked #' + rank.rank + ' in Canada for ' + group[1] + ' boys in ' + season[1];
+  }
+  return ', #' + rank.rank + ' in Canada for my age';
 }
 
 function pad(text, width) {

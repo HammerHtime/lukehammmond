@@ -57,7 +57,7 @@
         '<td>' + esc(b.distance) + 'm ' + esc(S.STROKE_LABEL[b.stroke]) + '</td>' +
         '<td class="t">' + esc(b.time) + '</td>' +
         '<td class="y">' + (y ? esc(y.time) + ' <span style="color:var(--faint)">' +
-          esc(y.name) + '</span>' : '<span style="color:var(--faint)">&mdash;</span>') + '</td>' +
+          esc(y.name) + '</span>' : '') + '</td>' +
         '<td>' + (rank ? '<span class="rank">#' + esc(rank.rank) + ' Canada</span>' : '') + '</td>' +
         '<td class="y">' + esc(shortDate(b.date)) + '</td>' +
         '</tr>';
@@ -87,6 +87,19 @@
     } catch (err) { /* no square, no harm */ }
   }
 
+  // Where the ranks came from, printed under the table, because a coach
+  // holding a sheet of paper cannot click through to check.
+  function rankNote(rankings) {
+    var ids = Object.keys(rankings);
+    if (!ids.length) return '';
+    var srcs = ids.map(function (id) { return rankings[id].source || ''; });
+    var r = SWIMMER.rankings;
+    var sourced = r && srcs.every(function (v) { return v && v === srcs[0]; });
+    return '<p class="rank-note">' + (sourced
+      ? 'Ranks: ' + esc(srcs[0]) + '. ' + esc(r.group) + ', long course, ' + esc(r.period) + '.'
+      : 'Ranks are national, for age.') + '</p>';
+  }
+
   function render(results, rankings, coach) {
     var bests = S.personalBests(results);
     var yards = C ? C.yardBests(S, results) : {};
@@ -111,7 +124,7 @@
         '</div>' +
       '</div>' +
 
-      '<h2>Best times</h2>' + timesTable(bests, yards, rankings) +
+      '<h2>Best times</h2>' + timesTable(bests, yards, rankings) + rankNote(rankings) +
 
       '<div class="cols">' +
         '<div>' +

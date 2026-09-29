@@ -10,6 +10,119 @@ Newest first.
 
 ---
 
+## 29 September 2026, the national rankings, from a named list
+
+**Andrew sent the CSCA TAG Rankings, Volume 4, September 2026.** Luke is ranked
+in ten long course events, Boys 13-14, for the season 1 September 2025 to
+31 August 2026. The list runs 50 deep.
+
+| Event | Rank | Time |
+|---|---|---|
+| 400 free | 4 | 4:10.86 |
+| 800 free | 4 | 8:43.49 |
+| 1500 free | 5 | 16:59.80 |
+| 200 free | 6 | 1:59.75 |
+| 200 back | 10 | 2:14.23 |
+| 400 IM | 13 | 4:52.37 |
+| 100 free | 18 | 55.88 |
+| 100 back | 33 | 1:04.17 |
+| 200 IM | 35 | 2:19.92 |
+| 50 free | 46 | 25.96 |
+
+Every time the list printed matches his best on this site for that event in
+that season, so each rank is for a swim on this site. The list shows him under
+LSC, ie, Lakeshore, which is right for the season it covers.
+
+### What was wrong before
+
+**The ranks in the code were higher than the published list.** They had been
+copied from the old profile page on 18 September with a note saying to confirm
+them before quoting. The 400 free said #2 (list: #4), the 800 said #3 (#4) and
+the 200 said #4 (#6). The new front page led with "#2 in Canada". That is the
+number a coach would have checked first.
+
+**The live back end was already partly right.** Someone had saved #6, #4, #4
+and #5 for the four distance events through the admin page. But four more it
+held do not match the list (50 free #20, list #46; 100 free #15, #18; 200 back
+#9, #10; 400 IM #11, #13) and two ranked events were missing (100 back, 200 IM).
+I cannot write to the back end from here. **See "for Andrew" below.**
+
+**My new page ignored the back end.** /v2.html read the ranks in the code only,
+so it kept showing #2 after the back end had #4. Fixed. It reads the back end
+the same way the live page does.
+
+**One sentence was no longer true.** The profile data said he was "ranked
+inside the top five across four distance freestyle events". With the 200 at #6
+it is three. Rewritten.
+
+### Found while testing, and fixed
+
+**One CDN hiccup blanked most of the front page.** The page drew every section
+in one chain with the charts in the middle. When a chart add-on failed to load
+from its CDN during a test run, the error stopped the chain, and the time
+cards, the rankings, the results table, the yards panel and the gallery never
+drew. That was live for anyone whose connection dropped that one file. Each
+section now runs on its own, and a test fails if any section is added outside
+that guard. I broke it on purpose to check the test catches it. It does.
+
+**The test for the no-script copy checked times but not ranks.** That is how
+"#2 in Canada" sat in the page markup unnoticed. It now checks both.
+
+### What changed
+
+- One list of ranks, with its source, group and season. The four headline
+  events no longer carry a second copy of the numbers.
+- Where a rank came from the list, the page names the list and the group.
+  Where it was typed in by hand, the page says "for age" and claims no source.
+- The hero badge counts distance freestyle only, so it reads "Ranked Top 5 in
+  Canada · 3 Distance Free Events". Counting all ten would have made the #46
+  in the 50 free set it, ie, "Top 46", which is true and says nothing.
+- The hero strip shows the three best ranked headline events (400, 800, 1500)
+  instead of the first three in the list, which would have led with the 200 at
+  #6 and dropped the 1500 at #5.
+- The coach email names the group and season: "ranked #4 in Canada for 13-14
+  boys in 2025-26". By the time it is sent he is in the next age group, and a
+  bare "#4 in Canada" reads as a claim about now. It does not say "last
+  season", which would go wrong a year later.
+- /v2.html has a ranked list, all ten, in rank order, with the source under it.
+- The one-pager prints the source under the times. It also had an em dash in
+  the yards column, removed.
+- A milestone for the Volume 4 list on the front page.
+
+### The photo
+
+The About Luke photo on the live front page was the podium shot with the gold
+medal. It is now the freestyle race shot, cropped and zoomed so he is alone in
+the frame. At the first crop the swimmer in the next lane's face was the second
+thing you saw, so the zoom takes her out. My change yesterday went to /v2.html
+only. Andrew meant the live page, and asked whether it had changed.
+
+### Tested end to end
+
+`npm run e2e` renders the real pages in Chromium against three back-end states:
+nothing saved, the ranks the live back end holds today, and ranks saved from
+the new fill button with one box cleared and one typed by hand. It checks the
+hero, the strip, the badge, the sentence, the footnote, the no-script copy, the
+ranked list at phone width, the admin save payload, the one-pager, and the
+front page with the chart add-on blocked. Not part of `npm test` because it
+needs Chromium.
+
+### For Andrew
+
+1. **Open the admin page, go to National rankings, tap "Fill from the published
+   list", then tap Save.** Two taps. That replaces the four stale ranks, adds
+   the two missing ones, and stamps each one with its source so the public page
+   can name the list. Nothing saves until you tap Save, so you can clear any box
+   first if you would rather not show, say, the #46.
+2. **The short course milestone** on the front page says "#3 Canada, 400m and
+   800m free, SCM" from the CSCA TAG Rankings. I have not seen that list, so I
+   cannot confirm it. If you have Volume 2, send it and I will check it the
+   same way.
+3. **The gallery** still has the second podium shot and the deck photo with a
+   teammate. Only the About photo was changed.
+
+---
+
 ## 28 September 2026, a second front page, built and rendered before it moves
 
 **Nothing has replaced the live page.** `public/v2.html` is a separate file at

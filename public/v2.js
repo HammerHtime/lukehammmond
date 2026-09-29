@@ -33,7 +33,7 @@
     var rank = rankings[lead.event];
 
     el('hero-rank').textContent = rank
-      ? '#' + rank.rank + ' in Canada for his age'
+      ? '#' + rank.rank + ' in Canada, ' + groupOf(rank)
       : 'Distance freestyle';
     el('hero-time').textContent = lead.time;
     el('hero-what').innerHTML = esc(lead.name) + ' <b>' + esc(lead.course) + '</b>';
@@ -41,6 +41,48 @@
     el('hero-who').textContent = SWIMMER.name + '. Class of ' + SWIMMER.classOf + ', ' +
       SWIMMER.club + '. Distance freestyle, ' +
       (SWIMMER.clubCity || SWIMMER.city) + ', ' + SWIMMER.province + '.';
+  }
+
+  // "for his age" was close but not what the list says. The list ranks age
+  // groups, so a rank from it names the group. A rank typed in by hand has no
+  // group to name and keeps the plain wording.
+  function groupOf(rank) {
+    var m = /^Boys (\d+-\d+)/.exec(rank.basis || '');
+    return m ? m[1] + ' boys' : 'for his age';
+  }
+
+  // Every ranked swim, in rank order. The board shows the best course for each
+  // event, so a long course medley rank sat behind a short course row and was
+  // never seen. Ranked and not shown is the one number worth printing left off.
+  function rankList(results, rankings) {
+    var host = el('rank-list');
+    if (!host) return;
+    var bests = S.personalBests(results);
+    var rows = Object.keys(rankings).filter(function (id) { return bests[id]; })
+      .map(function (id) { return { b: bests[id], r: rankings[id] }; })
+      .sort(function (a, c) { return a.r.rank - c.r.rank; });
+    var wrap = el('ranks');
+    if (!rows.length) { if (wrap) wrap.style.display = 'none'; return; }
+    if (wrap) wrap.style.display = '';
+
+    host.innerHTML = rows.map(function (x) {
+      return '<li><span class="rl-rank">#' + esc(x.r.rank) + '</span>' +
+        '<span class="rl-ev">' + esc(x.b.distance) + 'm ' + esc(S.STROKE_LABEL[x.b.stroke]) + '</span>' +
+        '<span class="rl-t">' + esc(x.b.time) + '</span></li>';
+    }).join('');
+
+    var srcs = rows.map(function (x) { return x.r.source || ''; });
+    var one = srcs.every(function (v) { return v && v === srcs[0]; }) ? srcs[0] : '';
+    var r = D.SWIMMER.rankings;
+    el('rank-src').textContent = one && r
+      ? one + '. ' + r.group + ', long course, ' + r.period + '. The list runs ' + r.depth +
+        ' deep in every event.'
+      : 'National rankings for his age, as entered.';
+    el('rank-count').textContent = rows.length === 1 ? 'one event' : inWords(rows.length) + ' events';
+  }
+  function inWords(n) {
+    return ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+      'eleven', 'twelve'][n] || String(n);
   }
 
   // ---- the board: dense, aligned, hairlines, no cards ----
@@ -67,10 +109,13 @@
     }).join('');
     el('board-rows').innerHTML = rows;
 
-    var withRank = Object.keys(rankings).length;
+    // Counted off the rows actually on screen. It used to count every ranking
+    // on file, so it would have said ten were ranked above a table showing six
+    // rank badges.
+    var shown = ranked.filter(function (b) { return rankings[b.event]; }).length;
     el('board-lede').textContent =
       'Strongest first, by World Aquatics points, so a 400 freestyle and a 400 individual ' +
-      'medley can be compared honestly. ' + withRank + ' of them are ranked nationally for his age. ' +
+      'medley can be compared honestly. ' + shown + ' of these carry a national rank. ' +
       'Yards figures are converted from the metres swim beside them. He has never raced a yard. ' +
       'Medley events have no accepted conversion factor, so those cells stay empty rather than guess.';
   }
@@ -209,12 +254,19 @@
     }).join('');
   }
 
+  // The ranks the back end holds win over the published seed, exactly as on
+  // the live page. This page used to read the seed only, so it went on showing
+  // #2 after the back end had been corrected to #4.
+  var rankings = D.seedRankings();
+  var current = [];
+
   function render(results) {
+    current = results;
     var bests = S.personalBests(results);
     var yards = C ? C.yardBests(S, results) : {};
-    var rankings = D.seedRankings();
     hero(results, bests, rankings);
     board(results, bests, yards, rankings);
+    rankList(results, rankings);
     curve(results);
     him();
     reach();
@@ -229,4 +281,11 @@
   fetch('/api/results').then(function (r) { return r.json(); }).then(function (body) {
     if (body && Array.isArray(body.results) && body.results.length) render(clean(body.results));
   }).catch(function () { /* the seed is already on screen */ });
+
+  fetch('/api/profile').then(function (r) { return r.json(); }).then(function (body) {
+    if (body && body.profile) {
+      rankings = D.rankingsFrom(body.profile);
+      render(current);
+    }
+  }).catch(function () { /* the published list is already on screen */ });
 })();

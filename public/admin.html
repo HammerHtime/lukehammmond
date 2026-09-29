@@ -408,6 +408,8 @@
       Clear a box and the badge disappears from the site. Leave them all clear and the
       ranking strip goes entirely.</p>
     <div id="rankRows"></div>
+    <p class="hint" id="rankPublished" style="margin:10px 0 8px"></p>
+    <button class="go" id="fillRanks" type="button" style="margin:0 8px 6px 0">Fill from the published list</button>
     <button class="go" id="saveRanks" style="margin-top:6px">Save the rankings</button>
     <div class="msg" id="rankMsg"></div>
   </div></div>
@@ -1129,12 +1131,37 @@
         : '');
   }
 
+  // One tap to load the published list into the boxes. Nothing is saved until
+  // Save is pressed, so the numbers can be read first, and any box can still
+  // be cleared. The saved list stays the whole truth, which is the rule above.
+  (function () {
+    var pub = SWIMMER.rankings;
+    var note = el('rankPublished');
+    if (!pub || !note) { if (el('fillRanks')) el('fillRanks').style.display = 'none'; return; }
+    note.textContent = 'Published list on file: ' + pub.source + ', ' + pub.group +
+      ', long course, ' + pub.season + '. ' + Object.keys(pub.ranks).length + ' events.';
+  })();
+
+  el('fillRanks').addEventListener('click', function () {
+    rankings = window.SwimmerData.seedRankings();
+    renderRankings();
+    say('rankMsg', 'ok', 'Filled from the published list. Check them, then press Save.');
+  });
+
   el('saveRanks').addEventListener('click', function () {
     var next = {};
     Array.prototype.forEach.call(el('rankRows').querySelectorAll('input[data-rank]'), function (input) {
       var value = input.value.trim();
       if (!value) return;              // cleared means gone, not reverted
-      next[input.dataset.rank] = { rank: Number(value), basis: 'Canada, for age' };
+      // A number that matches the published list keeps the list's name and
+      // group, so the public page can say where it came from. A number typed
+      // in that differs does not get to borrow that source.
+      var id = input.dataset.rank;
+      var pub = window.SwimmerData.publishedRank(id);
+      next[id] = pub && pub === Number(value)
+        ? { rank: Number(value), basis: window.SwimmerData.publishedBasis(),
+            source: SWIMMER.rankings.source }
+        : { rank: Number(value), basis: 'Canada, for age' };
     });
     el('saveRanks').disabled = true;
     api('/api/profile', { method: 'PUT', body: JSON.stringify({

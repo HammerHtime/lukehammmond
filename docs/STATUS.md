@@ -119,8 +119,12 @@ Re-check verifiedOn before a send rather than trusting it forever.
   the later, safer date and marks it unconfirmed.
 - The conversion factors are derived, not official. Replace them with the NCAA
   table when it can be read from source.
-- The national rankings on the profile came from the existing page. Confirm
-  against Swimming Canada before quoting them to a coach.
+- ~~The national rankings on the profile came from the existing page.~~
+  Settled 29 September 2026. Every rank now comes from the CSCA TAG Rankings,
+  Volume 4, September 2026, Boys 13-14, long course, 2025-26 season, and each
+  one is pinned in board.test.js to the time the list printed. The back end
+  still held older hand-typed ranks for four events on that date, which the
+  admin page's "Fill from the published list" button replaces in two taps.
 
 ### The old page is out of date
 lukehammond.netlify.app still shows March 2026 bests. The 200 free is now
