@@ -626,8 +626,12 @@
     text-transform: uppercase;
     margin-top: 0.5rem;
   }
+  /* Always on its own line under the time, lined up with it. It used to sit
+     inline, so it went beside a short time like 55.88 and under a long one
+     like 16:59.80, and when it wrapped it kept its left margin and sat
+     indented. Andrew spotted the mismatch on 30 September. */
   .time-pb-badge {
-    display: inline-block;
+    display: table;
     background: rgba(0,210,240,0.15);
     border: 1px solid rgba(0,210,240,0.4);
     color: rgba(0,210,240,1);
@@ -638,7 +642,7 @@
     text-transform: uppercase;
     padding: 0.2rem 0.5rem;
     border-radius: 3px;
-    margin-left: 0.5rem;
+    margin: 0.55rem 0 0;
     vertical-align: middle;
     line-height: 1.8;
   }

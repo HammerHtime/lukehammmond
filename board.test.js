@@ -2588,6 +2588,13 @@ ok('its size is declared', /og:image:width" content="1200"/.test(publicHtml) && 
 const chartsSrcTap = require('fs').readFileSync(require('path').join(__dirname, 'public', 'charts.js'), 'utf8');
 ok('the chart answers a tap near a swim, not only a direct hit', /mode: 'nearestSwim', intersect: false/.test(chartsSrcTap));
 
+// ---------- every rank badge sits the same way ----------
+// It flowed inline, so it sat beside 55.88 and 25.96 and under 16:59.80, and
+// was indented when it wrapped. Andrew spotted it on 30 September.
+const badgeCss = (/\.time-pb-badge \{([^}]+)\}/.exec(publicHtml) || [])[1] || '';
+ok('the rank badge is on its own line', /display: table;/.test(badgeCss));
+ok('and not indented off the time', !/margin-left/.test(badgeCss));
+
 // ---------- the published list, pinned to the page it came from ----------
 // CSCA TAG Rankings, Volume 4, September 2026, Boys 13-14, long course. Each
 // rank below was read off the list, and each time beside it is the time the

@@ -213,6 +213,22 @@ async function page(b, url, profile, opts={}) {
     await c.close();
   }
 
+  // ---------- every rank badge under its time, lined up ----------
+  for (const w of [1440, 1000, 390]) {
+    const {c,pg}=await page(b,'index.html',null,{vp:{width:w,height:900}});
+    const rows=await pg.evaluate(()=>[...document.querySelectorAll('#times-grid .time-card-front')].map(f=>{
+      const v=f.querySelector('.time-value'), bdg=f.querySelector('.time-pb-badge');
+      const r=document.createRange(); r.selectNodeContents(v.firstChild); const t=r.getBoundingClientRect();
+      const bb=bdg?bdg.getBoundingClientRect():null;
+      return {time:v.firstChild.textContent, below:bb?Math.round(bb.top-t.bottom):null, left:bb?Math.round(bb.left-t.left):null};
+    }));
+    console.log('\nindex.html at ' + w + 'px, rank badges');
+    ok('every ranked card has its badge under the time', rows.length>=10 && rows.every(r=>r.below!==null && r.below>=0), JSON.stringify(rows.filter(r=>r.below===null||r.below<0)));
+    ok('and lined up with it', rows.every(r=>Math.abs(r.left)<=2), JSON.stringify(rows.filter(r=>Math.abs(r.left)>2)));
+    ok('with the same gap on every card', new Set(rows.map(r=>r.below)).size===1, [...new Set(rows.map(r=>r.below))].join(','));
+    await c.close();
+  }
+
   // ---------- index.html with scripts off: the static copy ----------
   { const c=await b.newContext({javaScriptEnabled:false}); const pg=await c.newPage();
     await pg.goto('http://localhost:4176/index.html',{waitUntil:'load'});

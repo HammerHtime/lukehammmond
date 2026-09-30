@@ -10,6 +10,22 @@ Newest first.
 
 ---
 
+## 30 September 2026, the rank badge sat in two different places
+
+**Found by Andrew, from a screenshot of the time cards.** On the 100 free
+(55.88) and the 50 free (25.96) the "in Canada" badge sat beside the time. On
+the other eight it sat underneath. The badge flowed inline, so a short time
+left room for it on the same line and a long one pushed it down. When it
+wrapped it also kept its left margin, so it sat indented from the time.
+
+Now it always sits under the time, lined up with it, with the same gap on
+every card. Measured in a browser on all ten cards at 1440px, 1000px and 390px.
+
+The times were checked too. All ten match the CSCA TAG list. The lighter 50
+free card in the screenshot was the hover highlight.
+
+---
+
 ## 30 September 2026, the external audit, checked claim by claim
 
 Andrew sent two reviews: a detailed code and security audit, and a shorter UX
