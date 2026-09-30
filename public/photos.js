@@ -14,6 +14,21 @@ const MAX_BYTES = 4 * 1024 * 1024;   // after shrinking, not before
 const MAX_EDGE = 2200;               // long edge, in pixels
 const QUALITY = 0.82;
 
+// What the bytes actually are, read from their first few bytes, or null.
+// The declared type used to be trusted, so a file that said image/jpeg was
+// stored and served publicly as one whatever it contained. Admin only, so the
+// risk was small, but the check is a dozen lines. Takes a Buffer or Uint8Array.
+function sniffType(bytes) {
+  if (!bytes || bytes.length < 12) return null;
+  const b = function (i) { return bytes[i]; };
+  if (b(0) === 0xFF && b(1) === 0xD8 && b(2) === 0xFF) return 'image/jpeg';
+  if (b(0) === 0x89 && b(1) === 0x50 && b(2) === 0x4E && b(3) === 0x47 &&
+      b(4) === 0x0D && b(5) === 0x0A && b(6) === 0x1A && b(7) === 0x0A) return 'image/png';
+  if (b(0) === 0x52 && b(1) === 0x49 && b(2) === 0x46 && b(3) === 0x46 &&
+      b(8) === 0x57 && b(9) === 0x45 && b(10) === 0x42 && b(11) === 0x50) return 'image/webp';
+  return null;
+}
+
 function isAllowedType(type) {
   return ALLOWED.indexOf(String(type || '').toLowerCase()) !== -1;
 }
@@ -116,6 +131,7 @@ const api = {
   MAX_EDGE: MAX_EDGE,
   QUALITY: QUALITY,
   isAllowedType: isAllowedType,
+  sniffType: sniffType,
   normalisePhoto: normalisePhoto,
   setMain: setMain,
   ensureMain: ensureMain,

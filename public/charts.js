@@ -113,9 +113,25 @@
 
   var drawn = [];
 
+  // Only the swims answer a tap. Dataset 0 is every swim on record.
+  function registerNearestSwim() {
+    var I = window.Chart && window.Chart.Interaction;
+    if (!I || !I.modes || I.modes.nearestSwim) return;
+    I.modes.nearestSwim = function (chart, e) {
+      var meta = chart.getDatasetMeta(0);
+      var best = null, gap = Infinity;
+      (meta.data || []).forEach(function (point, i) {
+        var d = Math.abs(point.x - e.x);
+        if (d < gap) { gap = d; best = { element: point, datasetIndex: 0, index: i }; }
+      });
+      return best ? [best] : [];
+    };
+  }
+
   function makeChart(canvasId, series, cutSec, cutLabel) {
     var node = document.getElementById(canvasId);
     if (!node || !window.Chart || !series.length) return;
+    registerNearestSwim();
 
     var lows = series.map(function (p) { return p.y; });
     var yMin = Math.min.apply(null, lows) - 5;
@@ -143,7 +159,11 @@
       data: { datasets: sets },
       options: {
         responsive: true, maintainAspectRatio: false,
-        interaction: { mode: 'nearest', intersect: true },
+        // A tap anywhere on the chart shows the swim nearest in date. It used
+        // to need a direct hit on a dot four pixels across, which a finger on
+        // a phone mostly misses, and a near miss could land on the PB line or
+        // the cut line instead of a swim.
+        interaction: { mode: 'nearestSwim', intersect: false },
         plugins: {
           legend: { display: false },
           tooltip: {

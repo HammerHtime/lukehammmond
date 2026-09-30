@@ -65,6 +65,19 @@ board should probably lead with it. That is a decision for Andrew.
 
 ## Blockers and open questions
 
+### Before the first coach email, spring 2027
+From the 30 September 2026 audit. None of these matter while nothing is sent.
+- **Coach links die if the admin key changes.** Each school's link is signed
+  with ADMIN_KEY. Rotating the key, say because it leaked, breaks every link
+  already sent. Version the signature, eg, a "v1:" prefix that can be checked
+  alongside a "v2:" during a changeover, before any link goes out.
+- **The admin key must be long and random.** The back end has no limit on
+  guesses, and it answers a wrong-length key faster than a right-length one.
+  Neither matters for a key of 32 or more random characters. Both matter for
+  a password someone could guess. Check it in Netlify's environment settings.
+- **A forwarded coach link is not private.** Anyone holding it sees that
+  school's comparison. The email that carries it should say so in a line.
+
 ### Sending needs a domain, PARKED until spring 2027
 Still true, just not urgent. Any sender needs a domain verified for email and
 a netlify.app subdomain cannot be. Since nothing is sent until spring, this is

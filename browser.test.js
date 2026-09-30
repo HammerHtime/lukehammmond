@@ -159,9 +159,9 @@ function tagsIn(page) {
   const found = [];
   const re = /<script src="([^"]+)"><\/script>/g;
   let m;
-  // Relative sources only. A page may also pull a library off a CDN, which is
-  // not part of this repo and not this test's business.
-  while ((m = re.exec(html)) !== null) if (!/^https?:/.test(m[1])) found.push(m[1]);
+  // The site's own modules only. Third-party libraries used to come off a CDN
+  // and now sit in vendor/, and either way they are not this test's business.
+  while ((m = re.exec(html)) !== null) if (!/^https?:|^vendor\//.test(m[1])) found.push(m[1]);
   return found;
 }
 const publicTags = tagsIn('index.html').filter(function (f) { return f !== 'live-profile.js'; });

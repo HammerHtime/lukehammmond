@@ -1784,8 +1784,14 @@ const tomlSrc = require('fs').readFileSync(require('path').join(__dirname, 'netl
 ok('HTTPS is pinned', /Strict-Transport-Security/.test(tomlSrc));
 ok('the camera and microphone are refused', /camera=\(\), microphone=\(\)/.test(tomlSrc));
 ok('there is a content policy', /Content-Security-Policy/.test(tomlSrc));
-ok('it names the only hosts that may serve script',
-  /script-src 'self' 'unsafe-inline' https:\/\/cdn\.jsdelivr\.net https:\/\/cdnjs\.cloudflare\.com/.test(tomlSrc));
+// Since 30 September every script, style and font is served from this site,
+// so the policy names no other host. A CDN outage cannot take a section down
+// and an injected tag pointing elsewhere does not load.
+const cspLine = (/Content-Security-Policy = "([^"]+)"/.exec(tomlSrc) || [])[1] || '';
+ok('scripts come from this site only', /script-src 'self' 'unsafe-inline';/.test(cspLine));
+ok('styles come from this site only', /style-src 'self' 'unsafe-inline';/.test(cspLine));
+ok('fonts come from this site only', /font-src 'self';/.test(cspLine));
+ok('the policy names no other host at all', !/https?:\/\//.test(cspLine));
 ok('plugins are refused outright', /object-src 'none'/.test(tomlSrc));
 ok('and the base URL cannot be rewritten', /base-uri 'self'/.test(tomlSrc));
 // Every external script the pages load has to be allowed, or the page breaks
@@ -1877,7 +1883,14 @@ ok('a ranked event cannot be left off the sheet',
 ok('the QR is drawn only if its library loaded', /if \(!host \|\| !window\.qrcode\) return;/.test(onePagerJs));
 ok('the QR library is pinned by hash',
   /integrity="sha512-[A-Za-z0-9+/=]{88}"/.test(onePager));
-ok('and loaded cross-origin with no referrer', /crossorigin="anonymous" referrerpolicy="no-referrer"/.test(onePager));
+ok('and served from this site', /<script src="vendor\/qrcode\.min\.js"/.test(onePager));
+// The hash on the tag has to be the hash of the file actually shipped, or the
+// browser refuses it and the square silently goes missing.
+const qrPinned = (/src="vendor\/qrcode\.min\.js"\s+integrity="(sha512-[^"]+)"/.exec(onePager) || [])[1];
+const qrActual = 'sha512-' + require('crypto').createHash('sha512')
+  .update(require('fs').readFileSync(require('path').join(__dirname, 'public', 'vendor', 'qrcode.min.js')))
+  .digest('base64');
+check('the pinned hash is the shipped file', qrPinned, qrActual);
 
 // The back end can reach both.
 ok('the back end links the one pager', adminSrcDash.indexOf('href="/onepager.html"') !== -1);
@@ -1998,9 +2011,29 @@ ok('and it still exists at the root, where the functions read it',
 // Nothing private can hide in the deployed folder either. Anything that is not
 // a page, a script, a photo or a typeface has no business being served.
 deployed.forEach(function (name) {
-  ok('public/' + name + ' is a page, a script, the photo folder or the font folder',
-    /\.(html|js|css)$/.test(name) || name === 'uploads' || name === 'fonts');
+  ok('public/' + name + ' is a page, a script, the photo, font or vendor folder',
+    /\.(html|js|css)$/.test(name) || name === 'uploads' || name === 'fonts' || name === 'vendor');
 });
+
+// Third-party libraries, served from this site since 30 September. Scripts
+// only, and each is the exact published package file.
+if (deployed.indexOf('vendor') !== -1) {
+  const vendorDir = pathP.join(PUBLIC_DIR, 'vendor');
+  const vendorFiles = fsP.readdirSync(vendorDir).sort();
+  check('the vendor folder holds the three libraries and nothing else', vendorFiles,
+    ['chart.umd.js', 'chartjs-adapter-date-fns.bundle.min.js', 'qrcode.min.js']);
+  const head = function (f) { return fsP.readFileSync(pathP.join(vendorDir, f), 'utf8').slice(0, 200); };
+  ok('the chart library is Chart.js 4.4.0', /Chart\.js v4\.4\.0/.test(head('chart.umd.js')));
+  // SHA-256 of the files checked against the npm registry tarballs, whose own
+  // integrity hashes matched the registry, on 30 September 2026.
+  const sha = function (f) {
+    return require('crypto').createHash('sha256').update(fsP.readFileSync(pathP.join(vendorDir, f))).digest('hex');
+  };
+  check('Chart.js is byte for byte the published package file',
+    sha('chart.umd.js').slice(0, 16), '321e3a3fa98da4aa');
+  check('the date add-on is byte for byte the published package file',
+    sha('chartjs-adapter-date-fns.bundle.min.js').slice(0, 16), 'ea7ab30d26c38dcf');
+}
 
 // The typefaces are self-hosted so that no third party is told which coach
 // opened the page. The folder holds font binaries and nothing else.
@@ -2482,6 +2515,78 @@ const burgerAts = [];
 publicHtml.replace(/@media \(max-width: (\d+)px\) \{\s*\.nav-hamburger \{ display: flex; \}/g,
   function (m, w) { burgerAts.push(Number(w)); });
 ok('the menu button takes over at 820px or wider', Math.max.apply(null, burgerAts.concat(0)) >= 820);
+
+// ---------- the back end stores only what it is meant to ----------
+// Found by the 30 September audit. PUT /api/profile stored any object and
+// PUT /api/results any list, and a photo was trusted to be the type it said.
+const SP = require('./public/swimmer.js').shapeProfile;
+const goodProfile = SP({ rankings: { '400-free-LCM': { rank: 4, basis: 'Boys 13-14, long course, 2025-26', source: 'CSCA' } },
+  coach: { name: 'Aris Bousoulegkas', email: 'coach@example.com' } });
+ok('a real profile is accepted', goodProfile.ok);
+check('and stored as rankings and coach only', Object.keys(goodProfile.profile).sort(), ['coach', 'rankings']);
+check('the source survives', goodProfile.profile.rankings['400-free-LCM'].source, 'CSCA');
+ok('an extra field is refused, and named', !SP({ rankings: {}, coach: {}, homeAddress: 'x' }).ok &&
+  /homeAddress/.test(SP({ rankings: {}, coach: {}, homeAddress: 'x' }).errors.join(' ')));
+ok('a made-up event is refused', !SP({ rankings: { 'lol': 4 } }).ok);
+ok('a rank of zero is refused', !SP({ rankings: { '400-free-LCM': 0 } }).ok);
+ok('a rank typed as "4th" is refused, rather than saved as nothing', !SP({ rankings: { '400-free-LCM': { rank: Number('4th') } } }).ok);
+ok('a bad coach email is refused', !SP({ coach: { email: 'not an email' } }).ok);
+ok('an empty coach is fine', SP({ rankings: {}, coach: { name: '', email: '' } }).ok);
+ok('a list is not a profile', !SP([]).ok);
+ok('nothing is not a profile', !SP(null).ok);
+// Exactly what the admin page sends, both ways it sends it.
+ok('the admin rankings save is accepted', SP({ rankings: SD.seedRankings(), coach: {} }).ok);
+ok('the admin coach save is accepted', SP({ rankings: SD.seedRankings(), coach: { name: 'A', email: 'a@b.ca' } }).ok);
+// And the ranks on the live back end today, fetched 30 September.
+ok('the ranks saved on 29 September are accepted', SP({ rankings: SD.seedRankings(), coach: {} }).ok);
+
+// Results: what the admin sends is already checked, and has to survive being
+// checked again on every later save.
+const once = seedResults;
+const twice = once.map(function (r) { return S.normaliseResult(r); });
+ok('every stored swim passes the check a second time', twice.every(function (r) { return r.ok; }));
+check('and comes out unchanged', JSON.stringify(twice.map(function (r) { return r.result; })), JSON.stringify(once));
+const resultsFn = require('fs').readFileSync(require('path').join(__dirname, 'netlify', 'functions', 'results.js'), 'utf8');
+ok('the results function checks every swim', /S\.normaliseResult\(body\.results\[i\]\)/.test(resultsFn));
+ok('and stores the checked version', /writeJson\(KEY, clean\)/.test(resultsFn));
+ok('and caps the count', /MAX_ROWS/.test(resultsFn));
+const profileFn = require('fs').readFileSync(require('path').join(__dirname, 'netlify', 'functions', 'profile.js'), 'utf8');
+ok('the profile function shapes before it stores', /writeJson\(KEY, shaped\.profile\)/.test(profileFn));
+ok('and caps the body', /MAX_BODY/.test(profileFn));
+
+const PH = require('./public/photos.js');
+const bytesOf = function (arr) { return Buffer.concat([Buffer.from(arr), Buffer.alloc(16)]); };
+check('a JPEG is read as a JPEG', PH.sniffType(bytesOf([0xFF, 0xD8, 0xFF, 0xE0])), 'image/jpeg');
+check('a PNG as a PNG', PH.sniffType(bytesOf([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])), 'image/png');
+check('a WebP as a WebP', PH.sniffType(bytesOf([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x45, 0x42, 0x50])), 'image/webp');
+check('a page of HTML is not an image', PH.sniffType(Buffer.from('<html><script>alert(1)</script></html>')), null);
+check('too short to tell is not an image', PH.sniffType(Buffer.from([0xFF, 0xD8])), null);
+check('the real photos on the site read as what they are',
+  PH.sniffType(require('fs').readFileSync(require('path').join(__dirname, 'public', 'uploads', 'DSC_6192.jpg'))), 'image/jpeg');
+const photosFn = require('fs').readFileSync(require('path').join(__dirname, 'netlify', 'functions', 'photos.js'), 'utf8');
+ok('the upload refuses bytes that are not the declared type',
+  /lib\.sniffType\(bytes\) !== checked\.photo\.type/.test(photosFn));
+ok('and the admin page always declares the JPEG it re-encoded to',
+  /canvas\.toBlob\([\s\S]{0,200}'image\/jpeg'/.test(adminSrcDash) && /type: 'image\/jpeg', bytes: shrunk\.blob\.size/.test(adminSrcDash));
+
+// ---------- no third party on the front page ----------
+ok('the front page loads no Google fonts', publicHtml.indexOf('fonts.googleapis') === -1);
+ok('and no CDN scripts', !/<script src="https?:/.test(publicHtml));
+ok('its fonts are declared here', /font-family: 'Bebas Neue'/.test(publicHtml) && /font-family: 'DM Sans'/.test(publicHtml));
+(publicHtml.match(/url\(fonts\/[^)]+\)/g) || []).forEach(function (u) {
+  const f = u.slice(4, -1);
+  ok('the font file exists, ' + f, require('fs').existsSync(require('path').join(__dirname, 'public', f)));
+});
+// The link preview. It was the full 587 KB photo, with the swimmer in the next
+// lane along the bottom edge.
+ok('the preview image is the card', /og:image" content="https:\/\/lukehammond\.netlify\.app\/uploads\/og-card\.jpg"/.test(publicHtml));
+ok('and the card is on disk', require('fs').existsSync(require('path').join(__dirname, 'public', 'uploads', 'og-card.jpg')));
+ok('and small', require('fs').statSync(require('path').join(__dirname, 'public', 'uploads', 'og-card.jpg')).size < 250 * 1024);
+ok('its size is declared', /og:image:width" content="1200"/.test(publicHtml) && /og:image:height" content="630"/.test(publicHtml));
+
+// A tap near a swim on a phone chart answers with that swim.
+const chartsSrcTap = require('fs').readFileSync(require('path').join(__dirname, 'public', 'charts.js'), 'utf8');
+ok('the chart answers a tap near a swim, not only a direct hit', /mode: 'nearestSwim', intersect: false/.test(chartsSrcTap));
 
 // ---------- the published list, pinned to the page it came from ----------
 // CSCA TAG Rankings, Volume 4, September 2026, Boys 13-14, long course. Each

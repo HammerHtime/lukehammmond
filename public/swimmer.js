@@ -401,6 +401,61 @@ function rankingsFrom(profile) {
   return out;
 }
 
+// What the back end is allowed to store as the profile. It used to store any
+// object that arrived, so one bad paste, or a stolen key, could put fields on
+// a public GET that nobody meant to publish. Two things live there, the
+// rankings and the club coach, and nothing else gets in. The same rules run in
+// the browser and on the server, because they are this one function.
+const EVENT_ID = /^(\d{2,4})-(free|back|breast|fly|im)-(SCY|SCM|LCM)$/;
+const EMAIL = /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/;
+
+function shapeProfile(raw) {
+  const errors = [];
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ok: false, errors: ['The profile must be an object.'] };
+  }
+  const extra = Object.keys(raw).filter(function (k) { return k !== 'rankings' && k !== 'coach'; });
+  if (extra.length) {
+    errors.push('The profile holds the rankings and the club coach only. Not stored: ' + extra.join(', ') + '.');
+  }
+
+  const rankings = {};
+  const rin = raw.rankings === undefined ? {} : raw.rankings;
+  if (!rin || typeof rin !== 'object' || Array.isArray(rin)) {
+    errors.push('The rankings must be a list by event.');
+  } else {
+    const ids = Object.keys(rin);
+    if (ids.length > 60) errors.push('More than 60 rankings, which is more events than he swims.');
+    ids.forEach(function (id) {
+      if (!EVENT_ID.test(id)) { errors.push('Not an event: ' + String(id).slice(0, 40) + '.'); return; }
+      const entry = rin[id];
+      const rank = Number(entry && typeof entry === 'object' ? entry.rank : entry);
+      if (!Number.isInteger(rank) || rank < 1 || rank > 999) {
+        errors.push('The rank for ' + id + ' has to be a whole number, 1 or more.');
+        return;
+      }
+      const out = { rank: rank, basis: String((entry && entry.basis) || 'Canada, for age').slice(0, 120) };
+      if (entry && entry.source) out.source = String(entry.source).slice(0, 160);
+      rankings[id] = out;
+    });
+  }
+
+  const cin = raw.coach === undefined ? {} : raw.coach;
+  const coach = {};
+  if (!cin || typeof cin !== 'object' || Array.isArray(cin)) {
+    errors.push('The club coach must be a name and an email.');
+  } else {
+    const name = String(cin.name || '').trim();
+    const email = String(cin.email || '').trim();
+    if (name.length > 80) errors.push('The coach name is longer than 80 characters.');
+    if (email && (email.length > 120 || !EMAIL.test(email))) errors.push('The coach email does not look like an email address.');
+    if (name) coach.name = name;
+    if (email) coach.email = email;
+  }
+
+  return errors.length ? { ok: false, errors: errors } : { ok: true, profile: { rankings: rankings, coach: coach } };
+}
+
 function rankFor(rankings, eventId) {
   return (rankings && rankings[eventId]) || null;
 }
@@ -412,6 +467,7 @@ const api = {
   publishedRank: publishedRank,
   publishedBasis: publishedBasis,
   rankingsFrom: rankingsFrom,
+  shapeProfile: shapeProfile,
   rankFor: rankFor
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;

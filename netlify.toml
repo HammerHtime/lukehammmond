@@ -36,7 +36,11 @@
     # script, style, font or image to this site, so an injected tag pointing
     # somewhere else does not load. object-src and base-uri close the two
     # classic ways around that.
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    #
+    # Since 30 September every script, style and font is served from this site,
+    # so the policy names no other host at all. A tag pointing anywhere else
+    # does not load.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
 
 [[headers]]
   for = "/admin.html"

@@ -10,6 +10,106 @@ Newest first.
 
 ---
 
+## 30 September 2026, the external audit, checked claim by claim
+
+Andrew sent two reviews: a detailed code and security audit, and a shorter UX
+guide. Every claim was checked against the code before anything was built.
+
+### Built
+
+1. **Chart.js, its date add-on and the QR library now load from this site.**
+   A CDN failure took the charts down during a test run on 29 September. Each
+   file was checked against a second, independent source. One thing surfaced:
+   the CDN's "chart.umd.min.js" was its own re-minified copy, not a file
+   Chart.js publishes. The site now serves the published file, whose npm
+   integrity hash matched the registry. The QR file still matches the security
+   hash the page already pinned.
+2. **The front page fonts, Bebas Neue and DM Sans, are served from this site.**
+   No Google request, so no third party is told a coach opened the page.
+3. **The content policy names no outside host at all.** Scripts, styles and
+   fonts from this site only.
+4. **The profile store takes rankings and the club coach, nothing else.**
+   Anything else is refused and named. Ranks must be whole numbers and events
+   must be real ones. The coach email must look like an email. Capped at
+   64 KB. It used to store any object, and whatever it stored was public.
+5. **Every swim is checked on the server before it is stored,** by the same
+   rule the admin form runs. Capped at 2,000 swims and 1 MB. All 129 swims on
+   record pass, and they still pass after being checked twice, so a save from
+   the phone after a meet cannot start failing.
+6. **Photo uploads must be the image they claim to be,** read from the first
+   bytes. The admin page always re-encodes to JPEG and says so, so real
+   uploads are unaffected.
+7. **The link preview is a 1200 by 630 card, 163 KB,** cropped so Luke is alone
+   in his lane. It was the full 587 KB photo with the next swimmer along the
+   bottom edge.
+8. **Chart tooltips answer a tap near a swim.** It used to take a direct hit
+   on a four-pixel dot. The same near-miss tap showed nothing under the old
+   setting and the swim under the new one.
+
+**New test, functions.test.js, in npm test.** It runs the real server
+functions against an in-memory stand-in for the store and sends them real
+requests. Until now every back-end check read the source as text.
+**pages.e2e.js** now serves the pages under the real content policy with every
+outside request cut off: all four pages reach nothing outside the site, the
+policy refuses nothing, both charts draw, both fonts load and the QR draws.
+
+### Already done, so not rebuilt
+
+- **noindex on /v2.html and the one-pager.** Both have carried it since they
+  were built. So has admin.
+- **Gallery and About photos load full-size JPEGs.** They load the 900px WebP
+  copies. The JPEG is only the fallback for browsers without WebP.
+- **Charts do not scale on a phone.** Fixed on 28 September, tested at 390px.
+- **Engine versus recorded priority must be loud on the phone card.** It is an
+  amber tag on the school card itself, plus a count on the dashboard.
+- **A what-if tool.** The admin page has one, "What a drop would unlock".
+- **A stale-benchmark queue.** The dashboard already flags schools past 300
+  days since their times were checked.
+- **A one-pager a coach can file.** Built, with a QR, and it prints to PDF
+  from any browser.
+- **A coach landing for one school.** The signed school link does this. It
+  waits for spring 2027 with the rest of sending.
+- **Search and filters on the admin page.** Course, stroke and distance chips.
+
+### Wrong, so not acted on
+
+- **"Flip cards hide the times and ranks behind hover on a phone."** The time,
+  the rank and the date are all on the front. The flip is a tap, with a "tap
+  to flip" label. The back holds only the meet name.
+- **"The logo sits under the iPhone notch."** The page does not ask to draw
+  under the notch, so iOS keeps it clear. Nothing to fix.
+- **"Coach visits are logged through the ?c= link."** Visit tracking was
+  removed on Andrew's instruction on 24 September. The finding describes code
+  that no longer exists.
+- **"Dashboard, roster and eligibility pages need adaptive grids."** Those are
+  calculation modules, not pages.
+- **"1332 checks" and "no node_modules, so tests could not run."** The suites
+  need nothing installed. They ran from the zip: 1,418 checks then.
+
+### Agreed, but not now
+
+- **Coach link signatures break if the admin key is rotated.** True. Nothing is
+  sent until spring 2027. Written into STATUS under "Before the first coach
+  email", with the key-length point and the forwarded-link note.
+- **No limit on key guesses.** True, and a long random key makes it moot. In
+  STATUS: check the key is 32 or more random characters.
+- **A light theme toggle, CSV export, live syncing.** Declined. The site is
+  dark by design, SwimCloud already exports his results and the one-pager is
+  the printable export, and one person edits the board, so there is nothing to
+  sync.
+- **A public what-if teaser.** Declined. It would show coaches which schools
+  he is aiming at, which is the board's private side.
+- **A Junior Trials season plan page.** Parked. The admin already shows the gap
+  to the cut. A plan by meet is a later piece of work, if it is wanted.
+
+### For Andrew
+
+- **Teammate photo.** The audit points out that if the teammate in the gallery
+  is also a minor, their family's okay matters as well as yours. Your decision
+  to keep the gallery stands. This is only passed on.
+
+---
+
 ## 30 September 2026, three open items closed by Andrew's decision
 
 Andrew said he is good with all three as they stand. Do not raise them again

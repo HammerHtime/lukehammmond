@@ -14,11 +14,14 @@ const { chromium } = require('playwright');
 const ROOT=path.join(__dirname,'public'), OUT=path.join(__dirname,'docs','shots');
 const SAVED=path.join(require('os').tmpdir(),'lukehammond-e2e-saved.json');
 fs.mkdirSync(OUT,{recursive:true});
+// The site's real content policy, read from netlify.toml, so a page that
+// reaches for anything the policy forbids fails here the way it would live.
+const CSP=(/Content-Security-Policy = "([^"]+)"/.exec(fs.readFileSync(path.join(__dirname,'netlify.toml'),'utf8'))||[])[1];
 const T={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const server=http.createServer((rq,rs)=>{const u=rq.url.split('?')[0];
 const p=path.join(ROOT,decodeURIComponent(u==='/'?'/index.html':u));
 if(!p.startsWith(ROOT)||!fs.existsSync(p)||fs.statSync(p).isDirectory()){rs.writeHead(404);return rs.end('x');}
-rs.writeHead(200,{'content-type':T[path.extname(p)]||'application/octet-stream'});fs.createReadStream(p).pipe(rs);});
+rs.writeHead(200,{'content-type':T[path.extname(p)]||'application/octet-stream', 'content-security-policy': CSP});fs.createReadStream(p).pipe(rs);});
 
 // The ranks the live back end holds today, fetched from the deployed site on 29 Sept.
 const LIVE = {"rankings":{"200-free-LCM":{"rank":6,"basis":"Canada, for age"},"400-free-LCM":{"rank":4,"basis":"Canada, for age"},"800-free-LCM":{"rank":4,"basis":"Canada, for age"},"1500-free-LCM":{"rank":5,"basis":"Canada, for age"},"50-free-LCM":{"rank":20,"basis":"Canada, for age"},"100-free-LCM":{"rank":15,"basis":"Canada, for age"},"200-back-LCM":{"rank":9,"basis":"Canada, for age"},"400-im-LCM":{"rank":11,"basis":"Canada, for age"}},"coach":{}};
@@ -129,6 +132,62 @@ async function page(b, url, profile, opts={}) {
     ok('rankings still render', (t.intro.match(/#\d+/g)||[]).length===10, (t.intro.match(/#\d+/g)||[]).length);
     ok('time cards still render', t.cards>=10, t.cards);
     ok('results table still renders', t.rows>=10, t.rows);
+    await c.close(); }
+
+  // ---------- nothing leaves the site, and nothing is refused ----------
+  // Every outside request is cut off. The pages have to draw their charts,
+  // fonts and QR from this site alone, under the real content policy.
+  for (const pageName of ['index.html', 'v2.html', 'onepager.html', 'admin.html']) {
+    const c=await b.newContext({viewport:{width:1280,height:900}}); const pg=await c.newPage();
+    const outside=[], refused=[];
+    await pg.route(/^https?:\/\/(?!localhost)/, r=>{ outside.push(r.request().url()); return r.abort(); });
+    await pg.route('**/api/**', r=>r.fulfill({status:404, body:'{}', contentType:'application/json'}));
+    pg.on('console', m=>{ if (/Refused to|Content Security Policy|Failed to find a valid digest/i.test(m.text())) refused.push(m.text()); });
+    await pg.goto('http://localhost:4176/'+pageName,{waitUntil:'networkidle'});
+    if (pageName==='index.html') {
+      await pg.evaluate(()=>document.getElementById('performance').scrollIntoView());
+      await pg.waitForTimeout(900);
+    } else await pg.waitForTimeout(500);
+    const m=await pg.evaluate(()=>({
+      chart: typeof window.Chart, adapter: !!(window.Chart && window.Chart._adapters && window.Chart._adapters._date && window.Chart._adapters._date.prototype.formats().datetime),
+      drawn: [...document.querySelectorAll('canvas#chart400, canvas#chart800')].map(cv=>{ const d=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data; let n=0; for(let i=3;i<d.length;i+=4) if(d[i]) n++; return n; }),
+      bebas: document.fonts.check('20px "Bebas Neue"'), dm: document.fonts.check('16px "DM Sans"'),
+      qr: !!document.querySelector('#qr svg, #qr img, #qr canvas, #qr table') || !!(document.getElementById('qr')||{}).innerHTML
+    }));
+    console.log('\n' + pageName + ', every outside request cut off, real content policy');
+    ok('it tried to reach nothing outside the site', outside.length===0, outside.join(' '));
+    ok('and the policy refused nothing', refused.length===0, refused.join(' | '));
+    if (pageName==='index.html') {
+      ok('Chart.js loaded from this site', m.chart==='function');
+      ok('and its date add-on', m.adapter);
+      ok('both charts drew', m.drawn.length===2 && m.drawn.every(n=>n>500), m.drawn.join(','));
+      ok('the display font loaded', m.bebas);
+      ok('and the body font', m.dm);
+    }
+    if (pageName==='onepager.html') ok('the QR drew from the local library, hash checked', m.qr);
+    await c.close();
+  }
+
+  // ---------- a tap near a swim on a phone chart ----------
+  { const c=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true}); const pg=await c.newPage();
+    await pg.route('**/api/**', r=>r.fulfill({status:404, body:'{}', contentType:'application/json'}));
+    await pg.goto('http://localhost:4176/index.html',{waitUntil:'networkidle'});
+    await pg.evaluate(()=>document.getElementById('chart400').scrollIntoView({block:'center'}));
+    await pg.waitForTimeout(900);
+    // Find the last swim's dot, then tap 14px to the left of it and 30px
+    // above, ie, a near miss that the old setting ignored.
+    const target=await pg.evaluate(()=>{
+      const cv=document.getElementById('chart400'); const ch=window.Chart.getChart(cv);
+      const pts=ch.getDatasetMeta(0).data; const p=pts[pts.length-1]; const r=cv.getBoundingClientRect();
+      return { x: r.left + p.x - 14, y: r.top + p.y - 30, n: pts.length };
+    });
+    await pg.touchscreen.tap(target.x, target.y);
+    await pg.waitForTimeout(400);
+    const tip=await pg.evaluate(()=>{ const ch=window.Chart.getChart(document.getElementById('chart400'));
+      const a=ch.tooltip.getActiveElements(); return a.length ? { ds:a[0].datasetIndex, i:a[0].index, text:(ch.tooltip.body||[]).map(b=>b.lines.join(' ')).join(' ') } : null; });
+    console.log('\nindex.html at 390px, a near miss on the 400 free chart');
+    ok('a near miss still shows a swim', !!tip && tip.ds===0, JSON.stringify(tip));
+    ok('the one nearest where the finger landed', !!tip && tip.i===target.n-1, JSON.stringify(tip));
     await c.close(); }
 
   // ---------- index.html: charts under their heading, menu fits ----------

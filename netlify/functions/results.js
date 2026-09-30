@@ -3,6 +3,13 @@
 // can read them. Anything that changes them needs the key.
 
 import { readJson, writeJson, isAdmin, json, denied, needsSetup } from './lib/store.js';
+import S from '../../public/swim.js';
+
+// 129 swims on record came to 18 KB on 30 September. These limits are about
+// fifteen years of racing at his current rate, and exist so one bad paste
+// cannot fill the store.
+const MAX_ROWS = 2000;
+const MAX_BODY = 1024 * 1024;
 
 const KEY = 'results';
 
@@ -19,15 +26,28 @@ export default async (request) => {
 
   let body;
   try {
-    body = await request.json();
+    const text = await request.text();
+    if (text.length > MAX_BODY) return json({ error: 'That is far larger than his results.' }, 413);
+    body = JSON.parse(text);
   } catch (err) {
     return json({ error: 'Body was not readable JSON.' }, 400);
   }
 
   if (request.method === 'PUT') {
-    if (!Array.isArray(body.results)) return json({ error: 'results must be a list.' }, 400);
-    await writeJson(KEY, body.results);
-    return json({ ok: true, count: body.results.length });
+    if (!body || !Array.isArray(body.results)) return json({ error: 'results must be a list.' }, 400);
+    if (body.results.length > MAX_ROWS) return json({ error: 'More than ' + MAX_ROWS + ' swims.' }, 413);
+    // Every swim passes the same check the admin form runs before it sends,
+    // and what is stored is the checked version, not whatever arrived.
+    const clean = [];
+    for (let i = 0; i < body.results.length; i += 1) {
+      const checked = S.normaliseResult(body.results[i]);
+      if (!checked.ok) {
+        return json({ error: 'Swim ' + (i + 1) + ' was not stored: ' + checked.errors.join(' ') }, 400);
+      }
+      clean.push(checked.result);
+    }
+    await writeJson(KEY, clean);
+    return json({ ok: true, count: clean.length });
   }
 
   return json({ error: 'Method not allowed.' }, 405);

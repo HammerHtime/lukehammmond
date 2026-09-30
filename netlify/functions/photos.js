@@ -46,6 +46,11 @@ export default async (request) => {
     }
     if (!bytes.length) return json({ error: 'Image data was empty.' }, 400);
     if (bytes.length > lib.MAX_BYTES) return json({ error: 'Image is too large.' }, 413);
+    // The bytes have to be the image they say they are before they are stored
+    // and served publicly with that type for a year.
+    if (lib.sniffType(bytes) !== checked.photo.type) {
+      return json({ error: 'That file is not the image it says it is.' }, 400);
+    }
 
     await store().set('photo/' + checked.photo.id, bytes, {
       metadata: { type: checked.photo.type }
