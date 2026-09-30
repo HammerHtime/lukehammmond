@@ -10,6 +10,20 @@ Newest first.
 
 ---
 
+## 30 September 2026, three open items closed by Andrew's decision
+
+Andrew said he is good with all three as they stand. Do not raise them again
+unless he does.
+
+1. **The short course milestone** ("CSCA TAG Rankings, #3 Canada, 400m and
+   800m free, SCM") stays on the front page as written. It is from an earlier
+   volume that has not been checked here. Andrew's call.
+2. **The gallery** keeps its current photos, including the second podium shot
+   and the deck photo with a teammate.
+3. **/v2.html** stays a separate page. It does not replace the front page.
+
+---
+
 ## 29 September 2026, the charts under the wrong heading, and the menu
 
 **Found by Andrew, from a screenshot of the live page.** "Performance Over
