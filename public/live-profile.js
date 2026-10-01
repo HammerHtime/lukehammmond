@@ -76,7 +76,11 @@
   function contactLink() {
     var a = el('contact-email');
     var c = SWIMMER.contact;
-    if (!a || !c) return;
+    // The page renders twice, once from the shipped record and again when the
+    // live data lands, so without this the link was wired twice and every tap
+    // tried to open the mail app twice. The browser refused the second.
+    if (!a || !c || a.getAttribute('data-wired')) return;
+    a.setAttribute('data-wired', '1');
     a.addEventListener('click', function (e) {
       e.preventDefault();
       var to = c.user + '@' + c.domain;

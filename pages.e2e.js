@@ -268,6 +268,7 @@ async function page(b, url, profile, opts={}) {
     ok('and it stays shown', a.text==='hammondluke11@icloud.com');
     ok('and opens an email to Luke with Andrew copied', a.href==='mailto:hammondluke11@icloud.com?cc=andrewhammond75@mac.com', a.href);
     ok('and the email app was actually asked to open', opened.some(u=>/^mailto:hammondluke11@icloud\.com/.test(u)), opened.join(' '));
+    ok('once, not twice', opened.length===1, opened.length);
     await c.close();
   }
 
