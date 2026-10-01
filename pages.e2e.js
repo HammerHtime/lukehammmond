@@ -175,11 +175,14 @@ async function page(b, url, profile, opts={}) {
     await pg.evaluate(()=>document.getElementById('chart400').scrollIntoView({block:'center'}));
     await pg.waitForTimeout(900);
     // Find the last swim's dot, then tap 14px to the left of it and 30px
-    // above, ie, a near miss that the old setting ignored.
+    // above, ie, a near miss that the old setting ignored. When the dot sits
+    // near the top, as his fastest 400 does, 30px above is off the chart, so
+    // the tap goes 30px below instead. Off the chart it passed by luck.
     const target=await pg.evaluate(()=>{
       const cv=document.getElementById('chart400'); const ch=window.Chart.getChart(cv);
       const pts=ch.getDatasetMeta(0).data; const p=pts[pts.length-1]; const r=cv.getBoundingClientRect();
-      return { x: r.left + p.x - 14, y: r.top + p.y - 30, n: pts.length };
+      const dy = p.y - 30 < ch.chartArea.top ? 30 : -30;
+      return { x: r.left + p.x - 14, y: r.top + p.y + dy, n: pts.length };
     });
     await pg.touchscreen.tap(target.x, target.y);
     await pg.waitForTimeout(400);

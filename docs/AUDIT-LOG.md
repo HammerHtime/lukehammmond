@@ -10,6 +10,33 @@ Newest first.
 
 ---
 
+## 1 October 2026, Luke's ranks in gold
+
+Andrew picked this from a mockup of the page shown both ways.
+
+**What changed, on the front page only:**
+- The "#4 in Canada" badges on the time cards are gold, not aqua.
+- The "Ranked in Canada" line above the cards is gold.
+- The ranks in the short course table are gold.
+
+The rule now: gold is Luke's results, ie, times and ranks. Aqua is links,
+buttons and labels. The aqua ranks line looked like a link, and it is not one.
+
+**The trade-off, told to Andrew before he chose:** a gold badge under a gold
+time stands out less than the aqua one did. He preferred the gold. If the
+badges ever look lost, they can go back to aqua on their own in one line.
+
+**A flaky test, fixed.** The phone chart tap check failed twice, with and
+without this change. It tapped 30px above the newest 400 swim. That swim is
+his fastest, so the dot sits at the top, and the tap landed just off the
+chart. It passed or failed by luck. It now taps below the dot when above is
+off the chart. Three runs in a row passed, the contrast checks included.
+
+**Checks:** npm run check passed (1540, 30, 33). npm run e2e passed, three
+runs.
+
+---
+
 ## 1 October 2026, the colour scheme, measured
 
 Andrew asked whether the colours are the best ones to use. Measured rather than

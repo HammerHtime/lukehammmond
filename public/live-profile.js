@@ -334,7 +334,7 @@
       return '<tr>' +
         '<td class="meet-name">' + esc(b.distance) + 'm ' + esc(S.STROKE_LABEL[b.stroke]) + '</td>' +
         '<td style="color:var(--gold);font-variant-numeric:tabular-nums;">' + esc(b.time) + '</td>' +
-        '<td>' + (rank ? '#' + esc(rank) : '') + '</td>' +
+        '<td style="color:var(--gold);font-weight:600;">' + (rank ? '#' + esc(rank) : '') + '</td>' +
         '<td>' + esc(friendlyMonth(b.date)) + (b.meet ? ' \u00b7 ' + esc(b.meet) : '') + '</td>' +
         '</tr>';
     }).join('');
@@ -359,7 +359,7 @@
       }).filter(Boolean).sort(function (a, b) { return a.rank - b.rank; });
 
       intro.innerHTML = listed.length
-        ? '<span style="color:var(--aqua);">Ranked in Canada' +
+        ? '<span style="color:var(--gold);">Ranked in Canada' +
           (basisOf(rankings) === 'for age' ? ' for age' : ', ' + esc(basisOf(rankings))) + ': ' +
           listed.map(function (r) {
             return '#' + esc(r.rank) + ' ' + esc(r.name) + ' ' + esc(r.course);
