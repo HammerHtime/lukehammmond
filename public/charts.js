@@ -109,7 +109,9 @@
   var aquaDim = 'rgba(0,210,240,0.25)';
   var trialLine = 'rgba(232,184,75,0.5)';
   var gridColor = 'rgba(255,255,255,0.05)';
-  var textColor = 'rgba(255,255,255,0.35)';
+  // Axis labels. Were white at 35%, which measured 3.1:1 on the card, below
+  // the 4.5 that small text needs. 50% measures 5.3. Changed 1 October 2026.
+  var textColor = 'rgba(255,255,255,0.5)';
 
   var drawn = [];
 

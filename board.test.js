@@ -2736,6 +2736,13 @@ ok('and the height in both units', /id="contact-height">6 ft 0 in · 183 cm</.te
 ok('the email gives the percentage before the GPA',
   R.draftEmail({ swim: S, swimmer: SWIMMER, results: results }).body.indexOf('I had 81% in Grade 9, a 3.5 GPA on a 4.0 scale') !== -1);
 
+// ---------- chart labels are readable ----------
+// Drawn on a canvas, so the browser text check cannot see them. White at 35%
+// measured 3.1:1 on the card. 50% measures 5.3.
+const chartAlpha = Number((/var textColor = 'rgba\(255,255,255,([0-9.]+)\)'/.exec(
+  fsP.readFileSync(pathP.join(PUBLIC_DIR, 'charts.js'), 'utf8')) || [])[1]);
+ok('chart axis labels are at least half-strength white', chartAlpha >= 0.5);
+
 // ---------- the published list, pinned to the page it came from ----------
 // CSCA TAG Rankings, Volume 4, September 2026, Boys 13-14, long course. Each
 // rank below was read off the list, and each time beside it is the time the

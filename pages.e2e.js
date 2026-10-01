@@ -272,6 +272,38 @@ async function page(b, url, profile, opts={}) {
     await c.close();
   }
 
+  // ---------- every piece of text is readable ----------
+  // WCAG AA: 4.5:1 for normal text, 3:1 for large. Measured on 1 October 2026,
+  // the one-pager had 29 failures and /v2.html 43, each from one grey.
+  for (const pageName of ['index.html', 'onepager.html', 'v2.html']) {
+    const {c,pg}=await page(b,pageName,null,{vp:{width:1280,height:900}});
+    const H=await pg.evaluate(()=>document.body.scrollHeight);
+    for (let y=0;y<H;y+=700){ await pg.evaluate(v=>scrollTo(0,v),y); await pg.waitForTimeout(40); }
+    await pg.waitForTimeout(800);
+    const fails=await pg.evaluate(()=>{
+      const cv=document.createElement('canvas'); cv.width=cv.height=1; const cx=cv.getContext('2d',{willReadFrequently:true});
+      const parse=c=>{ cx.clearRect(0,0,1,1); cx.fillStyle=c; cx.fillRect(0,0,1,1); const d=cx.getImageData(0,0,1,1).data; const a=d[3]/255; return a?[d[0]/a,d[1]/a,d[2]/a,a]:[0,0,0,0]; };
+      const over=(t,b)=>[0,1,2].map(i=>t[i]*t[3]+b[i]*(1-t[3])).concat([1]);
+      const bgOf=el=>{ const st=[]; let n=el; while(n){ const c=parse(getComputedStyle(n).backgroundColor); if(c[3]>0) st.push(c); if(c[3]>=1) break; n=n.parentElement; }
+        let base=parse(getComputedStyle(document.body).backgroundColor); if(!base[3]) base=[255,255,255,1]; for(let i=st.length-1;i>=0;i--) base=over(st[i],base); return base; };
+      const L=c=>{ const f=v=>{v/=255; return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);}; return 0.2126*f(c[0])+0.7152*f(c[1])+0.0722*f(c[2]); };
+      const R=(a,b)=>{ const x=L(a),y=L(b); return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05); };
+      const out=[];
+      document.querySelectorAll('body *').forEach(el=>{
+        const own=[...el.childNodes].filter(n=>n.nodeType===3&&n.textContent.trim()).map(n=>n.textContent.trim()).join(' ');
+        if(!own) return; const cs=getComputedStyle(el); const r=el.getBoundingClientRect();
+        if(cs.visibility==='hidden'||cs.display==='none'||r.width===0) return;
+        let op=1,n=el; while(n){ op*=parseFloat(getComputedStyle(n).opacity); n=n.parentElement; } if(op<0.95) return;
+        const bg=bgOf(el), fg=over(parse(cs.color),bg), size=parseFloat(cs.fontSize), big=size>=24||(parseInt(cs.fontWeight)>=700&&size>=18.66);
+        const ratio=R(fg,bg); if(ratio<(big?3:4.5)) out.push(own.slice(0,30)+' '+ratio.toFixed(2));
+      });
+      return out;
+    });
+    console.log('\n' + pageName + ', text contrast');
+    ok('every piece of text passes WCAG AA', fails.length===0, fails.slice(0,4).join(' | '));
+    await c.close();
+  }
+
   // ---------- index.html with scripts off: the static copy ----------
   { const c=await b.newContext({javaScriptEnabled:false}); const pg=await c.newPage();
     await pg.goto('http://localhost:4176/index.html',{waitUntil:'load'});

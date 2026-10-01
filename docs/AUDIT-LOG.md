@@ -10,6 +10,34 @@ Newest first.
 
 ---
 
+## 1 October 2026, the colour scheme, measured
+
+Andrew asked whether the colours are the best ones to use. Measured rather than
+judged: every piece of text on three pages, against the background actually
+behind it, to WCAG AA (4.5:1 for normal text, 3:1 for large).
+
+**The palette is right and stays.** Deep navy, aqua and gold. Aqua reads as
+water, gold as results, and the pair is safe for colour-blind readers: in
+simulations of all three common types the two stay clearly apart, because they
+sit on the blue-yellow axis colour-blind vision keeps. The front page passed on
+all 174 pieces of text; the faintest grey measured 5.6:1.
+
+**Three things failed, all fixed, none changing the look:**
+- The chart axis labels, white at 35%, 3.1:1. Now 50%, 5.3:1.
+- The one-pager's light grey, #8b98a3, 2.95:1 on white, on 29 of 102 pieces of
+  text: column headings, dates, source notes and the Lakeshore line. It is the
+  printed sheet, where light grey prints fainter still. Now #646f7a, 5.1:1.
+- /v2.html's dim grey, #4e6274, 3.1:1, on 43 of 160: captions and labels. Now
+  #6c8092, 4.8:1.
+
+All three pages now pass on every piece of text, and pages.e2e.js measures it.
+
+**One weakness left alone.** Gold and aqua have nearly the same lightness, so in
+a black and white print they look alike. Nothing on the site relies on that
+difference alone; the one-pager uses gold for ranks and blue only for headings.
+
+---
+
 ## 1 October 2026, a coach could not contact Luke from the page
 
 **Found because Andrew asked how a coach would contact Luke.** Nobody had
