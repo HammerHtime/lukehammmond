@@ -2595,6 +2595,22 @@ const badgeCss = (/\.time-pb-badge \{([^}]+)\}/.exec(publicHtml) || [])[1] || ''
 ok('the rank badge is on its own line', /display: table;/.test(badgeCss));
 ok('and not indented off the time', !/margin-left/.test(badgeCss));
 
+// ---------- the ID Team, from Swimming Canada's own lists ----------
+// Male NDTP ID Team 2025 and 2026, boys born 2011, LSC, Ontario, checked
+// 1 October 2026. The body is Swimming Canada, not "Swim Canada", and the
+// programme is the National Development Program ID Team.
+const idTeam = SD.SWIMMER.recognition.filter(function (r) { return /ID Team/.test(r.label); })[0];
+ok('the ID Team is recorded under its published name',
+  idTeam && idTeam.label === 'Swimming Canada National Development Program ID Team');
+check('for both years', idTeam && idTeam.years, [2025, 2026]);
+ok('with the 2026 event', idTeam && /400 free in 2026/.test(idTeam.detail));
+ok('and where it can be checked', idTeam && /swimming\.ca\/national-development-program-id-teams/.test(idTeam.source));
+ok('the front page says two years running', /two years running, in 2025 and again in 2026/.test(publicHtml));
+ok('and has a 2026 milestone for it', /Named to the Swimming Canada ID Team, second year running/.test(publicHtml));
+ok('the old name is gone from the page', !/National ID Development Program/.test(publicHtml));
+ok('and "Swim Canada" is not used for the national body', !/Swim Canada\b/.test(publicHtml));
+ok('the profile data says it too', SD.SWIMMER.about.join(' ').indexOf('ID Team in 2025 and 2026') !== -1);
+
 // ---------- the published list, pinned to the page it came from ----------
 // CSCA TAG Rankings, Volume 4, September 2026, Boys 13-14, long course. Each
 // rank below was read off the list, and each time beside it is the time the

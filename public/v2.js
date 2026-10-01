@@ -228,7 +228,9 @@
       ['Born', '2011']
     ];
     (SWIMMER.recognition || []).slice(0, 2).forEach(function (r) {
-      kv.push(['Selected for', r.label]);
+      // The years are the point of the ID Team line, ie, named twice running,
+      // so the detail goes with the label unless it only says "Selected".
+      kv.push(['Selected for', r.label + (r.detail && r.detail !== 'Selected' ? ', ' + r.detail : '')]);
     });
     el('about-kv').innerHTML = kv.filter(function (p) { return p[1]; }).map(function (p) {
       return '<div><dt>' + esc(p[0]) + '</dt><dd>' + esc(p[1]) + '</dd></div>';

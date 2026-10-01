@@ -10,6 +10,32 @@ Newest first.
 
 ---
 
+## 1 October 2026, the ID Team, second year running
+
+**Andrew said Luke was named to the Swimming Canada ID Team again.** Checked
+against Swimming Canada's own published lists before anything went on the page:
+
+- Male NDTP ID Team 2026: Hammond, Luke, LSC, ON, boys born 2011, 400 free.
+- Male NDTP ID Team 2025: Luke Hammond, LSC, ON, boys born 2011.
+
+The 2025 events are not stated on the site. The table wraps in that PDF, and
+from where the words sit his events look like the 50, 200, 400 and 800 free,
+but the 800 cannot be read for certain.
+
+**What changed.** The About paragraph says two years running, 2025 and 2026.
+A 2026 milestone was added above the others, and the 2025 one was renamed.
+The recognition data, which /v2.html and the one-pager read, records both
+years, the 2026 event, and the source URL.
+
+**A naming fix on the way.** The site called it the "Swim Canada National ID
+Development Program". The national body is Swimming Canada and the programme
+is the National Development Program ID Team. Five more places said "Swim
+Canada" for the national body, ie, the goals, the chart caption and a link
+label, and all now say Swimming Canada. A test fails if either old name comes
+back.
+
+---
+
 ## 30 September 2026, the rank badge sat in two different places
 
 **Found by Andrew, from a screenshot of the time cards.** On the 100 free

@@ -62,7 +62,7 @@ const SWIMMER = {
   about: [
     'Distance freestyler with Mississauga Aquatic Club, training under head coach ' +
     'Aris Bousoulegkas. Lives in Etobicoke, Ontario. Started racing in spring 2022.',
-    'Selected to the Swim Canada National ID Development Program and the Swim ' +
+    'Named to the Swimming Canada National Development Program ID Team in 2025 and 2026, and the Swim ' +
     'Ontario Aerobic Development Program.',
     // Was "top five across four distance freestyle events". The published list
     // has the 200 free sixth, so that sentence stopped being true.
@@ -142,7 +142,13 @@ const SWIMMER = {
   },
 
   recognition: [
-    { label: 'Swim Canada National ID Development Program', detail: 'Selected' },
+    // Swimming Canada publishes the lists: Male NDTP ID Team 2025 and 2026,
+    // boys born 2011, LSC, Ontario. Checked 1 October 2026. The 2026 list
+    // names him in the 400 free. The 2025 events are not recorded here because
+    // the published table wraps and the fourth event cannot be read for sure.
+    { label: 'Swimming Canada National Development Program ID Team',
+      detail: '2025 and 2026, 400 free in 2026', years: [2025, 2026],
+      source: 'https://www.swimming.ca/national-development-program-id-teams/' },
     { label: 'Swim Ontario Aerobic Development Program', detail: 'Selected' },
     { label: 'Gold, 400 free', detail: '2026 Ontario Age Group Championships, Markham' },
     { label: 'Gold, 800 free', detail: '2025 Ontario Swimming Championships' }
