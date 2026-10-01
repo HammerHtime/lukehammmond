@@ -126,8 +126,36 @@ const SWIMMER = {
   // The list ranks age groups, not single ages. He is in Boys 13-14 because he
   // was 14 for the season it covers. Next season's lists put him in 15-17, and
   // these numbers become last season's, which is why the season is recorded.
+  // The short course list. U SPORTS races short course metres, so a Canadian
+  // coach reads these first. CSCA TAG Rankings, Volume 2, April 2026, results
+  // from 1 September 2025 to 31 March 2026, Boys 13-14, read off the PDF on
+  // csca.org on 1 October 2026. Each entry carries the time the list printed,
+  // and a rank is only shown against a swim with that exact time. Three of
+  // his short course bests have improved since the list closed (50 free,
+  // 100 back, 400 IM), so those ranks belong to older swims and are not shown.
+  rankingsSC: {
+    source: 'CSCA TAG Rankings, Volume 2, April 2026',
+    url: 'https://csca.org/tag-rankings',
+    group: 'Boys 13-14',
+    course: 'SCM',
+    period: '1 September 2025 to 31 March 2026',
+    ranks: {
+      '800-free-SCM': { rank: 3, time: '8:30.34' },
+      '400-free-SCM': { rank: 4, time: '4:09.77' },
+      '1500-free-SCM': { rank: 7, time: '16:38.24' },
+      '200-free-SCM': { rank: 9, time: '1:58.35' },
+      '100-free-SCM': { rank: 13, time: '54.51' },
+      '200-back-SCM': { rank: 15, time: '2:12.79' },
+      '200-im-SCM': { rank: 18, time: '2:14.64' },
+      '400-im-SCM': { rank: 40, time: '4:54.66' },
+      '100-back-SCM': { rank: 42, time: '1:02.94' },
+      '50-free-SCM': { rank: 45, time: '25.60' }
+    }
+  },
+
   rankings: {
     source: 'CSCA TAG Rankings, Volume 4, September 2026',
+    url: 'https://csca.org/tag-rankings',
     group: 'Boys 13-14',
     course: 'LCM',
     season: '2025-26',

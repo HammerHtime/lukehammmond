@@ -21,12 +21,15 @@ const STANDARDS = [
     name: 'Canadian Junior Trials',
     short: 'Jr. Trials',
     course: 'LCM',
-    // Carried over from the existing profile page at lukehammond.netlify.app,
-    // transcribed 18 September 2026. NOT yet checked against the official
-    // Swimming Canada standards document. Confirm before quoting to a coach.
-    source: 'Carried over from the existing profile page',
-    recorded: '2026-09-18',
-    confirmed: false,
+    // Carried over from the old profile page on 18 September 2026, then
+    // checked on 1 October 2026 against Swimming Canada's own document, the
+    // 2026-2028 Male Standards, "Trials Juniors", long course. All four cuts
+    // matched to the hundredth. The same table gives the Canadian Open long
+    // course standard, which his 800 (8:43.49) misses by 0.32 (8:43.17).
+    source: 'Swimming Canada 2026-2028 Male Standards, Trials Juniors (LCM)',
+    url: 'https://www.swimming.ca/wp-content/uploads/2026/01/2026-2028-Swimming-Canada-standards-EN-01.29.2026.pdf',
+    recorded: '2026-10-01',
+    confirmed: true,
     cuts: {
       '200-free-LCM': '1:56.47',
       '400-free-LCM': '4:08.73',

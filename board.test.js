@@ -626,7 +626,13 @@ check('four Junior Trials cuts are tracked', progress.length, 4);
 check('the 400 free is closest to its cut', S.formatGap(progress[1].gap.behindBy), '+2.13');
 ok('no cut is claimed as made yet', progress.every(function (p) { return p.gap.made === false; }));
 check('an unknown standard yields nothing', St.gapToCut(S.parseTime, 10000, 'nope', '200-free-LCM'), null);
-ok('the Junior Trials cuts are flagged unconfirmed', St.STANDARDS[0].confirmed === false);
+// Confirmed 1 October 2026 against Swimming Canada's 2026-2028 Male
+// Standards, Trials Juniors, long course. Each cut pinned to that table.
+ok('the Junior Trials cuts are confirmed', St.STANDARDS[0].confirmed === true);
+ok('against Swimming Canada\'s own table', /Swimming Canada 2026-2028 Male Standards, Trials Juniors/.test(St.STANDARDS[0].source));
+ok('with a link to it', /swimming\.ca\/wp-content\/uploads\/2026\/01\/2026-2028-Swimming-Canada-standards/.test(St.STANDARDS[0].url));
+check('the four cuts are the table\'s', St.STANDARDS[0].cuts,
+  { '200-free-LCM': '1:56.47', '400-free-LCM': '4:08.73', '800-free-LCM': '8:39.36', '1500-free-LCM': '16:31.79' });
 
 // ---------- the contact rule ----------
 check('a D1 coach cannot reply until June 2027', R.replyDateFor('D1', 2029), '2027-06-15');
@@ -2622,6 +2628,40 @@ ok('and has a 2026 milestone for it', /Named to the Swimming Canada ID Team, sec
 ok('the old name is gone from the page', !/National ID Development Program/.test(publicHtml));
 ok('and "Swim Canada" is not used for the national body', !/Swim Canada\b/.test(publicHtml));
 ok('the profile data says it too', SD.SWIMMER.about.join(' ').indexOf('ID Team in 2025 and 2026') !== -1);
+
+// ---------- short course, for Canadian university coaches ----------
+// U SPORTS races short course metres and the page showed long course only.
+// CSCA TAG Rankings Volume 2, April 2026, read 1 October 2026.
+const SC = SD.SWIMMER.rankingsSC;
+check('the short course list is named', SC.source, 'CSCA TAG Rankings, Volume 2, April 2026');
+check('ten short course ranks', Object.keys(SC.ranks).length, 10);
+check('800 free short course is #3', SC.ranks['800-free-SCM'], { rank: 3, time: '8:30.34' });
+check('400 free short course is #4, not #3', SC.ranks['400-free-SCM'], { rank: 4, time: '4:09.77' });
+// The rule the table applies: a rank is shown only against the exact swim.
+const scmBests = S.personalBests(seedResults);
+const shown = Object.keys(SC.ranks).filter(function (id) { return scmBests[id] && scmBests[id].time === SC.ranks[id].time; });
+check('seven ranks are still for his current best', shown.length, 7);
+ok('the three he has since beaten are not shown', ['50-free-SCM', '100-back-SCM', '400-im-SCM']
+  .every(function (id) { return shown.indexOf(id) === -1; }));
+ok('the front page has the short course table', /id="scm-table"/.test(publicHtml));
+const liveSrcSC = require('fs').readFileSync(require('path').join(__dirname, 'public', 'live-profile.js'), 'utf8');
+ok('and it only shows a rank against the exact time', /r && r\.time === b\.time \? r\.rank : null/.test(liveSrcSC));
+ok('drawn in its own guarded section', /safe\('short course'/.test(liveSrcSC));
+// The milestone claimed #3 in the 400 and 800 short course. Volume 2 has #4 in the 400.
+ok('the short course milestone no longer claims #3 in the 400',
+  publicHtml.indexOf('milestone-title">CSCA TAG Rankings, #3 Canada (400m') === -1);
+ok('it says #3 in the 800 and #4 in the 400', /#3 nationally in the 800m freestyle and #4 in the 400m/.test(publicHtml));
+// Links go to the sources, not a home page.
+ok('no link to Swimming Canada\'s bare home page', publicHtml.indexOf('href="https://swimming.ca"') === -1);
+ok('the CSCA rankings page is linked', /href="https:\/\/csca\.org\/tag-rankings"/.test(publicHtml));
+ok('the ID Team list is linked', /href="https:\/\/www\.swimming\.ca\/national-development-program-id-teams\/"/.test(publicHtml));
+ok('the one-pager is linked', /href="onepager\.html"/.test(publicHtml));
+
+// The phone rule that drops the results table's date column hid the short
+// course table's EVENT column too, because they share a class.
+ok('the phone column rule is scoped to the results table', /#comp-table th:nth-child\(1\),\s*#comp-table td:nth-child\(1\) \{ display: none; \}/.test(publicHtml));
+ok('and no class-wide rule hides a first column', !/\.comp-table t[dh]:nth-child\(1\)/.test(publicHtml));
+ok('chart columns may shrink on a small phone', /\.perf-charts-grid > \* \{ min-width: 0; \}/.test(publicHtml));
 
 // ---------- the published list, pinned to the page it came from ----------
 // CSCA TAG Rankings, Volume 4, September 2026, Boys 13-14, long course. Each

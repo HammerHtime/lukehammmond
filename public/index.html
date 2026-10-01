@@ -676,6 +676,10 @@
     font-size: 0.9rem;
     color: var(--muted);
   }
+  @media (max-width: 640px) {
+    .comp-table th, .comp-table td { padding-right: 0.7rem; }
+    .comp-table td { font-size: 0.8rem; }
+  }
   .comp-table td.meet-name {
     color: var(--white);
     font-weight: 500;
@@ -1015,6 +1019,9 @@
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
   }
+  /* A grid column will not shrink below what is inside it unless told to.
+     The charts held their column 14px past the edge of a 360px phone. */
+  .perf-charts-grid > * { min-width: 0; }
   .recruit-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1063,8 +1070,11 @@
     .goals-grid { grid-template-columns: 1fr; }
     .milestones-list .milestone-row { grid-template-columns: 60px 1fr; gap: 1rem; }
     .milestone-year { font-size: 1.3rem; }
-    .comp-table th:nth-child(1),
-    .comp-table td:nth-child(1) { display: none; }
+    /* The results table drops its date column on a phone. Scoped to that
+       table by id: the short course table shares the class, and the same
+       rule hid its event column, so the times had no event beside them. */
+    #comp-table th:nth-child(1),
+    #comp-table td:nth-child(1) { display: none; }
     .section-title { font-size: clamp(2rem, 8vw, 3rem); }
     .hero-badge { font-size: 0.62rem; padding: 0.45rem 0.85rem; }
     footer { flex-direction: column; gap: 0.75rem; text-align: center; padding: 2rem 1.5rem; }
@@ -1265,6 +1275,20 @@
         </div>
       </div>
     </div>
+    <!-- Short course metres. U SPORTS races short course, so a Canadian
+         university coach compares these first, and the page used to show
+         long course only. Filled by live-profile.js from the results and the
+         CSCA TAG short course list. Added 1 October 2026. -->
+    <div class="reveal" id="scm-block" style="margin-top:3.5rem;">
+      <p class="section-label" style="margin-bottom:0.6rem;">Short Course Metres</p>
+      <p id="scm-intro" style="color:var(--muted); font-size:0.875rem; max-width:700px; line-height:1.7; margin-bottom:1.5rem;"></p>
+      <div style="overflow-x:auto;">
+        <table class="comp-table" id="scm-table">
+          <thead><tr><th>Event</th><th>Best</th><th>Canada, SC</th><th>Swum</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
         <p style="font-size:0.7rem; color:var(--muted); margin-top:1.2rem; letter-spacing:0.05em;">
       <span id="times-footnote">★ Rankings: CSCA TAG Rankings, Volume 4, September 2026, Boys 13-14, long course, 2025-26</span>  &nbsp;·&nbsp; Full results: <a href="https://www.swimcloud.com/swimmer/3306753/" target="_blank" style="color:var(--aqua); text-decoration:none;">swimcloud.com/swimmer/3306753</a>
     </p>
@@ -1310,6 +1334,11 @@
     <h2 class="section-title">Competition Results</h2>
     <p style="color:var(--muted); font-size:0.875rem; max-width:600px; line-height:1.7; margin-bottom:2rem;">Selected highlights. Full meet history and splits available at <a href="https://www.swimcloud.com/swimmer/3306753/" target="_blank" style="color:var(--aqua); text-decoration:none;">SwimCloud</a>.</p>
   </div>
+  <!-- The results table ran 20px wider than a 390px phone and dragged the
+       whole page sideways. Measured 1 October 2026. Tighter cells on small
+       screens below, and this wrapper scrolls the table rather than the
+       page if a long meet name still does not fit. -->
+  <div style="overflow-x:auto;">
   <table class="comp-table reveal" id="comp-table">
     <thead>
       <tr>
@@ -1422,6 +1451,7 @@
       </tr>
     </tbody>
   </table>
+  </div>
 </section>
 
 <div class="divider"></div>
@@ -1525,8 +1555,11 @@
     <div class="milestone-row">
       <div class="milestone-year">2026</div>
       <div>
-        <div class="milestone-title">CSCA TAG Rankings, #3 Canada (400m & 800m Free, SCM)</div>
-        <div class="milestone-desc">Featured in the relaunched Canadian Top Age Group rankings, #3 nationally in the 400m and 800m freestyle, short course.</div>
+        <!-- Was "#3 Canada (400m & 800m Free, SCM)". Checked against Volume 2 on
+             csca.org on 1 October 2026: #3 in the 800 (8:30.34) and #4 in the
+             400 (4:09.77), Boys 13-14, short course, to 31 March 2026. -->
+        <div class="milestone-title">CSCA TAG Rankings, #3 Canada in the 800m Free, SCM</div>
+        <div class="milestone-desc">Volume 2, April 2026, Boys 13-14, short course: #3 nationally in the 800m freestyle and #4 in the 400m.</div>
       </div>
     </div>
     <div class="milestone-row">
@@ -1582,9 +1615,20 @@
             <span style="width:32px; height:1px; background:var(--aqua); display:inline-block;"></span>
             SwimCloud Profile
           </a>
-          <a href="https://swimming.ca" target="_blank" style="display:inline-flex; align-items:center; gap:0.75rem; color:var(--aqua); text-decoration:none; font-size:0.875rem; letter-spacing:0.05em; font-weight:500;">
+          <!-- "Swimming Canada Rankings" went to Swimming Canada's home page, which
+               shows nothing about Luke. These go to the published lists the
+               page quotes, so a coach can check the claims at the source. -->
+          <a href="https://csca.org/tag-rankings" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:0.75rem; color:var(--aqua); text-decoration:none; font-size:0.875rem; letter-spacing:0.05em; font-weight:500;">
             <span style="width:32px; height:1px; background:var(--aqua); display:inline-block;"></span>
-            Swimming Canada Rankings
+            CSCA TAG Rankings
+          </a>
+          <a href="https://www.swimming.ca/national-development-program-id-teams/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:0.75rem; color:var(--aqua); text-decoration:none; font-size:0.875rem; letter-spacing:0.05em; font-weight:500;">
+            <span style="width:32px; height:1px; background:var(--aqua); display:inline-block;"></span>
+            Swimming Canada ID Team
+          </a>
+          <a href="onepager.html" style="display:inline-flex; align-items:center; gap:0.75rem; color:var(--aqua); text-decoration:none; font-size:0.875rem; letter-spacing:0.05em; font-weight:500;">
+            <span style="width:32px; height:1px; background:var(--aqua); display:inline-block;"></span>
+            Printable one-page summary
           </a>
         </div>
       </div>

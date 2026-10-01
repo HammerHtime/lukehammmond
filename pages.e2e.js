@@ -229,6 +229,30 @@ async function page(b, url, profile, opts={}) {
     await c.close();
   }
 
+  // ---------- the front page never scrolls sideways on a phone ----------
+  // The results table was 20px wider than a 390px phone. Found 1 October 2026.
+  for (const w of [320, 360, 390, 414]) {
+    const {c,pg}=await page(b,'index.html',null,{vp:{width:w,height:800}});
+    const sw=await pg.evaluate(()=>document.documentElement.scrollWidth);
+    console.log('\nindex.html at ' + w + 'px');
+    ok('no sideways scroll', sw<=w, sw);
+    await c.close();
+  }
+
+  // ---------- the short course table on a phone ----------
+  { const {c,pg}=await page(b,'index.html',null,{vp:{width:390,height:844}});
+    const m=await pg.evaluate(()=>{ const t=document.getElementById('scm-table');
+      const rows=[...t.querySelectorAll('tbody tr')];
+      const firstVisible=rows.every(r=>getComputedStyle(r.cells[0]).display!=='none' && r.cells[0].getBoundingClientRect().width>40);
+      return { rows: rows.length, firstVisible, ranked: rows.filter(r=>/#\d+/.test(r.cells[2].textContent)).length,
+        eight: rows.map(r=>r.cells[0].textContent+' '+r.cells[1].textContent+' '+r.cells[2].textContent).filter(x=>/800m Freestyle/.test(x))[0] }; });
+    console.log('\nindex.html at 390px, short course table');
+    ok('ten events listed', m.rows===10, m.rows);
+    ok('the event name shows on every row', m.firstVisible);
+    ok('seven carry a short course rank', m.ranked===7, m.ranked);
+    ok('the 800 reads 8:30.34 at #3', /8:30\.34 #3/.test(m.eight||''), m.eight);
+    await c.close(); }
+
   // ---------- index.html with scripts off: the static copy ----------
   { const c=await b.newContext({javaScriptEnabled:false}); const pg=await c.newPage();
     await pg.goto('http://localhost:4176/index.html',{waitUntil:'load'});

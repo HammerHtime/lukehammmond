@@ -10,6 +10,46 @@ Newest first.
 
 ---
 
+## 1 October 2026, what coaches want, checked against the site
+
+Three research agents looked at personal recruiting sites, US coach needs and
+Canadian coach needs. The findings and sources are in docs/RECRUITING-RESEARCH.md.
+
+### Built
+
+1. **Short course metres table on the front page.** U SPORTS races short
+   course, and the page showed long course only. Ten events, each with the meet
+   and date, and the CSCA TAG short course rank where the list printed that
+   exact time. Seven do. Three bests have improved since the list closed.
+2. **The short course milestone was half wrong.** It said #3 in the 400 and 800.
+   Volume 2, read off csca.org, has #3 in the 800 and #4 in the 400. Corrected.
+   Andrew had chosen to leave it because it could not be checked. It can now,
+   and a coach can check it too.
+3. **The Junior Trials cuts are confirmed,** against Swimming Canada's own
+   2026-2028 table. They matched. The same table shows his 800 is 0.32 seconds
+   off the Canadian Open long course standard.
+4. **The links go to the sources.** "Swimming Canada Rankings" went to Swimming
+   Canada's home page. It now links the CSCA rankings page and the ID Team list,
+   plus the printable one-pager.
+
+### Found while testing it on a phone, and fixed
+
+- **The short course table lost its event column on a phone,** because a rule
+  meant to hide the results table's date column hid the first column of any
+  table with that style. Scoped to the results table.
+- **The page scrolled sideways on phones.** The results table was 20px too wide
+  at 390px, and the charts held their column 14px too wide at 360px and 320px.
+  Both fixed. A browser check now fails if the page is wider than the screen at
+  320, 360, 390 or 414.
+
+### For Andrew
+
+See the reply on 1 October for the list: the Ontario percentage average, a race
+video, the NCAA ID, and three decisions, ie, height, the school name, and the
+club coach's contact details.
+
+---
+
 ## 1 October 2026, Lakeshore until 2026, Mississauga now
 
 **Andrew confirmed Luke swam for Lakeshore Swim Club until 2026 and swims

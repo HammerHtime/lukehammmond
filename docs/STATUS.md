@@ -131,8 +131,9 @@ Bucknell, American and St. Bonaventure all carry a warning in contactNote.
 Re-check verifiedOn before a send rather than trusting it forever.
 
 ### Numbers that need confirming
-- The Canadian Junior Trials cuts were carried over from the existing profile
-  page, not read from Swimming Canada. standards.js flags them unconfirmed.
+- ~~The Canadian Junior Trials cuts were carried over from the old page.~~
+  Confirmed 1 October 2026 against Swimming Canada's 2026-2028 Male Standards,
+  Trials Juniors, long course. All four matched to the hundredth.
 - The NCAA Division II contact rule. Published guidance disagrees. The app uses
   the later, safer date and marks it unconfirmed.
 - The conversion factors are derived, not official. Replace them with the NCAA

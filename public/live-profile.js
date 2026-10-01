@@ -57,6 +57,7 @@
     safe('school panel', schoolPanel);
     safe('time cards', function () { timeCards(results, bests); });
     safe('rankings', function () { rankingLines(bests); });
+    safe('short course', function () { shortCourse(bests); });
     safe('results table', function () { compTable(results, bests); });
     safe('club coach', clubCoach);
     safe('club lines', function () { clubLines(results); });
@@ -273,6 +274,54 @@
   function sourceOf(list) {
     var srcs = Object.keys(list).map(function (id) { return list[id].source || ''; });
     return srcs.length && srcs.every(function (x) { return x && x === srcs[0]; }) ? srcs[0] : '';
+  }
+
+  // Short course metres bests, for Canadian university coaches. U SPORTS
+  // races short course, and the page showed long course only. The events are
+  // his headline and ranked long course events, so the two lists line up.
+  // A short course rank shows only when the list printed this exact time.
+  function shortCourse(bests) {
+    var body = el('scm-table') && el('scm-table').querySelector('tbody');
+    var block = el('scm-block');
+    if (!body || !block) return;
+    var sc = SWIMMER.rankingsSC || { ranks: {} };
+    var seen = {};
+    var ids = (SWIMMER.primary || []).map(function (p) { return p.distance + '-' + p.stroke; })
+      .concat(Object.keys((SWIMMER.rankings && SWIMMER.rankings.ranks) || {}).map(function (id) {
+        return id.replace(/-LCM$/, '');
+      }))
+      .filter(function (k) { if (seen[k]) return false; seen[k] = true; return true; })
+      .map(function (k) { return k + '-SCM'; })
+      .filter(function (id) { return bests[id]; })
+      .sort(function (a, b) {
+        var A = bests[a], B = bests[b];
+        var order = ['free', 'back', 'breast', 'fly', 'im'];
+        return order.indexOf(A.stroke) - order.indexOf(B.stroke) || A.distance - B.distance;
+      });
+    if (!ids.length) { block.style.display = 'none'; return; }
+
+    var ranked = 0;
+    body.innerHTML = ids.map(function (id) {
+      var b = bests[id];
+      var r = sc.ranks[id];
+      var rank = r && r.time === b.time ? r.rank : null;
+      if (rank) ranked += 1;
+      return '<tr>' +
+        '<td class="meet-name">' + esc(b.distance) + 'm ' + esc(S.STROKE_LABEL[b.stroke]) + '</td>' +
+        '<td style="color:var(--gold);font-variant-numeric:tabular-nums;">' + esc(b.time) + '</td>' +
+        '<td>' + (rank ? '#' + esc(rank) : '') + '</td>' +
+        '<td>' + esc(friendlyMonth(b.date)) + (b.meet ? ' \u00b7 ' + esc(b.meet) : '') + '</td>' +
+        '</tr>';
+    }).join('');
+
+    el('scm-intro').textContent =
+      'U SPORTS races short course metres, so these are the times a Canadian university ' +
+      'coach compares first. ' +
+      (ranked
+        ? 'Ranks are from the ' + sc.source + ', ' + sc.group + ', short course, results from ' +
+          sc.period + '. A rank is shown only where the time the list printed is still his best.'
+        : '');
+    block.style.display = '';
   }
 
   function rankingLines(bests) {
