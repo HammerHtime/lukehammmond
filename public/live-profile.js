@@ -117,7 +117,9 @@
       var p = x.p, id = x.id, best = bests[id], rank = x.rank;
       return '<div class="hero-stat">' +
         '<div class="hero-stat-val">#' + esc(rank.rank) + '</div>' +
-        '<div class="hero-stat-label">Ranked in Canada · ' + esc(p.distance) + 'm ' +
+        // Two short lines, not one long one. With the age group added, one line
+        // ran the three boxes past the edge of a laptop screen.
+        '<div class="hero-stat-label">Ranked in Canada, ' + esc(groupOf(rankings)) + '<br>' + esc(p.distance) + 'm ' +
         esc(S.STROKE_SHORT[p.stroke]) + ' · ' + esc(best.time) + '</div></div>';
     }).join('');
     // Clear every ranking and the whole strip goes, rather than leaving a row
@@ -199,7 +201,7 @@
             '<div class="time-event">' + esc(best.distance) + 'm ' + esc(S.STROKE_LABEL[best.stroke]) + '</div>' +
             '<div class="time-value gold">' + esc(best.time) +
               (rank ? '<span class="time-pb-badge">#' + esc(rank.rank) +
-                ' in Canada</span>' : '') +
+                ' in Canada, ' + esc(groupOf(rankings)) + '</span>' : '') +
             '</div>' +
             '<div class="time-course">' + esc(courseLabel) + ' · ' + esc(when) + '</div>' +
             progress + splits +
@@ -280,7 +282,8 @@
     // includes a 200 is the kind of small overclaim a coach notices.
     var label = held.length === 1 ? 'Distance Free Event' : 'Distance Free Events';
 
-    node.textContent = 'Ranked Top ' + bracket + ' in Canada · ' + held.length + ' ' + label;
+    node.textContent = 'Ranked Top ' + bracket + ' in Canada, ' + groupOf(rankings) + ' · ' +
+      held.length + ' ' + label;
     node.parentNode.style.display = '';
   }
 
@@ -295,6 +298,14 @@
     var bases = Object.keys(list).map(function (id) { return list[id].basis || ''; });
     var one = bases.length && bases.every(function (b) { return b === bases[0]; }) ? bases[0] : '';
     return /^Boys /.test(one) ? one : 'for age';
+  }
+  // The age group for a rank shown on its own, ie, "13-14 boys". A bare
+  // "#4 in Canada" reads as all ages. The list ranks 13- and 14-year-olds
+  // together, so it says 13-14, not 14. Hand-typed ranks keep "for age".
+  // Andrew asked for the age on every rank, 1 October 2026.
+  function groupOf(list) {
+    var m = /^Boys (\d+-\d+)/.exec(basisOf(list));
+    return m ? m[1] + ' boys' : 'for age';
   }
   function sourceOf(list) {
     var srcs = Object.keys(list).map(function (id) { return list[id].source || ''; });

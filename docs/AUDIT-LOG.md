@@ -10,6 +10,41 @@ Newest first.
 
 ---
 
+## 1 October 2026, every rank names the age group
+
+Andrew noted the site said "ranked in Canada" without saying the ranks are
+for his age. A bare "#4 in Canada" reads as all ages, which overclaims.
+
+**Checked against the list first.** Andrew said 14-year-olds. The CSCA TAG
+list ranks 13- and 14-year-olds together, under "Boys 13-14". Luke was 14
+on it, and 13-year-olds sit in the same rankings, eg, a 13-year-old is
+sixth in the 100 free. So the site says "13-14 boys", which is what the
+list says. Told Andrew.
+
+**What changed, front page:**
+- The top badge reads "Ranked Top 5 in Canada, 13-14 boys".
+- The three big numbers read "Ranked in Canada, 13-14 boys", with the
+  event and time on a second line. On one line they ran into the right edge
+  of a laptop screen.
+- Every time card badge reads "#4 in Canada, 13-14 boys".
+- The Path to 2029 paragraph says "top 5 in Canada for 13-14 boys".
+- Ranks typed by hand in admin carry no group, so they say "for age".
+
+Already named the group, unchanged: the ranks line, the footnote, the short
+course table, the About text, v2, the one-pager and the coach emails.
+
+**A phone fault found on the way, fixed.** The top section sized itself to
+its longest line. On a 320px phone it ran about 70px past the screen and
+the right edge of the text was cut off. This was there before today. The
+sideways scroll check missed it, because the top section hides anything
+that spills over. It now keeps to the screen width, and a new check measures
+every piece of text in it at 320, 360, 390 and 414px. Another new check
+keeps the three rank boxes clear of the edge at 1024, 1280 and 1440px.
+
+**Checks:** npm run check passed (1543, 30, 33). npm run e2e passed.
+
+---
+
 ## 1 October 2026, Luke's ranks in gold
 
 Andrew picked this from a mockup of the page shown both ways.

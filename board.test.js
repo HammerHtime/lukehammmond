@@ -1671,7 +1671,7 @@ const seedRanks = require('./public/swimmer.js').seedRankings();
 // check the time only, which is how "#2 in Canada" sat in the markup after the
 // published list said #4. The four headline events must each have a card.
 const staticCards = [];
-publicHtml.replace(/>([0-9:.]+)<span class="time-pb-badge">#(\d+) in Canada<\/span>/g,
+publicHtml.replace(/>([0-9:.]+)<span class="time-pb-badge">#(\d+) in Canada, 13-14 boys<\/span>/g,
   function (m, time, rank) { staticCards.push({ time: time, rank: Number(rank) }); });
 ok('the no-script fallback carries cards', staticCards.length >= 4);
 staticCards.forEach(function (card) {
@@ -1687,14 +1687,19 @@ staticCards.forEach(function (card) {
     !!seedBests[id] && staticCards.some(function (c) { return c.time === seedBests[id].time; }));
 });
 // The static hero strip, which is also what a link preview reads.
-const heroStatic = (publicHtml.match(/<div class="hero-stat-val">#(\d+)<\/div>\s*<div class="hero-stat-label">Ranked in Canada · (\d+)m Free · ([0-9:.]+)<\/div>/g) || []);
+const heroStatic = (publicHtml.match(/<div class="hero-stat-val">#(\d+)<\/div>\s*<div class="hero-stat-label">Ranked in Canada, 13-14 boys<br>(\d+)m Free · ([0-9:.]+)<\/div>/g) || []);
 check('the static hero strip has three boxes', heroStatic.length, 3);
 heroStatic.forEach(function (box) {
-  const m = /#(\d+)<\/div>\s*<div class="hero-stat-label">Ranked in Canada · (\d+)m Free · ([0-9:.]+)/.exec(box);
+  const m = /#(\d+)<\/div>\s*<div class="hero-stat-label">Ranked in Canada, 13-14 boys<br>(\d+)m Free · ([0-9:.]+)/.exec(box);
   const id = m[2] + '-free-LCM';
   check('static hero box ' + id + ' matches the published rank', Number(m[1]), seedRanks[id] && seedRanks[id].rank);
   check('and its time matches the best on record', m[3], seedBests[id] && seedBests[id].time);
 });
+// Every rank names its age group. The list ranks 13- and 14-year-olds
+// together, and a bare "#4 in Canada" reads as all ages. Added 1 October 2026.
+ok('no bare rank badge in the markup', !/time-pb-badge">#\d+ in Canada</.test(publicHtml));
+ok('no bare rank in the hero strip', !/Ranked in Canada · /.test(publicHtml));
+ok('the Path to 2029 claim names the group', publicHtml.indexOf('top 5 in Canada for 13-14 boys') !== -1);
 ok('no superseded 400 free time survives in the markup',
   publicHtml.split('4:11.47').filter(function (chunk, i) { return i > 0; }).length <= 2);
 

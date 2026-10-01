@@ -102,11 +102,17 @@ async function page(b, url, profile, opts={}) {
       badge: (document.getElementById('hero-badge-claim')||{}).textContent,
       stats: [...document.querySelectorAll('#hero-stats .hero-stat')].map(x=>x.innerText.replace(/\s+/g,' ')),
       intro: (document.getElementById('times-intro')||{}).innerText,
+      cards: [...document.querySelectorAll('.time-pb-badge')].map(x=>x.textContent),
       foot: (document.getElementById('times-footnote')||{}).textContent,
       text: document.body.innerText
     }));
     ok('no page errors', errors.length===0, errors.join('; '));
-    ok('hero badge', t.badge==='Ranked Top 5 in Canada · 3 Distance Free Events', t.badge);
+    // Every rank names its age group, 13-14 boys from the published list.
+    // Hand-typed ranks carry no group, so they say "for age".
+    const grp = profile ? 'for age' : '13-14 boys';
+    ok('hero badge', t.badge==='Ranked Top 5 in Canada, ' + grp + ' · 3 Distance Free Events', t.badge);
+    ok('hero strip names the group', t.stats.every(x=>x.toLowerCase().indexOf(('Ranked in Canada, ' + grp + ' ').toLowerCase())!==-1), t.stats.join(' | '));
+    ok('every card badge names the group', t.cards.length>=4 && t.cards.every(x=>new RegExp('^#\\d+ in Canada, ' + grp + '$').test(x)), t.cards.join(' | '));
     ok('hero strip is 400, 800, 1500', t.stats.length===3 && /^#4 .*400m/i.test(t.stats[0]) && /^#4 .*800m/i.test(t.stats[1]) && /^#5 .*1500m/i.test(t.stats[2]), t.stats.join(' | '));
     ok('no #2 in Canada anywhere', !/#2 in Canada|#2\s*Canada/.test(t.text));
     if (!profile) {
@@ -239,6 +245,18 @@ async function page(b, url, profile, opts={}) {
     const sw=await pg.evaluate(()=>document.documentElement.scrollWidth);
     console.log('\nindex.html at ' + w + 'px');
     ok('no sideways scroll', sw<=w, sw);
+    // The hero hides what spills over, so the scroll check above cannot see
+    // it. Its text ran past a 320px screen and was cut off. Found 1 October.
+    const hero=await pg.evaluate(()=>[...document.querySelectorAll('.hero-content, .hero-content *')]
+      .map(e=>Math.ceil(e.getBoundingClientRect().right)).reduce((a,x)=>Math.max(a,x),0));
+    ok('nothing in the hero runs past the screen', hero<=w, hero);
+    await c.close();
+  }
+  // And on a laptop, the three rank boxes stay clear of the right edge.
+  for (const w of [1024, 1280, 1440]) {
+    const {c,pg}=await page(b,'index.html',null,{vp:{width:w,height:900}});
+    const r=await pg.evaluate(()=>Math.ceil(document.getElementById('hero-stats').getBoundingClientRect().right));
+    ok('hero rank boxes fit at ' + w + 'px', r<=w-40, r);
     await c.close();
   }
 
@@ -312,7 +330,7 @@ async function page(b, url, profile, opts={}) {
     await pg.goto('http://localhost:4176/index.html',{waitUntil:'load'});
     const txt=await pg.evaluate(()=>document.body.innerText);
     console.log('\nindex.html, scripts off');
-    ok('static strip reads #4, #4, #5', /#4\s+Ranked in Canada · 400m Free · 4:10\.86[\s\S]*#4\s+Ranked in Canada · 800m Free[\s\S]*#5\s+Ranked in Canada · 1500m Free/i.test(txt));
+    ok('static strip reads #4, #4, #5', /#4\s+Ranked in Canada, 13-14 boys\s+400m Free · 4:10\.86[\s\S]*#4\s+Ranked in Canada, 13-14 boys\s+800m Free[\s\S]*#5\s+Ranked in Canada, 13-14 boys\s+1500m Free/i.test(txt));
     ok('no #2 in the static copy', !/#2 in Canada/.test(txt));
     await c.close(); }
 
