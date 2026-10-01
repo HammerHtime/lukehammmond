@@ -120,6 +120,9 @@
         '</div>' +
         '<div class="bar-right">' +
           esc(SWIMMER.club) + '<br>' +
+          // A coach holding the sheet sees LSC on every list he checks.
+          (SWIMMER.formerClub ? '<span style="color:var(--faint)">' + esc(SWIMMER.formerClub) +
+            ' until ' + esc(SWIMMER.formerClubUntil) + '</span><br>' : '') +
           esc(school.name || '') +
         '</div>' +
       '</div>' +

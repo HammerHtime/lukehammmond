@@ -10,6 +10,37 @@ Newest first.
 
 ---
 
+## 1 October 2026, Lakeshore until 2026, Mississauga now
+
+**Andrew confirmed Luke swam for Lakeshore Swim Club until 2026 and swims
+for Mississauga now.** The move was already in the data, but no page said so.
+Every time and ranking on the site was swum for Lakeshore, and the CSCA TAG
+rankings and both ID Team lists show him under LSC. A coach checking those
+lists against a page that only says Mississauga would find two clubs.
+
+**The name.** Andrew wrote "Mississauga Swim Club". Swimming Canada's national
+lists carry one Mississauga club, Mississauga Aquatic Club, code MSSAC, which
+is what the site already used, so the name stays. The short code in the data
+read "MSC" and now reads MSSAC. It is not shown anywhere. **If Luke's club is
+a different club from MSSAC, Andrew should say so.**
+
+**Where the line now appears, all from the data, none typed by hand:**
+- About Luke: "Swam for Lakeshore Swim Club until 2026, so every time and
+  ranking on this page was swum for Lakeshore, which is the club the national
+  lists show."
+- The rankings footnote: "Swum for Lakeshore Swim Club (LSC)".
+- /v2.html, the same sentence in About.
+- The one-pager, under the club name.
+- The coach email: "I swam for Lakeshore Swim Club until 2026, so that is the
+  club you will see on my results." Its own sentence, with the club named in
+  full, because "LSC" means nothing to an American coach.
+
+An old test stopped the former club being typed into the pages by hand, and
+it still does, now across five files. A new test checks the line is stated,
+from the data, on all four surfaces.
+
+---
+
 ## 1 October 2026, the ID Team, second year running
 
 **Andrew said Luke was named to the Swimming Canada ID Team again.** Checked

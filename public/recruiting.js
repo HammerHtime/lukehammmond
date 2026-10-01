@@ -243,7 +243,12 @@ function draftEmail(input) {
 
   lines.push('My name is ' + swimmer.name + '. I’m a Class of ' + swimmer.classOf +
     ' swimmer from ' + swimmer.city + ', ' + swimmer.province + ', Canada, and I currently ' +
-    'train with the ' + swimmer.club + '.');
+    'train with the ' + swimmer.club + '.' +
+    // His results and rankings are all under the old club. A coach who looks
+    // him up should not have to wonder why. Its own short sentence, and the
+    // club by name, because "LSC" means nothing to an American coach.
+    (swimmer.formerClub ? ' I swam for ' + swimmer.formerClub + ' until ' +
+      swimmer.formerClubUntil + ', so that is the club you will see on my results.' : ''));
   lines.push('');
 
   lines.push('I’ve been looking at ' + named + ' and I wanted to introduce myself early, ' +

@@ -20,13 +20,18 @@ const SWIMMER = {
   name: 'Luke Hammond',
   shortName: 'Luke',
   classOf: 2029,
+  // The name and code Swimming Canada's national lists use. Andrew calls it
+  // Mississauga Swim Club day to day; the lists only carry this one
+  // Mississauga club, MSSAC. The code read "MSC" until 1 October 2026.
   club: 'Mississauga Aquatic Club',
-  clubShort: 'MSC',
-  // Moved from Lakeshore Swim Club, September 2026. Worth knowing when reading
-  // the results below: every swim on record was swum for Lakeshore. A club
-  // change mid-development is completely ordinary and coaches read it without
-  // comment, but the history and the badge do not match and that is why.
+  clubShort: 'MSSAC',
+  // Swam for Lakeshore Swim Club until 2026, confirmed by Andrew 1 October
+  // 2026. Every swim on record was swum for Lakeshore, and the national
+  // rankings and both ID Team lists show him under LSC. The public page says
+  // so in one line, so a coach checking those lists is not left with two clubs.
   formerClub: 'Lakeshore Swim Club',
+  formerClubShort: 'LSC',
+  formerClubUntil: 2026,
   // Still overridable from the back end, which is where it should be set when
   // it next changes. Publishing the WRONG name is worse than publishing none,
   // because the one thing college coaches said they actually do is telephone
@@ -61,7 +66,9 @@ const SWIMMER = {
   // Anything a coach could not work out from a times sheet.
   about: [
     'Distance freestyler with Mississauga Aquatic Club, training under head coach ' +
-    'Aris Bousoulegkas. Lives in Etobicoke, Ontario. Started racing in spring 2022.',
+    'Aris Bousoulegkas. Lives in Etobicoke, Ontario. Started racing in spring 2022. ' +
+    'Swam for Lakeshore Swim Club until 2026, so every time and ranking on this page ' +
+    'was swum for Lakeshore, which is the club the national lists show.',
     'Named to the Swimming Canada National Development Program ID Team in 2025 and 2026, and the Swim ' +
     'Ontario Aerobic Development Program.',
     // Was "top five across four distance freestyle events". The published list

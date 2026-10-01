@@ -300,8 +300,11 @@
       // The age was written into this line as "14-year-old males", which goes
       // wrong on his next birthday. The graduating class does not.
       var src = sourceOf(rankings);
+      // The lists print him under LSC. Said here, where a coach checks them.
+      var swumFor = SWIMMER.formerClub
+        ? '. Swum for ' + SWIMMER.formerClub + ' (' + SWIMMER.formerClubShort + ')' : '';
       foot.textContent = '\u2605 Rankings: ' + (src ? src + ', ' + basisOf(rankings) : 'Canada, for age') +
-        '. Class of ' + SWIMMER.classOf;
+        swumFor + '. Class of ' + SWIMMER.classOf;
     }
   }
 

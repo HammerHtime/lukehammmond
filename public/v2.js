@@ -217,7 +217,10 @@
     var a = SWIMMER.academics || {}, sc = SWIMMER.school || {};
     el('about-1').innerHTML = 'Distance freestyler with ' + esc(SWIMMER.club) +
       ', training under ' + esc(SWIMMER.coach) + '. Lives in ' + esc(SWIMMER.city) +
-      ', ' + esc(SWIMMER.province) + '. Started racing in spring 2022.';
+      ', ' + esc(SWIMMER.province) + '. Started racing in spring 2022.' +
+      (SWIMMER.formerClub ? ' Swam for ' + esc(SWIMMER.formerClub) + ' until ' +
+        esc(SWIMMER.formerClubUntil) + ', so every time and ranking here was swum there, ' +
+        'which is the club the national lists show.' : '');
     el('about-2').textContent = R && R.trainingLine ? R.trainingLine(SWIMMER, 'third') : '';
 
     var kv = [

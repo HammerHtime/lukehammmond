@@ -741,9 +741,21 @@ check('and the portal check is openly not done yet', SWIMMER.school.ncaaPortalCh
 // copies that survive a data edit live.
 check('the club is current', SWIMMER.club, 'Mississauga Aquatic Club');
 check('and the former one is recorded, not erased', SWIMMER.formerClub, 'Lakeshore Swim Club');
-['index.html', 'live-profile.js', 'recruiting.js'].forEach(function (f) {
+['index.html', 'live-profile.js', 'recruiting.js', 'v2.js', 'onepager.js'].forEach(function (f) {
   const src = require('fs').readFileSync(require('path').join(__dirname, 'public', f), 'utf8');
-  ok(f + ' names no former club', src.indexOf('Lakeshore') === -1);
+  ok(f + ' does not type the former club by hand', src.indexOf('Lakeshore') === -1);
+});
+// But the history IS stated, from the data. Every time and ranking on the
+// page was swum for Lakeshore, and the national lists show him under LSC, so
+// a coach checking them would otherwise find two clubs. Added 1 October 2026.
+check('the former club code is the one the lists print', SWIMMER.formerClubShort, 'LSC');
+check('and the year it ended', SWIMMER.formerClubUntil, 2026);
+check('the current club code is the one the lists print', SWIMMER.clubShort, 'MSSAC');
+ok('the About line says where the times were swum',
+  /Swam for Lakeshore Swim Club until 2026/.test(SWIMMER.about[0]));
+['live-profile.js', 'v2.js', 'onepager.js', 'recruiting.js'].forEach(function (f) {
+  const src = require('fs').readFileSync(require('path').join(__dirname, 'public', f), 'utf8');
+  ok(f + ' states the history from the data', /formerClub/.test(src));
 });
 
 // The club is in Mississauga and he lives in Etobicoke. The email said "with
