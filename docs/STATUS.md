@@ -96,13 +96,16 @@ request from this environment. A Netlify function runs from a different
 network and may do better, but it should not be assumed. Until then benchmarks
 carry a benchmarksCheckedOn date and go stale visibly rather than silently.
 
-### Two schools have no swimmer times
-Loyola Maryland and Hamilton read "Not assessed". Six of the original eight
+### Nine schools have no swimmer times
+Re-counted 1 October 2026: Hamilton, Pitt-Johnstown and seven Canadian
+programmes (Queen's, Lethbridge, Manitoba, UQTR, UNB, Mount Allison and
+Memorial) read "Not assessed". Loyola Maryland now has times. Six of the original eight
 now carry real 2026 conference results, ie, the MAAC Championships and the
 Liberty League Championships, each citing the meet it came from.
 
-### Four schools now disagree with their recorded priority
-This is the engine doing its job, and each one is a decision for Andrew.
+### Five schools now disagree with their recorded priority
+Re-counted 1 October 2026 across all 64 schools. This is the engine doing its
+job, and each one is a decision for Andrew.
 - RPI, recorded P2, reads P1. Luke sits inside their distance group in all
   three events.
 - Fairfield, recorded P3, reads P1. They won the 2026 MAAC men's title and he
@@ -112,6 +115,8 @@ This is the engine doing its job, and each one is a decision for Andrew.
   competing, ie, the distance group got softer.
 - Bucknell, recorded P3, reads P2, because the recorded benchmark is 15:46
   rather than 15:35.
+- Loyola Maryland, recorded P3, now reads target to reach since its times
+  were gathered.
 
 Worth knowing about Manhattan: his times would make him the fastest man in
 every distance event there immediately, and his mile would sit within a
@@ -139,7 +144,6 @@ Re-check verifiedOn before a send rather than trusting it forever.
   still held older hand-typed ranks for four events on that date, which the
   admin page's "Fill from the published list" button replaces in two taps.
 
-### The old page is out of date
-lukehammond.netlify.app still shows March 2026 bests. The 200 free is now
-1:59.75 and the 400 is 4:10.86. That staleness is the problem this back end
-exists to solve.
+### ~~The old page is out of date~~
+Settled. The live page reads its times from the results data and has shown
+1:59.75 and 4:10.86 since the back end went in.
