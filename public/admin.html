@@ -545,8 +545,12 @@
       fetch('/api/results').then(function (r) { return r.json(); }).catch(function () { return {}; }),
       api('/api/schools').catch(function () { return { schools: [] }; }),
       fetch('/api/profile').then(function (r) { return r.json(); }).catch(function () { return {}; }),
-      fetch('/api/photos').then(function (r) { return r.json(); }).catch(function () { return {}; })
+      fetch('/api/photos').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+      // The club's meet calendar. Private, so it needs the key. It feeds the
+      // "my next meet" line of the coach email and nothing public.
+      api('/api/meets').catch(function () { return { meets: [] }; })
     ]).then(function (both) {
+      meets = (both[4] && both[4].meets) || [];
       var raw = both[0] && Array.isArray(both[0].results) && both[0].results.length ? both[0].results : SEED;
       results = clean(raw);
       schools = both[1].schools || [];
@@ -1093,6 +1097,7 @@
   // Editable because they change every time the national lists are
   // republished, and a stale #4 on a public page is worse than no number.
   var rankings = window.SwimmerData.seedRankings();
+  var meets = [];
 
   function renderRankings() {
     var bests = S.personalBests(results);
@@ -1539,7 +1544,7 @@
 
     var draft = R.draftEmail({
       swim: S, standards: St, swimmer: SWIMMER, results: results, rankings: rankings,
-      today: today, profileUrl: location.origin, school: school
+      today: today, profileUrl: location.origin, school: school, meets: meets
     });
 
     var mailto = 'mailto:' + encodeURIComponent(draft.to) +
@@ -1888,7 +1893,7 @@
     if (!school) return;
     var draft = R.draftEmail({
       swim: S, standards: St, swimmer: SWIMMER, results: results, rankings: rankings,
-      today: today, profileUrl: location.origin, school: school
+      today: today, profileUrl: location.origin, school: school, meets: meets
     });
 
     var warn = draft.warnings.length

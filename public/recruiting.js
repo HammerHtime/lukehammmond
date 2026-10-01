@@ -276,10 +276,17 @@ function draftEmail(input) {
     lines.push('My primary events are ' + eventsSentence(ranked) +
       '. Some of my current best times are:');
     lines.push('');
+    // The group and season are said once, under the list, rather than on every
+    // line. Four lines each ending "in Canada for 13-14 boys in 2025-26" read
+    // like a form letter and cost the email thirty words.
+    let basisNote = '';
     ranked.forEach(function (best) {
       const rank = rankings[best.event];
-      lines.push(best.name + ' ' + best.course + ': ' + best.time + rankPhrase(rank));
+      const phrase = rankPhrase(rank);
+      if (phrase.group && !basisNote) basisNote = phrase.group;
+      lines.push(best.name + ' ' + best.course + ': ' + best.time + phrase.text);
     });
+    if (basisNote) lines.push('', 'The rankings are for ' + basisNote + '.');
     lines.push('');
   }
 
@@ -300,11 +307,38 @@ function draftEmail(input) {
     lines.push('');
   }
 
+  // Where a coach can see him race next. From the club's calendar, which the
+  // admin page loads with the key. It is the club's calendar, not his entry
+  // list, so the draft says to check before it goes. Month only: a coach needs
+  // the meet, not the session times or the pool.
+  const meets = Array.isArray(input.meets) ? input.meets : [];
+  const next = meets.slice().sort(function (a, b) { return a.start < b.start ? -1 : 1; })
+    .filter(function (m) { return today && m.start > today; })[0];
+  if (next) {
+    const parts = /^(\d{4})-(\d{2})/.exec(next.start);
+    const when = parts ? MONTHS[Number(parts[2]) - 1] + ' ' + parts[1] : '';
+    lines.push('My next meet is the ' + next.name + (when ? ' in ' + when : '') + '.');
+    lines.push('');
+    warnings.push('The draft says his next meet is the ' + next.name + '. That comes from the ' +
+      'club calendar, so check Luke is entered' + (next.qualifier ? ' and has the qualifying times' : '') +
+      ' before sending.');
+  }
+
   if (swimmer.academics && swimmer.academics.gpa) {
     // The school itself, not only the swimming. Every coach interviewed said
     // academic strength is what lets them stretch a small pot of money further.
-    lines.push('School matters to me too. I have a ' + swimmer.academics.gpa +
-      ' GPA on a ' + swimmer.academics.gpaScale + ' scale and I want to study ' +
+    // The school and its program. The TDSB's High Performing Athletes program
+    // takes students recognised at provincial or national level who train 15
+    // hours a week or more, and builds the timetable around training.
+    const sc = swimmer.school || {};
+    const atSchool = sc.name
+      ? 'I go to ' + sc.name + (sc.programmeShort ? ' in the ' + sc.programmeShort : '') + '. '
+      : '';
+    // The percentage first for a Canadian coach, the GPA for an American one.
+    const avg = swimmer.academics.average;
+    lines.push(atSchool + 'School matters to me too. ' +
+      (avg ? 'I had ' + avg.percent + '% in Grade ' + avg.grade + ', a ' : 'I have a ') +
+      swimmer.academics.gpa + ' GPA on a ' + swimmer.academics.gpaScale + ' scale, and I want to study ' +
       (swimmer.academics.interestsShort || listOut(swimmer.academics.interests).toLowerCase()) +
       (school && school.academicNote ? '. ' + school.academicNote : '') + '.');
     lines.push('');
@@ -351,7 +385,9 @@ function draftEmail(input) {
   lines.push('Class of ' + swimmer.classOf);
   lines.push(swimmer.club);
   lines.push(swimmer.city + ', ' + swimmer.province + ', Canada');
-  if (swimmer.contact && swimmer.contact.email) lines.push(swimmer.contact.email);
+  // No address in the signature. The email is sent from Luke's own address, so
+  // a coach already has it, and the sign-off is the four lines Andrew wrote. A
+  // line here used to read contact.email, which was always empty.
 
   // A phone shows roughly the first 35 to 40 characters of a subject in the
   // list. The old one was 52 and read "Luke Hammond, 2029 distance free, 40..."
@@ -525,14 +561,16 @@ function seedRankingsFrom(swimmer) {
 // The season is written out rather than "last season", which would go wrong
 // the year after without anyone noticing.
 function rankPhrase(rank) {
-  if (!rank) return '';
+  if (!rank) return { text: '' };
   const basis = String(rank.basis || '');
   const group = /^Boys (\d+-\d+)/.exec(basis);
   const season = /(\d{4}-\d{2})$/.exec(basis) || (rank.season ? [0, rank.season] : null);
   if (group && season) {
-    return ', ranked #' + rank.rank + ' in Canada for ' + group[1] + ' boys in ' + season[1];
+    // The season is written out rather than "last season", which would go
+    // wrong the year after without anyone noticing.
+    return { text: ', #' + rank.rank + ' in Canada', group: group[1] + ' boys in ' + season[1] };
   }
-  return ', #' + rank.rank + ' in Canada for my age';
+  return { text: ', #' + rank.rank + ' in Canada for my age' };
 }
 
 function pad(text, width) {

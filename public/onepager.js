@@ -135,10 +135,14 @@
           '<dl class="pair">' +
             '<dt>School</dt><dd>' + esc(school.name || '') +
               (school.programme ? ', ' + esc(school.programme) : '') + '</dd>' +
+            (academics.average ? '<dt>Average</dt><dd>' + esc(academics.average.percent) + '%, ' +
+              esc(academics.average.label) + ' (Ontario)</dd>' : '') +
             '<dt>GPA</dt><dd>' + esc(academics.gpa || '') +
               (academics.gpaScale ? ' of ' + esc(academics.gpaScale) : '') + '</dd>' +
             '<dt>Interest</dt><dd>' + esc((academics.interests || []).join(', ')) + '</dd>' +
             '<dt>Graduates</dt><dd>June ' + esc(SWIMMER.classOf) + '</dd>' +
+            (SWIMMER.height ? '<dt>Height</dt><dd>' + esc(SWIMMER.height.feet) + ' ft ' +
+              esc(SWIMMER.height.inches) + ' in, ' + esc(SWIMMER.height.cm) + ' cm</dd>' : '') +
           '</dl>' +
         '</div>' +
         '<div>' +

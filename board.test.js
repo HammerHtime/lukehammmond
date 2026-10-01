@@ -1066,12 +1066,15 @@ ok('and it is in the letter',
 // Ranks from the published list name the group and the season, because by the
 // time this is sent he is in the next age group.
 ok('the 400 free is listed with its ranking',
-  voice.body.indexOf('400 Free LCM: 4:10.86, ranked #4 in Canada for 13-14 boys in 2025-26') !== -1);
-ok('the 800 too', voice.body.indexOf('800 Free LCM: 8:43.49, ranked #4 in Canada for 13-14 boys in 2025-26') !== -1);
-ok('the 1500 too', voice.body.indexOf('1500 Free LCM: 16:59.80, ranked #5 in Canada for 13-14 boys in 2025-26') !== -1);
-ok('the 200 too', voice.body.indexOf('200 Free LCM: 1:59.75, ranked #6 in Canada for 13-14 boys in 2025-26') !== -1);
+  voice.body.indexOf('400 Free LCM: 4:10.86, #4 in Canada') !== -1);
+ok('the 800 too', voice.body.indexOf('800 Free LCM: 8:43.49, #4 in Canada') !== -1);
+ok('the 1500 too', voice.body.indexOf('1500 Free LCM: 16:59.80, #5 in Canada') !== -1);
+ok('the 200 too', voice.body.indexOf('200 Free LCM: 1:59.75, #6 in Canada') !== -1);
 ok('the old #2 is gone from the letter', voice.body.indexOf('#2 in Canada') === -1);
 ok('and "last season" is not used, since it goes stale', voice.body.indexOf('last season') === -1);
+ok('the group and season are said once, under the list',
+  voice.body.indexOf('The rankings are for 13-14 boys in 2025-26.') !== -1 &&
+  voice.body.split('13-14 boys').length === 2);
 // A rank typed in by hand has no group to name and keeps the plain wording.
 const handTyped = R.draftEmail({
   swim: S, swimmer: require('./public/swimmer.js').SWIMMER, results: results,
@@ -2662,6 +2665,76 @@ ok('the one-pager is linked', /href="onepager\.html"/.test(publicHtml));
 ok('the phone column rule is scoped to the results table', /#comp-table th:nth-child\(1\),\s*#comp-table td:nth-child\(1\) \{ display: none; \}/.test(publicHtml));
 ok('and no class-wide rule hides a first column', !/\.comp-table t[dh]:nth-child\(1\)/.test(publicHtml));
 ok('chart columns may shrink on a small phone', /\.perf-charts-grid > \* \{ min-width: 0; \}/.test(publicHtml));
+
+// ---------- the meet calendar stays private ----------
+// Andrew sent the club's 2026-27 calendar on 1 October 2026. A public list of
+// where a minor will be, on which dates, at which pool, is not published. It
+// lives outside public/, behind the admin key, and feeds one email line.
+const MEETS = require('./meets.js');
+ok('the calendar is not in the deployed folder', deployed.indexOf('meets.js') === -1);
+ok('and exists at the root, where the function reads it', fsP.existsSync(pathP.join(__dirname, 'meets.js')));
+check('it carries the season', MEETS.SEASON, '2026-27');
+check('nineteen meets, October to July', MEETS.MEETS.length, 19);
+check('the next meet after 1 October is the MAC Fall Invitational', MEETS.nextMeet('2026-10-01').name, 'MAC Fall Invitational');
+check('and after 1 March it is the OAGs', MEETS.nextMeet('2027-03-01').name, 'Ontario Age Group Championships (OAG)');
+check('and after the season there is none', MEETS.nextMeet('2027-08-01'), null);
+// No meet name, pool or date from the calendar reaches any public file.
+const publicFiles = fsP.readdirSync(PUBLIC_DIR).filter(function (f) { return /\.(html|js)$/.test(f); });
+['Harvest', 'Hicken', 'MSSAC Open', 'Stephen Clarke', 'GTA Skins', 'Mallards', 'Gore Meadows', 'Saanich'].forEach(function (word) {
+  ok('no public file mentions "' + word + '"', publicFiles.every(function (f) {
+    return fsP.readFileSync(pathP.join(PUBLIC_DIR, f), 'utf8').indexOf(word) === -1;
+  }));
+});
+const meetsFn = fsP.readFileSync(pathP.join(__dirname, 'netlify', 'functions', 'meets.js'), 'utf8');
+ok('the calendar function checks the key before anything else',
+  meetsFn.indexOf('isAdmin(request)') !== -1 && meetsFn.indexOf('isAdmin(request)') < meetsFn.indexOf('meetsLib.MEETS'));
+ok('the admin page fetches it with the key', /api\('\/api\/meets'\)/.test(adminSrcDash));
+ok('and gives it to both email drafts', (adminSrcDash.match(/school: school, meets: meets/g) || []).length === 2);
+
+// The email line. Month only, and a warning that it is the club's calendar.
+const withMeet = R.draftEmail({ swim: S, swimmer: SWIMMER, results: results, today: '2027-03-01', meets: MEETS.MEETS });
+ok('the email names the next meet and the month',
+  withMeet.body.indexOf('My next meet is the Ontario Age Group Championships (OAG) in March 2027.') !== -1);
+ok('and gives no pool or exact dates', withMeet.body.indexOf('TPASC') === -1 && withMeet.body.indexOf('Mar 4') === -1);
+ok('and warns to check he is entered, with the qualifying times',
+  withMeet.warnings.some(function (w) { return /check Luke is entered and has the qualifying times/.test(w); }));
+const noMeet = R.draftEmail({ swim: S, swimmer: SWIMMER, results: results, today: '2027-03-01' });
+ok('with no calendar, no meet line', noMeet.body.indexOf('My next meet') === -1);
+
+// ---------- the school, shown by Andrew's choice ----------
+check('the school', SWIMMER.school.name, 'Silverthorn Collegiate Institute');
+check('the program under its TDSB name', SWIMMER.school.programme, 'TDSB High Performing Athletes program');
+ok('with the TDSB page as its source', /tdsb\.on\.ca\/High-School\/Going-to-High-School\/High-Performing-Athletes/.test(SWIMMER.school.programmeUrl));
+ok('the front page card names it', /id="contact-school">Silverthorn Collegiate Institute, TDSB High Performing Athletes program</.test(publicHtml));
+ok('the email names it', withMeet.body.indexOf('I go to Silverthorn Collegiate Institute in the TDSB High Performing Athletes program.') !== -1);
+ok('the old program name is gone', publicFiles.every(function (f) {
+  return fsP.readFileSync(pathP.join(PUBLIC_DIR, f), 'utf8').indexOf('High Performer Program') === -1;
+}));
+
+// ---------- a coach can reach Luke from the page ----------
+// The handler behind "Click to reveal email" was removed by mistake on
+// 19 September 2026. From then until 1 October the link did nothing and the
+// page offered no other way to reach him. Nothing tested it.
+check('the contact is Luke, with Andrew copied', [SWIMMER.contact.user, SWIMMER.contact.domain, SWIMMER.contact.ccUser],
+  ['hammondluke11', 'icloud.com', 'andrewhammond75']);
+const swimmerSrcC = fsP.readFileSync(pathP.join(PUBLIC_DIR, 'swimmer.js'), 'utf8');
+check('there is one contact entry in the data, not two', (swimmerSrcC.match(/^  contact: \{/gm) || []).length, 1);
+const liveSrcC = fsP.readFileSync(pathP.join(PUBLIC_DIR, 'live-profile.js'), 'utf8');
+ok('the email link has a handler', /function contactLink\(\)/.test(liveSrcC) && /el\('contact-email'\)/.test(liveSrcC));
+ok('drawn in its own guarded section', /safe\('contact', contactLink\)/.test(liveSrcC));
+ok('the page source carries no whole address for a scraper', !/hammondluke11@icloud\.com/.test(publicHtml));
+ok('there is a way in near the top', /<a class="hero-contact" href="#contact">/.test(publicHtml));
+ok('the sign-off stays the four lines Andrew wrote, no address added',
+  R.draftEmail({ swim: S, swimmer: SWIMMER, results: results }).body.trim().split('\n').slice(-1)[0] === 'Etobicoke, Ontario, Canada');
+
+// ---------- average and height, given by Andrew 1 October 2026 ----------
+check('the Grade 9 average', SWIMMER.academics.average, { percent: 81, grade: 9, label: 'Grade 9 average' });
+check('the height', [SWIMMER.height.feet, SWIMMER.height.inches, SWIMMER.height.cm], [6, 0, 183]);
+ok('the card shows the average', /id="contact-average">81%</.test(publicHtml));
+ok('and the GPA, labelled as the US scale', />GPA, US 4\.0 Scale</.test(publicHtml));
+ok('and the height in both units', /id="contact-height">6 ft 0 in · 183 cm</.test(publicHtml));
+ok('the email gives the percentage before the GPA',
+  R.draftEmail({ swim: S, swimmer: SWIMMER, results: results }).body.indexOf('I had 81% in Grade 9, a 3.5 GPA on a 4.0 scale') !== -1);
 
 // ---------- the published list, pinned to the page it came from ----------
 // CSCA TAG Rankings, Volume 4, September 2026, Boys 13-14, long course. Each

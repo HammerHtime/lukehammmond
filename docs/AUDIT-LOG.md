@@ -10,6 +10,54 @@ Newest first.
 
 ---
 
+## 1 October 2026, a coach could not contact Luke from the page
+
+**Found because Andrew asked how a coach would contact Luke.** Nobody had
+noticed: from 19 September to 1 October 2026, "Click to reveal email" did
+nothing. The script behind it was removed by mistake on 19 September, in the
+commit that stripped the old editor out of the page, and nothing tested the
+link. There was no other address anywhere on the page. A coach who wanted to
+write to Luke for twelve days had no way to do it from his site.
+
+**Fixed.** Tapping it now shows Luke's address and opens an email to him with
+Andrew copied, which is what it did before 19 September. The address now stays
+on screen after the tap. It used to vanish after four seconds, which left a
+coach with no mail app nothing to copy. A "Get in touch" button now sits in the
+first screen and goes straight to the contact card. Before, contact was only at
+the very bottom. The handler runs in its own guarded section, from the data, and
+a browser test clicks it at desktop and phone widths and checks the email app
+is asked to open.
+
+**Found on the way.** The data had two entries called contact. The second, with
+empty fields, silently replaced the first. Merged into one.
+
+## 1 October 2026, school, average, height and the meet calendar
+
+From Andrew: Silverthorn Collegiate Institute, an 81% Grade 9 average, 6 ft,
+and the club's 2026-27 meet calendar.
+
+- **School and program**, on the card, in About, in the email and the
+  one-pager. Silverthorn is a TDSB hub school for the High Performing Athletes
+  program, checked on tdsb.on.ca: it takes students recognised at provincial or
+  national level who train 15 hours a week or more, and builds the timetable
+  around training. The data had it as "High Performer Program", which is not
+  its name.
+- **81% and 3.5.** Both shown: Canadian coaches read the percentage, US coaches
+  a GPA. They agree. The NCAA's Ontario sheet scores 80 and up as 4 and 70 to
+  79 as 3, so an 81 average of 80s and 70s lands near 3.5.
+- **Height** in feet and centimetres. Andrew chose to show it.
+- **The meet calendar is private.** It is in meets.js at the repository root,
+  outside public/, served only by an admin-key function, and feeds one line of
+  the coach email: "My next meet is the X in Month Year", with a warning to
+  check Luke is entered, because it is the club's calendar and not his entry
+  list. The sheet's title read 2025-2026; Andrew sent it as this season's. A
+  test fails if any meet name or pool from it appears in a public file.
+- **The email.** The rankings now say the group and season once, under the
+  list, not on every line, which saved about 25 words and keeps it under 320
+  with the new lines in.
+
+---
+
 ## 1 October 2026, what coaches want, checked against the site
 
 Three research agents looked at personal recruiting sites, US coach needs and

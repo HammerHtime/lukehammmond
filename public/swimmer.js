@@ -48,11 +48,23 @@ const SWIMMER = {
   clubCity: 'Mississauga',
   country: 'Canada',
   swimcloud: 'https://www.swimcloud.com/swimmer/3306753/',
+  // How a coach reaches him. Luke's own address, with Andrew copied, which is
+  // how the page worked until the handler behind "Click to reveal email" was
+  // removed by mistake on 19 September 2026. From then until 1 October the
+  // link did nothing at all. Kept in two halves so a scraper reading the page
+  // text does not find an address, and joined only when a coach taps.
+  // (The address itself is in contact, further down. One entry, not two: a
+  // second contact block lower in this object silently replaced the first.)
 
   // What a coach wants in the first ten seconds.
   headline: 'Distance freestyle. Class of 2029. Etobicoke, Ontario.',
 
   academics: {
+    // Canadian coaches read the Ontario percentage; US coaches read a GPA.
+    // Both shown. Andrew gave the Grade 9 average on 1 October 2026. The 3.5
+    // fits it: the NCAA's Ontario sheet scores 80 and up as 4 and 70 to 79 as
+    // 3, so an 81 average of 80s and 70s lands near 3.5.
+    average: { percent: 81, grade: 9, label: 'Grade 9 average' },
     gpa: '3.5',
     gpaScale: '4.0',
     interests: ['History', 'Exercise Science and Kinesiology'],
@@ -62,6 +74,11 @@ const SWIMMER = {
     interestsShort: 'history or exercise science',
     note: 'Intended field of study, not yet declared.'
   },
+
+  // Every questionnaire in both countries asks for it. Andrew gave it on
+  // 1 October 2026 and chose to show it. Feet for US forms, centimetres for
+  // Canadian ones. 6 ft 0 in is 182.9 cm.
+  height: { feet: 6, inches: 0, cm: 183, recorded: '2026-10-01' },
 
   // Anything a coach could not work out from a times sheet.
   about: [
@@ -194,9 +211,18 @@ const SWIMMER = {
   // name, address and phone, and NCAA core credit depends on the SCHOOL holding
   // an Eligibility Center account with an approved course list. That check
   // belongs in Grade 10, ie, now.
+  // Andrew confirmed the school and program on 1 October 2026 and chose to show
+  // the school on the public page. Silverthorn is one of three TDSB hub schools
+  // for the High Performing Athletes program, which takes students recognised
+  // at provincial or national level who train at least 15 hours a week, and
+  // builds their timetable around training. The program read "High Performer
+  // Program" here before, which is not its name.
   school: {
     name: 'Silverthorn Collegiate Institute',
-    programme: 'High Performer Program',
+    programme: 'TDSB High Performing Athletes program',
+    programmeShort: 'TDSB High Performing Athletes program',
+    programmeUrl: 'https://www.tdsb.on.ca/High-School/Going-to-High-School/High-Performing-Athletes/Secondary-HPA',
+    board: 'Toronto District School Board',
     ncaaPortalChecked: false
   },
 
@@ -226,8 +252,10 @@ const SWIMMER = {
   // Kept deliberately short. A recruiting page needs a way to reach the family
   // and the club coach. It does not need an address or a date of birth.
   contact: {
-    email: '',
-    coachEmail: '',
+    user: 'hammondluke11',
+    domain: 'icloud.com',
+    ccUser: 'andrewhammond75',
+    ccDomain: 'mac.com',
     note: 'Enquiries are welcome from college coaches at any time.'
   },
 

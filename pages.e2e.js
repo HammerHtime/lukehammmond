@@ -253,6 +253,24 @@ async function page(b, url, profile, opts={}) {
     ok('the 800 reads 8:30.34 at #3', /8:30\.34 #3/.test(m.eight||''), m.eight);
     await c.close(); }
 
+  // ---------- a coach can reach Luke ----------
+  // The email link did nothing from 19 September to 1 October 2026.
+  for (const w of [1280, 390]) {
+    const {c,pg}=await page(b,'index.html',null,{vp:{width:w,height:900}});
+    const opened=[]; pg.on('request', r=>{ if (/^mailto:/.test(r.url())) opened.push(r.url()); });
+    await pg.click('.hero-contact'); await pg.waitForTimeout(900);
+    const atContact=await pg.evaluate(()=>{ const r=document.getElementById('contact-email').getBoundingClientRect(); return r.top>=0 && r.bottom<=innerHeight; });
+    await pg.click('#contact-email'); await pg.waitForTimeout(400);
+    const a=await pg.evaluate(()=>{ const e=document.getElementById('contact-email'); return { text:e.textContent, href:e.getAttribute('href') }; });
+    console.log('\nindex.html at ' + w + 'px, contacting Luke');
+    ok('the top link takes a coach to the contact', atContact);
+    ok('tapping the email shows the address', a.text==='hammondluke11@icloud.com', a.text);
+    ok('and it stays shown', a.text==='hammondluke11@icloud.com');
+    ok('and opens an email to Luke with Andrew copied', a.href==='mailto:hammondluke11@icloud.com?cc=andrewhammond75@mac.com', a.href);
+    ok('and the email app was actually asked to open', opened.some(u=>/^mailto:hammondluke11@icloud\.com/.test(u)), opened.join(' '));
+    await c.close();
+  }
+
   // ---------- index.html with scripts off: the static copy ----------
   { const c=await b.newContext({javaScriptEnabled:false}); const pg=await c.newPage();
     await pg.goto('http://localhost:4176/index.html',{waitUntil:'load'});

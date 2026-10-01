@@ -221,12 +221,16 @@
       (SWIMMER.formerClub ? ' Swam for ' + esc(SWIMMER.formerClub) + ' until ' +
         esc(SWIMMER.formerClubUntil) + ', so every time and ranking here was swum there, ' +
         'which is the club the national lists show.' : '');
-    el('about-2').textContent = R && R.trainingLine ? R.trainingLine(SWIMMER, 'third') : '';
+    el('about-2').textContent = (R && R.trainingLine ? R.trainingLine(SWIMMER, 'third') : '') +
+      (sc.name ? ' He goes to ' + sc.name + (sc.programme ? ', in the ' + sc.programme +
+        ', which builds his school timetable around training' : '') + '.' : '');
 
     var kv = [
       ['Class of', SWIMMER.classOf],
       ['School', sc.name || ''],
+      ['Average', a.average ? a.average.percent + '%, ' + a.average.label.replace(/ average$/, '') : ''],
       ['GPA', a.gpa ? a.gpa + ' of ' + a.gpaScale : ''],
+      ['Height', SWIMMER.height ? SWIMMER.height.feet + ' ft ' + SWIMMER.height.inches + ' in, ' + SWIMMER.height.cm + ' cm' : ''],
       ['Wants to study', (a.interests || []).join(', ')],
       ['Born', '2011']
     ];
@@ -246,9 +250,11 @@
       'He is class of ' + SWIMMER.classOf + '. Canadian, Division II and Division III coaches ' +
       'may reply at any time. Division I coaches cannot write back until 15 June 2027, ' +
       'and he is not expecting them to.';
-    var u = ['hammondluke11', 'icloud.com'].join('@');
+    var c = SWIMMER.contact || {};
+    var u = c.user ? c.user + '@' + c.domain : '';
+    var cc = c.ccUser ? '?cc=' + c.ccUser + '@' + c.ccDomain : '';
     el('reach-kv').innerHTML = [
-      ['Email', '<a href="mailto:' + u + '">' + u + '</a>'],
+      ['Email', u ? '<a href="mailto:' + esc(u) + esc(cc) + '">' + esc(u) + '</a>' : ''],
       ['Club', esc(SWIMMER.club) + ', ' + esc(SWIMMER.clubCity)],
       ['Coach', esc(SWIMMER.coach)],
       ['SwimCloud', '<a href="' + esc(SWIMMER.swimcloud) + '" target="_blank" rel="noopener">' +

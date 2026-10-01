@@ -277,6 +277,13 @@
     opacity: 0;
     animation: fadeUp 0.9s 0.7s forwards;
   }
+  .hero-contact {
+    display: inline-block; margin-top: 2rem; padding: 0.75rem 1.4rem;
+    border: 1px solid var(--aqua); border-radius: 3px; color: var(--aqua);
+    font-size: 0.8rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;
+    text-decoration: none; opacity: 0; animation: fadeUp 0.9s 1.1s forwards;
+  }
+  .hero-contact:hover, .hero-contact:focus-visible { background: rgba(0,210,240,0.12); }
   .hero-stats {
     display: flex;
     gap: 3rem;
@@ -1174,6 +1181,9 @@
         <div class="hero-stat-label">Ranked in Canada · 1500m Free · 16:59.80</div>
       </div>
     </div>
+    <!-- The contact was at the very bottom and nowhere else. One tap from the
+         top now goes to it. Added 1 October 2026. -->
+    <a class="hero-contact" href="#contact">Get in touch &rarr;</a>
   </div>
   <div class="hero-scroll">
     <div class="scroll-line"></div>
@@ -1202,7 +1212,7 @@
     </div>
     <div class="about-text">
       <p id="about-lead"></p>
-      <p><span id="about-training"></span></p>
+      <p><span id="about-training"></span> <span id="about-school"></span></p>
       <p>He has been named to the Swimming Canada National Development Program ID Team two years running, in 2025 and again in 2026, and to the Swim Ontario Aerobic Development Program. Pretty cool recognition that he's heading in the right direction.</p>
       <div id="about-quote"></div>
       <div id="about-press"></div>
@@ -1632,12 +1642,12 @@
           </a>
         </div>
       </div>
-      <div style="background:var(--card-bg); border:1px solid rgba(255,255,255,0.07); border-radius:4px; padding:2.5rem;">
+      <div id="contact" style="scroll-margin-top:90px; background:var(--card-bg); border:1px solid rgba(255,255,255,0.07); border-radius:4px; padding:2.5rem;">
         <p style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--aqua); margin-bottom:1.5rem; font-weight:500;">Contact Information</p>
         <div style="display:flex; flex-direction:column; gap:1.25rem;">
           <div>
             <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Email</div>
-            <a id="contact-email" href="#" style="color:var(--aqua); text-decoration:none; font-size:1rem;">Click to reveal email</a>
+            <a id="contact-email" href="#recruit" style="color:var(--aqua); text-decoration:none; font-size:1rem;">Tap to show email</a>
           </div>
           <div>
             <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Club</div>
@@ -1652,8 +1662,20 @@
             <div style="color:var(--white); font-size:1rem;">2011</div>
           </div>
           <div>
-            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">GPA</div>
-            <div style="color:var(--gold); font-size:1rem; font-weight:600;">3.5 / 4.0</div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">School</div>
+            <div style="font-size:0.95rem; color:var(--white);" id="contact-school">Silverthorn Collegiate Institute, TDSB High Performing Athletes program</div>
+          </div>
+          <div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Grade 9 Average</div>
+            <div style="color:var(--gold); font-size:1rem; font-weight:600;" id="contact-average">81%</div>
+          </div>
+          <div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">GPA, US 4.0 Scale</div>
+            <div style="color:var(--gold); font-size:1rem; font-weight:600;" id="contact-gpa">3.5 / 4.0</div>
+          </div>
+          <div>
+            <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Height</div>
+            <div style="font-size:0.95rem; color:var(--white);" id="contact-height">6 ft 0 in · 183 cm</div>
           </div>
           <div>
             <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;">Academic Interests</div>

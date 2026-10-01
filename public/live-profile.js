@@ -64,6 +64,27 @@
     safe('progression', function () { progression(results); });
     safe('yards panel', function () { coachPanel(yards); });
     safe('gallery', gallery);
+    safe('contact', contactLink);
+  }
+
+  // The email. Its handler was removed by mistake on 19 September 2026, and
+  // until 1 October "Click to reveal email" did nothing, so a coach on the
+  // page had no way to reach Luke. Built from the data now, in its own guarded
+  // section, with a test that clicks it. The address stays visible after the
+  // tap: it used to vanish after four seconds, which left a coach with no
+  // mail app set up nothing to copy.
+  function contactLink() {
+    var a = el('contact-email');
+    var c = SWIMMER.contact;
+    if (!a || !c) return;
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var to = c.user + '@' + c.domain;
+      var href = 'mailto:' + to + (c.ccUser ? '?cc=' + c.ccUser + '@' + c.ccDomain : '');
+      a.textContent = to;
+      a.href = href;
+      window.location.href = href;
+    });
   }
 
   // Age goes stale every birthday. A graduating class never does, and it is
@@ -524,6 +545,24 @@
   // places, which is why a club change was a code change. It is data now.
   function clubLines(results) {
     var club = String(coach.club || SWIMMER.club || '').trim();
+
+    // The school and its program, from the data, in About and on the card.
+    var sc = SWIMMER.school || {};
+    var aboutSchool = el('about-school');
+    if (aboutSchool && sc.name) {
+      aboutSchool.textContent = 'He goes to ' + sc.name +
+        (sc.programme ? ', in the ' + sc.programme +
+          ', which builds his school timetable around training' : '') + '.';
+    }
+    var ac = SWIMMER.academics || {};
+    if (el('contact-average') && ac.average) el('contact-average').textContent = ac.average.percent + '%';
+    if (el('contact-gpa') && ac.gpa) el('contact-gpa').textContent = ac.gpa + ' / ' + ac.gpaScale;
+    var ht = SWIMMER.height;
+    if (el('contact-height') && ht) {
+      el('contact-height').textContent = ht.feet + ' ft ' + ht.inches + ' in \u00b7 ' + ht.cm + ' cm';
+    }
+    var cardSchool = el('contact-school');
+    if (cardSchool && sc.name) cardSchool.textContent = sc.name + (sc.programme ? ', ' + sc.programme : '');
 
     var lead = el('about-lead');
     if (lead) {

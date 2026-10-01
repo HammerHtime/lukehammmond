@@ -42,6 +42,7 @@ copyDir(path.join(__dirname, 'netlify', 'functions'), path.join(root, 'netlify',
 fs.readdirSync(path.join(__dirname, 'public')).filter(function (f) { return /\.js$/.test(f); })
   .forEach(function (f) { copy(path.join(__dirname, 'public', f), path.join(root, 'public', f)); });
 copy(path.join(__dirname, 'schools.js'), path.join(root, 'schools.js'));
+copy(path.join(__dirname, 'meets.js'), path.join(root, 'meets.js'));
 // Netlify bundles the functions as modules. Plain Node needs telling.
 fs.writeFileSync(path.join(root, 'netlify', 'functions', 'package.json'), '{"type":"module"}');
 
@@ -94,6 +95,7 @@ async function call(fn, method, url, body, key) {
   const profile = await load('profile');
   const results = await load('results');
   const photos = await load('photos');
+  const meets = await load('meets');
   const SD = require(path.join(__dirname, 'public', 'swimmer.js'));
   const S = require(path.join(__dirname, 'public', 'swim.js'));
 
@@ -161,6 +163,14 @@ async function call(fn, method, url, body, key) {
   check('a JPEG claiming to be a PNG is refused', liar.status, 400);
   const list = (await call(photos, 'GET', '/api/photos', undefined, null)).body.photos.map(function (p) { return p.id; });
   check('only the real one made the gallery', list, ['test-good-1']);
+
+  // ---------- the meet calendar ----------
+  check('the calendar refuses a request with no key', (await call(meets, 'GET', '/api/meets', undefined, null)).status, 401);
+  check('and a wrong key', (await call(meets, 'GET', '/api/meets', undefined, 'z'.repeat(40))).status, 401);
+  const cal = await call(meets, 'GET', '/api/meets');
+  check('with the key it answers', cal.status, 200);
+  check('with all nineteen meets', cal.body.meets.length, 19);
+  check('and it is not cached anywhere', cal.res.headers.get('cache-control'), 'no-store');
 
   fs.rmSync(root, { recursive: true, force: true });
   const label = failed ? 'FAIL' : 'PASS';
